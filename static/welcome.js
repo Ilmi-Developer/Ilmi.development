@@ -43,7 +43,7 @@
   }
   function setAll(list, name, v) { for (var i = 0; i < list.length; i++) set(list[i], name, v); }
   function list(root, sel) { return root ? [].slice.call(root.querySelectorAll(sel)) : []; }
-  var USES = ".bwash,.band-in,.f-track,li .art,.f-bar i,.i-splash,.mock-3d,.vcard,.c-big,.art-skyline,.art-grass";
+  var USES = ".bback,.band-in,.f-track,li .art,.f-bar i,.i-splash,.mock-3d,.vcard,.c-big,.art-skyline,.art-grass";
 
   // Wraps each word of [data-words] in a span that knows its place (--i) and the count (--n), keeping <em> and the
   // like as they are. Screen readers still read the sentence whole.

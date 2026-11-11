@@ -297,7 +297,8 @@ Count badges never wrap their digits.
 It follows the reference: the Ilmi wordmark large with علمي under it, a sprig and the Qur'an on its rahle drawn in
 ink, the tagline "Every step in learning matters.", then an olive band ("My knowledge.") explaining the name, four
 features with ink icons (Qur'an tracking, Memorisation, Houses and rewards, Progress at a glance), a preview of the
-overview drawn in HTML with made-up figures (never real pupils), and a closing line over grass and a mosque
+overview as it looks after signing in (the greeting, Needs attention, Quran trackers, Rankings and the dock of icons),
+drawn in HTML with made-up figures (never real pupils), and a closing line over grass and a mosque
 skyline. On load the hero paints itself in (washes bloom, the sprig and letters draw on, علمي writes in from the
 right, the i's dot drops); further down each part rises in as it scrolls into view and the preview's figures count
 up (`static/welcome.js`, allowed by the page's CSP along with `static/wash.js`, which starts the wash page turn into
