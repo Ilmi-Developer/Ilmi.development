@@ -318,6 +318,7 @@ def create_app(test_config=None):
         DATA_DIR=os.environ.get("DATA_DIR", str(ROOT / ".local-data")),
         ADMIN_EMAIL=os.environ.get("ADMIN_EMAIL", ""),
         DASHBOARD_PASSWORD=os.environ.get("DASHBOARD_PASSWORD", ""),
+        ADMIN_RESET_PASSWORD=os.environ.get("ADMIN_RESET_PASSWORD", ""),
         COOKIE_SECURE=os.environ.get("COOKIE_SECURE", "1") != "0",
         # The site's address in invite and reset links. Railway's own RAILWAY_PUBLIC_DOMAIN can name a
         # domain that no longer exists, so it isn't used; without PUBLIC_URL the request's address is.
@@ -361,6 +362,7 @@ def create_app(test_config=None):
     database = Database(app.config["DATABASE_URL"].strip(), app.config["DATA_DIR"], app.config.get("TESTING"))
     database.migrate()
     auth.bootstrap_admin(database, app.config["ADMIN_EMAIL"], app.config["DASHBOARD_PASSWORD"])
+    auth.reset_admin(database, app.config["ADMIN_EMAIL"], app.config["ADMIN_RESET_PASSWORD"])
     app.config["DB"] = database
     if not app.config.get("TESTING"):
         with database.transaction() as db:
