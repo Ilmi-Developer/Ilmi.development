@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" type="image/png" href="/favicon.png?v=4">
+<link rel="apple-touch-icon" href="/favicon.png?v=4">
+<title>Ilmi · Live</title>
+<style>
+@font-face{font-family:"Atkinson Next";src:url(/fonts/atkinson-next-latin.woff2) format("woff2");font-weight:200 800;font-display:swap}
+/* Student-facing display, in Ilmi's olive and cream. Every slide is a still from an Islamic place or story (the Kaaba in the Prophet's time,
+   Masjid an-Nabawi, Al-Aqsa, Cave Hira, Cave Thawr, the Ark, the parting of the sea, the split moon) that keeps moving
+   while it is on: washing and trees in the wind, water, light. On the Presenter the class's students ride through by name. Slides change every
+   30 seconds with a crossfade and a slow push in, so the screen never cuts. Everything is sized in vh for a 16:9 TV. */
+:root{--navy:#3b4524;--ink:#22231b;--mute:#5d5b48;--gold:#f5c542;--gold2:#d99a00;--silver:#dfe6ee;--silver2:#9fb0c2;--bronze:#efaa72;--bronze2:#b86a2e;
+ --makkah:#e9a400;--aqsa:#2a9fe6;--madinah:#1fae72;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--navy);color:#fff;font-family:"Atkinson Next",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums}
+#stage{position:fixed;inset:0;overflow:hidden}
+/* ---------- Slides and the change between them ---------- */
+.slide{position:absolute;inset:0;overflow:hidden;opacity:0;transform:scale(1.06);transition:opacity 1.4s ease,transform 2.2s cubic-bezier(.2,.7,.2,1)}
+.slide.on{opacity:1;transform:none}
+.slide.out{opacity:0;transform:scale(1.035);transition:opacity 1.2s ease,transform 1.4s ease-in}
+.slide:not(.on) *,.slide.out *{animation-play-state:paused!important}
+.scene{position:absolute;inset:0}
+.scene svg.land{position:absolute;left:0;bottom:0;width:100%;height:100%}
+.carriers{position:absolute;inset:0;pointer-events:none;z-index:0} /* behind the podium and lists, so nothing covers a name */
+.content>*{position:relative;z-index:1}.content>.title{z-index:3}
+.content{position:absolute;inset:13vh 3vw 3.4vh;display:flex;flex-direction:column}
+/* ---------- Header ---------- */
+header{position:fixed;z-index:5;top:2.2vh;left:2.4vw;right:2.4vw;display:flex;align-items:center;gap:1.4vw;pointer-events:none}
+.brand{display:flex;align-items:center;gap:1vw;background:var(--navy);border-radius:99px;padding:.8vh 2vw .8vh .8vh;box-shadow:0 .6vh 0 rgba(30,34,16,.25)}
+.badge{width:7vh;height:7vh;border-radius:50%;background:#fff;display:grid;place-items:center}
+.badge img{width:6vh;height:6vh}
+.brand h1{margin:0;font-size:3.4vh;font-weight:800;line-height:1.05;letter-spacing:-.01em}
+.brand h1 small{display:block;font-size:1.9vh;font-weight:600;color:#dfe0c4;letter-spacing:0}
+.mode{background:var(--gold);color:#2b1d00;font-weight:800;font-size:2.3vh;border-radius:99px;padding:.9vh 1.6vw}
+.mode:empty{display:none}
+.spacer{flex:1}
+.dots{display:flex;gap:.9vh;background:var(--navy);border-radius:99px;padding:1.1vh 1.2vw}
+.dots i{width:1.4vh;height:1.4vh;border-radius:50%;background:rgba(255,255,255,.35);transition:background .6s,transform .6s}
+.dots i.on{background:var(--gold);transform:scale(1.35)}
+.clock{font-size:4.4vh;font-weight:800;background:var(--navy);border-radius:99px;padding:.6vh 1.6vw;box-shadow:0 .6vh 0 rgba(30,34,16,.25)}
+footer{position:fixed;z-index:5;left:0;right:0;bottom:0;height:.9vh;background:rgba(0,40,72,.5)}
+footer i{display:block;height:100%;width:0;background:var(--gold)}
+footer i.run{width:100%;transition:width linear}
+/* ---------- Titles ---------- */
+.title{align-self:flex-start;background:var(--navy);border-radius:2.4vh;padding:1.4vh 2.6vw 1.5vh;box-shadow:0 .8vh 0 rgba(30,34,16,.25);animation:drop 1s .35s both cubic-bezier(.2,.9,.3,1.2)}
+.title h2{margin:0;font-size:6.4vh;font-weight:800;letter-spacing:-.015em;line-height:1.05}
+.title .stage{display:block;font-size:4.8vh;font-weight:800;color:var(--gold);line-height:1.1;margin-top:.3vh}
+.title p{margin:.6vh 0 0;font-size:3.3vh;font-weight:700;color:#e3eef8}
+.title .pg{color:var(--gold);margin-left:1vw}
+@keyframes drop{from{opacity:0;transform:translateY(-3vh)}}
+/* ---------- Podium ---------- */
+/* The podium stands in the middle of the screen on a flat base, rather than on the bottom edge. */
+.podium{flex:1 1 0;min-height:0;max-height:62vh;margin:2vh 0 5vh;position:relative;display:grid;grid-template-columns:24vw 28vw 24vw;grid-template-rows:minmax(0,1fr);justify-content:center;align-items:end;gap:0 1vw}
+.podium:after{content:"";position:absolute;left:calc(50% - 39.5vw);right:calc(50% - 39.5vw);bottom:-1.8vh;height:1.8vh;border-radius:1vh;background:rgba(0,30,60,.3)}
+.col{display:flex;flex-direction:column;justify-content:flex-end;height:100%;min-width:0;min-height:0}
+.p1.col{padding-top:6.6vh} /* room for the crown */
+.col>.who,.col>.step{flex:none}
+.who{display:flex;flex-direction:column;gap:1vh;align-items:stretch;margin-bottom:1.6vh;position:relative}
+.pc{background:#fdfaf2;color:var(--ink);border-radius:2vh;padding:1.4vh 1vw 1.5vh;text-align:center;box-shadow:0 .7vh 0 rgba(30,34,16,.22);border-bottom:.7vh solid var(--hc,#d6d3c0);animation:pop .7s both cubic-bezier(.3,1.6,.5,1)}
+.pc .pn{display:block;font-size:4.2vh;font-weight:800;line-height:1.1;overflow-wrap:anywhere}
+.pc .pcl{display:block;font-size:2.3vh;font-weight:600;color:var(--mute);margin-top:.3vh}
+.p1 .pc .pn{font-size:5vh}
+/* A class card celebrates its teacher: their name is the big line, the year group sits under it. */
+.pc.cls .pn{font-size:5.2vh;white-space:nowrap;overflow-wrap:normal}.p1 .pc.cls .pn{font-size:6.2vh}
+.pc.cls .pcl{font-size:3vh;font-weight:700;color:var(--mute)}
+.more{text-align:center;font-weight:800;font-size:2.4vh;background:rgba(0,40,72,.8);border-radius:99px;padding:.6vh 1vw;animation:pop .7s both}
+.step{position:relative;border-radius:2vh 2vh 0 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:1.6vh;color:#2b1d00;overflow:hidden;
+ box-shadow:inset 0 1.4vh 0 rgba(255,255,255,.35),inset 0 -2.2vh 0 rgba(0,0,0,.1),0 .8vh 0 rgba(30,34,16,.22);animation:rise 1.1s both cubic-bezier(.2,.9,.25,1.1);transform-origin:bottom}
+.step b{font-size:9vh;font-weight:800;line-height:1}
+.step span{font-size:2.6vh;font-weight:800;margin-top:.4vh;opacity:.85}
+.p1 .step{height:24vh;background:var(--gold)}
+.p2 .step{height:18vh;background:var(--silver);color:#2d2f24}
+.p3 .step{height:14.5vh;background:var(--bronze);color:#3a1c05}
+.p3 .step b{font-size:7vh}
+.step.none{opacity:.45}
+/* The steps rise in order: first place, then second, then third, each step before its names. First place then
+   keeps a crown bobbing and light sweeping over the gold. */
+.p1 .step{animation-delay:.4s}.p1 .pc,.p1 .more{animation-delay:.9s}
+.p2 .step{animation-delay:1.6s}.p2 .pc,.p2 .more{animation-delay:2.1s}
+.p3 .step{animation-delay:2.8s}.p3 .pc,.p3 .more{animation-delay:3.3s}
+.p1 .step::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.3);clip-path:polygon(30% 0,42% 0,22% 100%,10% 100%);transform:translateX(-120%);animation:sweep 4.5s 2.4s infinite}
+.p1 .who{animation:float 4s 2s ease-in-out infinite}
+.crown{position:absolute;left:50%;top:-6.4vh;width:8vh;margin-left:-4vh;animation:pop .8s 1.3s both cubic-bezier(.3,1.6,.5,1)}
+.crown svg{width:100%;display:block;animation:bob 2.6s 2.5s ease-in-out infinite}
+.spark{position:absolute;width:2.4vh;height:2.4vh;background:#fff;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);animation:twinkle 2.2s infinite}
+@keyframes rise{from{transform:scaleY(0)}}
+@keyframes pop{from{opacity:0;transform:scale(.5) translateY(3vh)}}
+@keyframes sweep{0%{transform:translateX(-120%)}40%,100%{transform:translateX(120%)}}
+@keyframes float{50%{transform:translateY(-1vh)}}
+@keyframes bob{50%{transform:translateY(-.8vh) rotate(-4deg)}}
+@keyframes twinkle{0%,100%{opacity:0;transform:scale(.3)}50%{opacity:1;transform:scale(1)}}
+/* Quran: five stars on each step, filled to the average. */
+.meter{position:relative;display:block;height:3.4vh;width:18.5vh;margin-top:1vh}
+.meter>i{position:absolute;left:0;top:0;bottom:0;display:flex;gap:.4vh;overflow:hidden;white-space:nowrap}
+.meter svg{flex:none;width:3.4vh;height:3.4vh;fill:currentColor}
+.meter .mt{opacity:.2}
+.meter .mf{animation:fill 1.4s both cubic-bezier(.3,.8,.3,1)}
+.p1 .meter .mf{animation-delay:.9s}.p2 .meter .mf{animation-delay:2.1s}.p3 .meter .mf{animation-delay:3.3s}
+.qs .step b{font-size:7.6vh}.qs .p3 .step b{font-size:6.6vh}
+.qs .p1 .step{height:26vh}.qs .p2 .step{height:21.5vh}.qs .p3 .step{height:19vh}
+@keyframes fill{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+/* ---------- Presenter: the class at a glance, and the class rankings ---------- */
+/* Figure tiles: only what the class has this month, so a quiet class shows a few big tiles and a busy one more. */
+.glance{flex:1 1 0;min-height:0;margin:3vh 0 3vh;display:flex;flex-direction:column;gap:2vh;justify-content:center}
+.gl-tiles{display:grid;justify-content:center;grid-template-columns:repeat(var(--gc,3),minmax(0,var(--gw,1fr)));gap:2vh 1.4vw}
+.gl{background:#fdfaf2;color:var(--ink);border-radius:2.4vh;padding:2.2vh 1.6vw 2.4vh;box-shadow:0 .8vh 0 rgba(30,34,16,.22);border-bottom:.9vh solid var(--gt,#d6d3c0);animation:pop .75s both cubic-bezier(.3,1.5,.5,1);min-width:0}
+.gl b{display:block;font-size:var(--gn,9vh);font-weight:800;line-height:1;letter-spacing:-.02em}
+.gl span{display:block;font-size:3vh;font-weight:800;margin-top:.8vh}
+.gl small{display:block;font-size:2.3vh;font-weight:600;color:var(--mute);margin-top:.4vh}
+.gl .meter{color:#d99a00;margin-top:1vh}
+.gl.memo{--gt:#e9b949}.gl.quran{--gt:#7cc7a1}.gl.books{--gt:#e9604f}.gl.qaidah{--gt:#8fb8e8}.gl.points{--gt:#c79bea}.gl.merits{--gt:#f2a3b8}
+.gl-place{display:flex;flex-wrap:wrap;gap:1.4vh 1.2vw;justify-content:center}
+.gp{display:flex;align-items:center;gap:1vw;background:var(--navy);border-radius:99px;padding:1vh 2vw 1vh 1vh;font-size:3vh;font-weight:800;box-shadow:0 .6vh 0 rgba(30,34,16,.25);animation:pop .7s both}
+.gp i{font-style:normal;display:grid;place-items:center;min-width:6.4vh;height:6.4vh;padding:0 1vh;border-radius:99px;background:var(--gold);color:#2b1d00;font-size:3.2vh}
+.gp.q i{background:#7cc7a1;color:#08321c}
+.gp small{font-size:2.3vh;font-weight:600;color:#cfe0f0;margin-left:.4vw}
+/* The ranking: everyone in place order, in columns that fill the board, with ties sharing a place. A class with more
+   than fits turns its own pages within the slide. */
+.rlist{flex:1 1 0;min-height:0;margin:2.6vh 0 3vh;position:relative;background:var(--navy);border-radius:2.4vh;box-shadow:0 .8vh 0 rgba(30,34,16,.25);animation:pop .8s .3s both cubic-bezier(.3,1.4,.5,1);overflow:hidden}
+.rpage{position:absolute;inset:1.6vh 1.2vw;display:grid;grid-auto-flow:column;grid-template-columns:repeat(var(--rc,1),minmax(0,1fr));grid-template-rows:repeat(var(--rr,8),minmax(0,auto));gap:.32em 1.2vw;align-content:start;font-size:var(--rf,4vh);transition:opacity .6s ease}
+.rpage.leave{opacity:0}
+.rrow{display:grid;grid-template-columns:2.6em minmax(0,1fr) auto;align-items:center;gap:.5em;animation:pop .6s both}
+.rpl{display:grid;place-items:center;height:1.9em;border-radius:.4em;background:rgba(255,255,255,.14);font-weight:800;font-size:.9em}
+.rrow.r1 .rpl{background:var(--gold);color:#2b1d00}.rrow.r2 .rpl{background:var(--silver);color:#2d2f24}.rrow.r3 .rpl{background:var(--bronze);color:#3a1c05}
+.rnm{position:relative;height:1.9em;display:flex;align-items:center;background:#fdfaf2;color:var(--ink);border-radius:.4em;padding:0 .6em;border-left:.24em solid var(--hc,#d6d3c0);overflow:hidden}
+.rnm .bar{position:absolute;left:0;top:0;bottom:0;background:#fff1c7;transform-origin:left;animation:grow 1.2s both cubic-bezier(.3,.8,.3,1)}
+.rnm b{position:relative;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rv{font-weight:800;font-size:.8em;white-space:nowrap;min-width:3.2em;text-align:right}
+.rv small{font-size:.7em;font-weight:700;color:#dfe0c4;margin-left:.2em}
+@keyframes grow{from{transform:scaleX(0)}}
+/* ---------- Memorisation and book passes board ----------
+   One navy board. Each rank is a band: its place and score on the left, then the students in a grid of boxes that
+   are all the same size. A month too full for the board scrolls band by band (fitRanks). */
+.ranks{flex:0 1 auto;min-height:0;margin:2.6vh 0 3vh;position:relative;overflow:hidden;font-size:3.6vh;background:var(--navy);border-radius:2.4vh;border:.5vh solid var(--navy);box-shadow:0 .8vh 0 rgba(30,34,16,.25);animation:pop .8s .3s both cubic-bezier(.3,1.4,.5,1)}
+.rk-in{will-change:transform}
+.rk{display:grid;grid-template-columns:5.2em 1fr;gap:.5em;padding:.5em .55em;border-bottom:.12em solid rgba(255,255,255,.12)}
+.rk:last-child{border-bottom:0}
+.rb{display:flex;flex-direction:column;align-items:center;justify-content:center;height:2.6em;border-radius:.4em;background:rgba(255,255,255,.14);color:#fff}
+.rb b{font-size:1.15em;font-weight:800;line-height:1}
+.rb span{font-size:.46em;font-weight:800;opacity:.85;margin-top:.15em}
+.m1 .rb{background:var(--gold);color:#2b1d00}.bk .rb{background:#e9604f;color:#fff}.m2 .rb{background:var(--silver);color:#2d2f24}.m3 .rb{background:var(--bronze);color:#3a1c05}
+.rw{display:grid;grid-template-columns:repeat(var(--cols,4),minmax(0,1fr));gap:.36em}
+.chip{height:2.6em;display:flex;flex-direction:column;justify-content:center;background:#fdfaf2;color:var(--ink);border-radius:.4em;padding:0 .6em;border-left:.24em solid var(--hc,#d6d3c0);line-height:1.15;min-width:0}
+.chip .pn{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip .pcl{font-size:.52em;font-weight:700;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* ---------- House podium: every house gets its own step, logo, name, rank and points ---------- */
+.hp .pc{padding:2vh 1vw 2.2vh;border-bottom-width:1vh}
+.hp .logo{display:block;width:13vh;height:13vh;margin:0 auto 1vh}
+.hp .p1 .logo{width:16vh;height:16vh}
+.hp .pc .pn{font-size:5.4vh}.hp .p1 .pc .pn{font-size:6.4vh}
+.hp .step b{font-size:8vh}.hp .step span{font-size:3.2vh}
+.hp .p1 .step{height:26vh}.hp .p2 .step{height:20vh}.hp .p3 .step{height:16.5vh}
+/* The House race (Presenter): each house's top earners in the class under its name, so the logo is smaller. */
+.hp .ern{display:flex;flex-direction:column;gap:.5vh;margin-top:1.2vh;padding-top:1.2vh;border-top:.25vh solid #e6edf4;font-size:3vh}
+.hp .ern>span{display:flex;justify-content:space-between;gap:1vw;font-weight:700;color:var(--ink);animation:pop .6s both}
+.hp .ern b{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hp .ern em{font-style:normal;font-weight:800;color:#2b1d00;background:color-mix(in srgb,var(--hc) 22%,#fff);border-radius:99px;padding:0 1vh}
+.hp .ern .none{justify-content:center;color:var(--mute);font-weight:600}
+.hp .pc:has(.ern) .logo{width:9vh;height:9vh;margin-bottom:.6vh}.hp .p1 .pc:has(.ern) .logo{width:11vh;height:11vh}
+.hp .pc:has(.ern) .pn{font-size:4.4vh}.hp .p1 .pc:has(.ern) .pn{font-size:5vh}
+/* ---------- Last month's winners: one card per category, first place only ---------- */
+.wins{flex:1 1 0;min-height:0;margin:3vh 0 4vh;display:grid;grid-template-columns:repeat(var(--n,4),minmax(0,1fr));gap:1.6vw;align-items:stretch}
+.win{position:relative;display:flex;flex-direction:column;align-items:center;min-width:0;background:#fff;color:var(--ink);border-radius:2.4vh;padding:0 1.2vw 2.4vh;text-align:center;
+ box-shadow:0 .8vh 0 rgba(30,34,16,.25);border-bottom:1vh solid var(--hc,var(--gold));animation:pop .8s both cubic-bezier(.3,1.5,.5,1)}
+.win .wh{align-self:stretch;margin:0 -1.2vw;background:var(--gold);color:#2b1d00;border-radius:2.4vh 2.4vh 0 0;padding:1.4vh 1vw;min-height:12.6vh;display:flex;flex-direction:column;justify-content:center;font-size:3vh;font-weight:800;line-height:1.15}
+.win .wh small{display:block;font-size:2.2vh;font-weight:700;opacity:.8}
+.win .medal{width:9vh;height:9vh;margin:2.2vh 0 1vh;flex:none}
+.win .medal svg{width:100%;height:100%;display:block}
+.win .wl{flex:1 1 0;min-height:0;width:100%;display:flex;flex-direction:column;justify-content:center;gap:1.4vh}
+.win .wp{display:block;min-width:0}
+.win .pn{display:block;font-size:4.6vh;font-weight:800;line-height:1.1;overflow-wrap:anywhere}
+.win .pcl{display:block;font-size:2.5vh;font-weight:700;color:var(--mute);margin-top:.3vh}
+.win .logo{display:block;width:15vh;height:15vh;margin:0 auto 1vh}
+.win .wmore{font-size:2.4vh;font-weight:800;color:var(--mute)}
+.win .wn{margin-top:1.6vh;flex:none;background:var(--navy);color:#fff;font-size:2.8vh;font-weight:800;border-radius:99px;padding:.8vh 1.6vw}
+.win:nth-child(1){animation-delay:.5s}.win:nth-child(2){animation-delay:.8s}.win:nth-child(3){animation-delay:1.1s}.win:nth-child(4){animation-delay:1.4s}
+/* ---------- Scenery parts ---------- */
+.ph{transform-box:fill-box;transform-origin:50% 0}.ph.b{transform-origin:50% 100%}
+.float{transform-box:fill-box;transform-origin:50% 80%}
+.hand{transform-box:view-box;animation:spin linear infinite}
+.pulse{animation:pulse 3.2s ease-in-out infinite alternate}
+@keyframes pulse{to{opacity:.34}}
+.umb{transform-box:fill-box;transform-origin:50% 100%;animation:umb 18s ease-in-out infinite}
+@keyframes umb{0%,10%{transform:scale(.14,1.5)}30%,78%{transform:none}94%,100%{transform:scale(.14,1.5)}}
+.peck{transform-box:fill-box;transform-origin:30% 100%;animation:peck 4s ease-in-out infinite}
+@keyframes peck{0%,70%,100%{transform:none}78%{transform:rotate(-5deg) translateY(-2px)}86%{transform:rotate(3deg)}}
+.web{animation:shimmer 3s ease-in-out infinite alternate}
+.foam{animation:foam 2s linear infinite}
+@keyframes foam{to{stroke-dashoffset:-132}}
+.half{transform-box:fill-box;animation:split 16s ease-in-out infinite}
+.half.r{animation-name:splitr}
+@keyframes split{0%,18%,94%,100%{transform:none}42%,72%{transform:translate(-70px,8px) rotate(-8deg)}}
+@keyframes splitr{0%,18%,94%,100%{transform:none}42%,72%{transform:translate(70px,8px) rotate(8deg)}}
+.sfish{position:absolute;width:3vh;height:1.6vh;border-radius:50%;opacity:.85;animation:sfish ease-in-out infinite alternate}
+.sfish::after{content:"";position:absolute;left:-1.2vh;top:.2vh;border:.6vh solid transparent;border-right:1.2vh solid;border-right-color:inherit;color:inherit}
+@keyframes sfish{from{left:var(--l)}to{left:var(--r)}}
+/* ---------- Festival scenery ---------- */
+.fw{position:absolute;width:0;height:0}
+.fw i{position:absolute;left:-.3vh;top:0;width:.6vh;height:4.6vh;border-radius:99px;background:var(--c);transform-origin:50% 0;opacity:0;animation:burst 3.6s ease-out infinite}
+@keyframes burst{0%{opacity:0;transform:rotate(var(--r)) translateY(0) scaleY(.2)}12%{opacity:1}65%{opacity:0;transform:rotate(var(--r)) translateY(8vh) scaleY(1)}100%{opacity:0;transform:rotate(var(--r)) translateY(8vh)}}
+.flag{transform-box:fill-box;transform-origin:50% 0;animation:flag 2.4s ease-in-out infinite alternate}
+@keyframes flag{from{transform:rotate(-7deg)}to{transform:rotate(7deg)}}
+.fall{position:absolute;top:-4vh;width:1.1vh;height:1.7vh;border-radius:.25vh;animation:fall linear infinite}
+@keyframes fall{to{transform:translate(4vw,112vh) rotate(720deg)}}
+.empty{margin:auto;background:rgba(0,40,72,.82);border-radius:3vh;padding:4vh 4vw;font-size:4.4vh;font-weight:800;text-align:center;animation:pop .9s .6s both}
+.empty small{display:block;font-size:2.6vh;color:#cfe0f0;font-weight:600;margin-top:1vh}
+/* ---------- Names that take turns ---------- */
+.cycle{flex:1;min-height:0;position:relative;margin:0 0 7vh}
+.names{position:absolute;inset:0;display:grid;gap:2vh 1.6vw;align-content:center;justify-content:center}
+.names.leave .nc{animation:leave .6s both ease-in}
+.nc{background:#fdfaf2;color:var(--ink);border-radius:2.4vh;padding:2.2vh 2vw 2.4vh;box-shadow:0 .8vh 0 rgba(30,34,16,.22);border-left:1vh solid var(--hc,#d6d3c0);min-width:0;animation:pop .75s both cubic-bezier(.3,1.5,.5,1)}
+.nc .pn{display:block;font-size:1em;font-weight:800;line-height:1.1;overflow-wrap:anywhere}
+.nc .pcl{display:block;font-size:.5em;font-weight:600;color:var(--mute);margin-top:.4vh}
+.nc .wk{display:inline-block;font-size:.45em;font-weight:800;color:#5b4200;background:#ffe9a6;border-radius:99px;padding:.3vh .8vw;margin-top:.8vh}
+.names.solo .nc{text-align:center;padding:4vh 5vw;border-left:0;border-bottom:1.2vh solid var(--hc,#d6d3c0);animation:pop 1s both cubic-bezier(.3,1.5,.5,1),float 5s 1.2s ease-in-out infinite}
+@keyframes leave{to{opacity:0;transform:scale(.85) translateY(-2vh)}}
+.Makkah{--hc:var(--makkah)}.Al-Aqsa{--hc:var(--aqsa)}.Madinah{--hc:var(--madinah)}
+/* ---------- Teachers' names riding through ---------- */
+.rider{position:absolute;left:0;top:0;display:flex;flex-direction:column;align-items:center;will-change:transform}
+.rider .tag{background:#fdfaf2;color:var(--ink);font-weight:800;font-size:2.4vh;border-radius:99px;padding:.5vh 1.2vw;white-space:nowrap;box-shadow:0 .5vh 0 rgba(30,34,16,.3);margin-top:.4vh}
+.rider .tag:empty{display:none}
+.rider .art{display:block}
+.rider .art{transform-origin:50% 50%;will-change:transform}
+.wg{transform-box:view-box;animation:wg .08s ease-in-out infinite alternate}
+.flapx{transform-box:fill-box;transform-origin:0 50%;animation:flapx .28s ease-in-out infinite alternate}
+.flapx.r{transform-origin:100% 50%}
+.wx{transform-box:fill-box;transform-origin:0 50%}.wx.r{transform-origin:100% 50%}
+.wing{transform-box:fill-box;transform-origin:30% 100%}.thrust{transform-box:fill-box;transform-origin:100% 50%}
+.flame{transform-box:fill-box;transform-origin:50% 0;animation:flame .12s infinite alternate}
+.spin{transform-box:fill-box;transform-origin:50% 50%;animation:spin 1.2s linear infinite}
+@keyframes wg{from{transform:rotate(-24deg)}to{transform:rotate(30deg) scaleY(.7)}}
+@keyframes flapx{to{transform:scaleX(.25)}}
+@keyframes flame{to{transform:scaleY(1.5)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* ---------- Scenery that keeps moving ---------- */
+.sway{transform-box:fill-box;transform-origin:50% 100%;animation:sway 5s ease-in-out infinite alternate}
+.swing{transform-box:fill-box;transform-origin:50% 0;animation:swing 6s ease-in-out infinite alternate}
+@keyframes sway{from{transform:rotate(-4deg)}to{transform:rotate(4deg)}}
+@keyframes swing{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
+.drift{position:absolute;animation:drift linear infinite}
+@keyframes drift{from{transform:translateX(-30vw)}to{transform:translateX(130vw)}}
+.cloud{position:absolute;left:0;width:22vw;height:7vh;background:#fff;border-radius:99px}
+.cloud::before,.cloud::after{content:"";position:absolute;background:#fff;border-radius:50%}
+.cloud::before{width:9vw;height:9vw;left:3vw;bottom:2vh}.cloud::after{width:6vw;height:6vw;left:10vw;bottom:2.5vh}
+.bub{position:absolute;bottom:-4vh;border-radius:50%;border:.25vh solid rgba(255,255,255,.7);background:rgba(255,255,255,.12);animation:up linear infinite}
+@keyframes up{to{transform:translate(2vw,-115vh)}}
+.ray{position:absolute;top:-20vh;width:9vw;height:120vh;background:rgba(255,255,255,.08);transform-origin:50% 0;animation:ray 7s ease-in-out infinite alternate}
+@keyframes ray{from{transform:rotate(14deg);opacity:.5}to{transform:rotate(22deg);opacity:1}}
+.tw{position:absolute;width:.5vh;height:.5vh;border-radius:50%;background:#fff;animation:tw 3s ease-in-out infinite}
+@keyframes tw{0%,100%{opacity:.2}50%{opacity:1}}
+.fly{position:absolute;width:1.1vh;height:1.1vh;border-radius:50%;background:#f4ff7a;outline:.6vh solid rgba(244,255,122,.25);animation:fly 9s ease-in-out infinite alternate}
+@keyframes fly{0%{transform:translate(0,0);opacity:.2}30%{opacity:1}100%{transform:translate(6vw,-8vh);opacity:.4}}
+.sun{position:absolute;border-radius:50%;background:#ffd23f;box-shadow:0 0 0 2.2vh rgba(255,210,63,.3),0 0 0 4.6vh rgba(255,210,63,.14);animation:glow 4s ease-in-out infinite alternate}
+.sun::before{display:none}
+@keyframes glow{to{box-shadow:0 0 0 3vh rgba(255,210,63,.3),0 0 0 6.4vh rgba(255,210,63,.12)}}
+.wave{position:absolute;left:0;width:200%;animation:wave linear infinite}
+@keyframes wave{to{transform:translateX(-50%)}}
+.mist{position:absolute;left:-20vw;width:80vw;height:12vh;border-radius:99px;background:rgba(255,255,255,.18);animation:mist 26s ease-in-out infinite alternate}
+@keyframes mist{to{transform:translateX(60vw)}}
+/* A shooting star: a bright head with a long tail that tapers and fades behind it, streaking down along its own
+   line (the holder is turned to the angle, the star moves straight along it) and burning out, then a long wait. */
+@keyframes tail{0%{transform:scaleX(.05)}5%{transform:scaleX(1)}9%{transform:scaleX(.7)}11%,100%{transform:scaleX(.1)}}
+.glowwin{animation:tw 4s ease-in-out infinite}
+.confetti{position:absolute;width:1.2vh;height:1.8vh;border-radius:.3vh;pointer-events:none}
+#ctl{position:fixed;z-index:8;right:2vw;bottom:3vh;display:flex;gap:.8vw;opacity:0;transition:opacity .4s}
+#ctl.on,#ctl:focus-within{opacity:1}
+#ctl button{font:inherit;font-size:2.2vh;font-weight:800;color:#fff;background:var(--navy);border:0;border-radius:99px;padding:1.1vh 1.6vw;cursor:pointer;box-shadow:0 .5vh 0 rgba(30,34,16,.3)}
+#ctl button.ico{display:grid;place-items:center;width:6vh;height:6vh;padding:0}
+#ctl .ico svg{width:3vh;height:3vh}
+#ctl .ico .fs-off,#ctl .ico.full .fs-on{display:none}#ctl .ico.full .fs-off{display:block}
+#ctl button[hidden]{display:none}
+#ctl button:focus-visible{outline:.4vh solid #ffd23f;outline-offset:.3vh}
+#off{position:fixed;z-index:9;inset:0;display:none;align-items:center;justify-content:center;text-align:center;background:var(--navy);font-size:4vh;font-weight:800;padding:5vw}
+@media (prefers-reduced-motion:reduce){
+ .slide,.slide.out{transition:opacity .6s}.slide{transform:none}
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;animation-delay:0s!important}
+ footer i.run{transition:none}.carriers{display:none}}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<header><div class="brand"><span class="badge"><img src="/logo.png?v=4" alt="" width="80" height="80"></span><h1 id="brand">Ilmi</h1></div><span class="mode" id="mode"></span><span class="spacer"></span><div class="dots" id="dots"></div><div class="clock" id="clock"></div></header>
+<footer><i id="prog"></i></footer>
+<div id="off"></div>
+<nav id="ctl" hidden><button type="button" id="fs" class="ico" aria-label="Full screen" title="Full screen"><svg class="fs-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg><svg class="fs-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/></svg></button><button type="button" id="close" hidden>Close</button></nav>
+<script>
+(function(){
+var SLIDE_MS=30000,DATA_MS=60000;
+/* /present/<token> is a teacher's Presenter: the same scenes, for one class, with its students riding through. Like a
+   TV screen's link it needs no sign-in: the dashboard's Presenter button makes a new link each time, and the first tab
+   to open it claims it with a key kept in this tab's sessionStorage, so it works here until the tab is closed. */
+var path=location.pathname.replace(/\/+$/,""),LIVE=/^\/present\/([\w-]+)$/.exec(path),PRESENT=!!LIVE,LK=LIVE?"mysafar.present."+LIVE[1]:"",
+ VIEW="",URL=path==="/tv"?"/api/tv":path+"/data";
+if(LIVE)try{VIEW=sessionStorage.getItem(LK)||""}catch(e){}
+var CLASSY=PRESENT; // the class's own slides, with its students riding through
+/* The brand pill shows the site title the server put there (tv.page), or Ilmi; Presenter puts the class above it. */
+var SITE=$("brand").textContent;
+/* Test hooks for previews: ?slide=<id> keeps one slide on, ?focus=qaidah or memo plays only those. */
+var Q=new URLSearchParams(location.search),PIN=Q.get("slide"),FOCUS=Q.get("focus");
+var RM=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+var data=null,cur=null,curId=null,ST=null,PT=null,RT=null,teach=Math.floor(Math.random()*1e3);
+function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return "&#"+c.charCodeAt(0)+";"})}
+function $(id){return document.getElementById(id)}
+function rnd(a,b){return a+Math.random()*(b-a)}
+function pick(L){return L[Math.floor(Math.random()*L.length)]}
+function rep(n,f){var h="";for(var i=0;i<n;i++)h+=f(i);return h}
+function plural(n,w){return n+" "+(n===1?w:/s$/.test(w)?w+"es":w+"s")}
+function clock(){$("clock").textContent=new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}
+
+/* Flat bands of colour instead of gradients: [top in vh, colour], each to the bottom of the screen. */
+function bands(B){return B.map(function(b){return '<i style="position:absolute;left:0;right:0;bottom:0;top:'+b[0]+'vh;background:'+b[1]+'"></i>'}).join("")}
+function clouds(n,top){return rep(n,function(i){var s=rnd(.6,1.2);return '<div class="drift" style="top:'+rnd(top[0],top[1])+'vh;animation-duration:'+rnd(70,110)+'s;animation-delay:-'+rnd(0,100)+'s"><div class="cloud" style="transform:scale('+s+')"></div></div>'})}
+function stars(n,h){return rep(n,function(){return '<i class="tw" style="left:'+rnd(0,100)+'vw;top:'+rnd(0,h)+'vh;animation-delay:-'+rnd(0,3)+'s;transform:scale('+rnd(.6,1.6)+')"></i>'})}
+var LAND='<svg class="land" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice" aria-hidden="true">';
+/* Things that move with the wind (wind() below): washing on a line, palm fronds, cypresses, the spider's web.
+   A hanging piece swings from its top, a tree bends from its foot. */
+function ph(inner,k,s,foot){return '<g class="ph'+(foot?' b':'')+'" data-k="'+k+'" data-s="'+s+'">'+inner+'</g>'}
+function cloth(x,y,c,kind){var peg='<rect x="'+(x-3)+'" y="'+(y-5)+'" width="6" height="10" rx="2" fill="#8a5a2e"/>';switch(kind){
+ case 0:return '<path d="M'+(x-22)+' '+y+' H'+(x+22)+' L'+(x+36)+' '+(y+16)+' L'+(x+25)+' '+(y+25)+' L'+(x+21)+' '+(y+19)+' V'+(y+60)+' H'+(x-21)+' V'+(y+19)+' L'+(x-25)+' '+(y+25)+' L'+(x-36)+' '+(y+16)+'Z" fill="'+c+'"/>'+peg; // shirt
+ case 1:return '<rect x="'+(x-19)+'" y="'+y+'" width="38" height="56" rx="3" fill="'+c+'"/><rect x="'+(x-19)+'" y="'+(y+40)+'" width="38" height="7" fill="#fff" opacity=".7"/>'+peg; // towel
+ case 2:return '<path d="M'+(x-16)+' '+y+' H'+(x+16)+' L'+(x+22)+' '+(y+88)+' H'+(x-22)+'Z" fill="'+c+'"/><path d="M'+(x-16)+' '+y+' L'+(x-30)+' '+(y+14)+' L'+(x-20)+' '+(y+22)+' M'+(x+16)+' '+y+' L'+(x+30)+' '+(y+14)+' L'+(x+20)+' '+(y+22)+'" fill="'+c+'"/>'+peg; // thobe
+ default:return '<path d="M'+(x-24)+' '+y+' H'+(x+24)+' L'+x+' '+(y+46)+'Z" fill="'+c+'"/>'+peg}} // scarf
+/* A washing line from one point to another, sagging in the middle, with clothes pegged along it. */
+function washing(x1,y1,x2,y2,sag,C){var cx=(x1+x2)/2,cy=(y1+y2)/2+sag*2,h='<path d="M'+x1+' '+y1+' Q'+cx+' '+cy+' '+x2+' '+y2+'" stroke="#6b5544" stroke-width="3" fill="none"/>';
+ C.forEach(function(c,i){var t=(i+.5)/C.length,u=1-t,x=u*u*x1+2*u*t*cx+t*t*x2,y=u*u*y1+2*u*t*cy+t*t*y2;h+=ph(cloth(x,y,c,i%4),9+i%3*4,1+i%2*.5)});return h}
+function datePalm(x,base,h,flip){var top=base-h,f=flip?-1:1;return '<path d="M'+x+' '+base+' Q'+(x+f*18)+' '+(base-h/2)+' '+(x+f*6)+' '+top+'" stroke="#8a5a2b" stroke-width="16" fill="none" stroke-linecap="round"/>'
+ +ph([[-120,30],[-80,-40],[0,-60],[80,-40],[120,30],[-60,60],[60,60]].map(function(p,i){return '<path d="M'+(x+f*6)+' '+top+' Q'+(x+f*6+p[0]*.5)+' '+(top+p[1]-40)+' '+(x+f*6+p[0])+' '+(top+p[1]+20)+' Q'+(x+f*6+p[0]*.55)+' '+(top+p[1]-12)+' '+(x+f*6)+' '+top+'Z" fill="'+(i%2?"#2f9a4f":"#3db35e")+'"/>'}).join("")
+  +'<circle cx="'+(x+f*6-10)+'" cy="'+(top+16)+'" r="9" fill="#e07a2c"/><circle cx="'+(x+f*6+8)+'" cy="'+(top+20)+'" r="9" fill="#c9611c"/>',7,.9,1)}
+function cypress(x,base,h,c){return ph('<path d="M'+x+' '+(base-h)+' Q'+(x+26)+' '+(base-h*.45)+' '+(x+14)+' '+base+' H'+(x-14)+' Q'+(x-26)+' '+(base-h*.45)+' '+x+' '+(base-h)+'Z" fill="'+(c||"#2f6b3e")+'"/>',10,.5,1)}
+function minaret(x,top,base,body,cap){return '<rect x="'+(x-9)+'" y="'+top+'" width="18" height="'+(base-top)+'" fill="'+body+'"/><rect x="'+(x-14)+'" y="'+(top+40)+'" width="28" height="7" rx="2" fill="'+cap+'"/><rect x="'+(x-13)+'" y="'+(top+(base-top)*.55)+'" width="26" height="6" rx="2" fill="'+cap+'"/>'
+ +'<path d="M'+(x-9)+' '+top+' L'+x+' '+(top-34)+' L'+(x+9)+' '+top+'Z" fill="'+cap+'"/><path d="M'+x+' '+(top-34)+' V'+(top-46)+'" stroke="'+cap+'" stroke-width="3"/>'}
+function arches(x,y,w,n,h,c){return rep(n,function(i){var a=x+i*w+w*.2,b=w*.6;return '<path d="M'+a+' '+(y+h)+' V'+(y+b/2)+' Q'+(a+b/2)+' '+(y-b*.3)+' '+(a+b)+' '+(y+b/2)+' V'+(y+h)+'Z" fill="'+c+'"/>'})}
+function crescent(x,y,r,c,bg){return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+c+'"/><circle cx="'+(x+r*.38)+'" cy="'+(y-r*.18)+'" r="'+(r*.86)+'" fill="'+bg+'"/>'}
+/* The time on Makkah's clock tower, so it shows the real time. */
+function hands(cx,cy,r){var d=new Date(),m=d.getMinutes()*60+d.getSeconds(),h=(d.getHours()%12)*3600+m;
+ return '<path class="hand" style="transform-origin:'+cx+'px '+cy+'px;animation-duration:43200s;animation-delay:-'+h+'s" d="M'+cx+' '+cy+' V'+(cy-r*.5)+'" stroke="#2b2b2b" stroke-width="5" stroke-linecap="round"/>'
+  +'<path class="hand" style="transform-origin:'+cx+'px '+cy+'px;animation-duration:3600s;animation-delay:-'+m+'s" d="M'+cx+' '+cy+' V'+(cy-r*.78)+'" stroke="#2b2b2b" stroke-width="3" stroke-linecap="round"/>'}
+
+/* ---------- The worlds ----------
+   Each is a still from an Islamic place or story, with a sky (CSS background), scenery that keeps moving on its own,
+   and what carries the Presenter's names through it (rider). Flat colours, no gradients. The horizon sits about a third of the
+   way down so the landmark shows above the podium and the lists. */
+var W={
+ makkah:{sky:"#86cdf2",rider:"pigeon",
+  // Makkah in the Prophet's time (peace be upon him): the Kaaba on open ground in a valley ringed by bare mountains,
+  // people going round it, the well of Zamzam beside it, and flat-roofed mud-brick houses with washing tied out.
+  html:function(){var gold="#d9a531";
+   // A mud-brick house: a parapet, rows of small shuttered windows and a door at the foot.
+   var house=function(x,y,w,h,c,dark){var rows=Math.min(3,Math.floor((h-110)/120)),cols=Math.max(1,Math.floor(w/70)),g='';
+     for(var r=0;r<rows;r++)for(var k=0;k<cols;k++){var wx=x+(w/cols)*(k+.5)-14,wy=y+40+r*120;g+='<rect x="'+wx+'" y="'+wy+'" width="28" height="36" rx="3" fill="'+dark+'"/><path d="M'+(wx+14)+' '+wy+' V'+(wy+36)+'" stroke="'+c+'" stroke-width="3"/>'}
+     return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="'+c+'"/><rect x="'+(x-4)+'" y="'+(y-10)+'" width="'+(w+8)+'" height="12" fill="'+c+'"/><path d="M'+x+' '+(y+3)+' H'+(x+w)+'" stroke="rgba(0,0,0,.12)" stroke-width="4"/>'+g};
+   return bands([[24,"#9ad6f5"],[34,"#b3e1f8"]])+clouds(5,[10,26])
+   +LAND
+   // The mountains round the valley: far ridges, then nearer, darker ones.
+   +'<path d="M0 300 L90 236 L170 262 L260 196 L360 248 L470 214 L560 262 L660 230 L760 270 L860 236 L960 280 L1040 250 L1180 270 L1300 240 L1460 262 L1530 222 L1600 244 V900 H0Z" fill="#cfa577"/>'
+   +'<path d="M0 340 L120 286 L230 318 L330 280 L450 330 L560 300 L700 344 L820 316 L940 352 L1060 334 L1200 356 L1320 330 L1480 320 L1560 296 L1600 310 V900 H0Z" fill="#b98a5a"/>'
+   // The valley floor, then the open ground round the Kaaba with its edge.
+   +'<rect y="372" width="1600" height="528" fill="#efe0c2"/><rect y="560" width="1600" height="340" fill="#e7d4b0"/><rect y="760" width="1600" height="140" fill="#dcc69c"/>'
+   +'<ellipse cx="1236" cy="392" rx="276" ry="44" fill="#e2cfa8"/><ellipse cx="1236" cy="390" rx="268" ry="40" fill="#f8f0de"/>'
+   // People going round the Kaaba, drawn before it so it hides those behind.
+   +rep(30,function(i){return '<g><animateMotion dur="48s" begin="-'+(i*1.6).toFixed(1)+'s" repeatCount="indefinite" path="M1016 392 a220 28 0 1 0 440 0 a220 28 0 1 0 -440 0"/><circle cy="-15" r="5.5" fill="#e9c296"/><path d="M-6 -10 H6 L7 4 H-7Z" fill="#fff"/></g>'})
+   // The Kaaba: a black cube with its gold band and raised door, standing on the ground in the middle of the circle.
+   +'<ellipse cx="1240" cy="388" rx="150" ry="12" fill="rgba(80,55,20,.2)"/>'
+   +'<path d="M1092 158 L1182 142 L1384 142 L1294 158Z" fill="#3b3b3b"/><rect x="1092" y="158" width="202" height="228" fill="#151515"/><path d="M1294 158 L1384 142 V370 L1294 386Z" fill="#292929"/>'
+   +'<rect x="1092" y="202" width="202" height="16" fill="'+gold+'"/><path d="M1294 202 L1384 186 V202 L1294 218Z" fill="#b98a22"/>'
+   +rep(9,function(i){return '<rect x="'+(1100+i*22)+'" y="207" width="12" height="6" rx="2" fill="#7a5a12"/>'})
+   +'<rect x="1216" y="256" width="44" height="80" rx="3" fill="'+gold+'"/><rect x="1224" y="264" width="28" height="64" fill="#a8791b"/><path d="M1238 264 V328" stroke="'+gold+'" stroke-width="3"/>'
+   +'<ellipse cx="1288" cy="350" rx="7" ry="10" fill="#3a3a3a" stroke="#c9c9c9" stroke-width="4"/>'
+   // The well of Zamzam on the ground beside it, its bucket swinging on the rope.
+   +'<ellipse cx="960" cy="432" rx="40" ry="11" fill="#a99a80"/><rect x="920" y="410" width="80" height="22" fill="#bdae92"/><ellipse cx="960" cy="410" rx="40" ry="11" fill="#cfc1a6"/><ellipse cx="960" cy="410" rx="29" ry="6" fill="#3c5f74"/>'
+   +'<path d="M926 414 V352 M994 414 V352 M918 352 H1002" stroke="#7a5230" stroke-width="7" stroke-linecap="round"/>'
+   +ph('<path d="M960 352 V380" stroke="#6b5544" stroke-width="2.5"/><path d="M951 380 H969 L966 396 H954Z" fill="#8a5a2e"/>',8,.5)
+   // Houses at the edges of the valley; the washing line is tied to a beam on the house and to a forked pole.
+   +house(0,180,150,720,"#d6b07f","#8a5a2e")+house(150,250,104,650,"#c99f6d","#7a4c26")+house(1536,350,64,550,"#d2ab79","#8a5a2e")
+   +'<path d="M254 270 H276" stroke="#7a5230" stroke-width="8" stroke-linecap="round"/><circle cx="274" cy="270" r="5" fill="#6b5544"/>'
+   +'<ellipse cx="640" cy="440" rx="16" ry="5" fill="rgba(80,55,20,.25)"/><path d="M640 440 V300" stroke="#7a5230" stroke-width="9" stroke-linecap="round"/><path d="M628 286 L640 304 L652 286" stroke="#7a5230" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="640" cy="302" r="5" fill="#6b5544"/>'
+   +washing(274,270,640,302,24,["#ffffff","#b8473a","#3e5f9e","#e2b04a","#f3ecdc","#6c8f4e"])
+   +'</svg>'}},
+ madinah:{sky:"#8fd3f5",rider:"pigeon",
+  html:function(){var wall="#f3ebda",green="#1f9254",cap="#d9a531";
+   return bands([[26,"#a5dcf7"],[36,"#bfe6fa"]])+'<div class="sun" style="width:11vh;height:11vh;left:56vw;top:15vh"></div>'+clouds(5,[12,30])
+   +LAND+'<path d="M0 372 Q140 250 300 330 Q420 280 560 345 L700 372Z" fill="#b98a5c"/><path d="M0 372 Q100 320 220 352 Q360 330 520 372Z" fill="#a8784a"/>'
+   +'<rect y="370" width="1600" height="530" fill="#f4f0e7"/>'+rep(16,function(i){return '<path d="M'+(i*100)+' 370 L'+(i*100-120)+' 900" stroke="#e6e0d2" stroke-width="3"/>'})+'<rect y="620" width="1600" height="280" fill="#ece6d8"/>'
+   +'<rect x="1000" y="268" width="600" height="104" fill="'+wall+'"/><rect x="1000" y="268" width="600" height="10" fill="#e4d9c2"/>'+arches(1010,290,40,15,80,"#c8b48e")
+   +minaret(1030,110,268,wall,green)+minaret(1340,120,268,wall,green)+minaret(1460,100,268,wall,green)+minaret(1570,120,268,wall,green)
+   // The Green Dome.
+   +'<rect x="1170" y="226" width="96" height="46" fill="#e9dfca"/><path d="M1160 230 Q1160 160 1218 144 Q1276 160 1276 230Z" fill="'+green+'"/><path d="M1160 230 Q1160 160 1218 144 Q1192 168 1190 230Z" fill="#2aa964"/>'
+   +'<path d="M1218 144 V112" stroke="'+cap+'" stroke-width="5"/>'+crescent(1218,104,9,cap,"#8fd3f5")
+   +'<path d="M1090 268 Q1090 236 1118 230 Q1146 236 1146 268Z" fill="#c9d2d6"/><path d="M1380 268 Q1380 240 1404 234 Q1428 240 1428 268Z" fill="#c9d2d6"/>'
+   // The courtyard umbrellas open and close.
+   +[1040,1150,1260,1370,1480,1580].map(function(x,i){return '<path d="M'+x+' 382 V330" stroke="#c8c3b8" stroke-width="4"/><path class="umb" style="animation-delay:-'+(i*1.3)+'s" d="M'+(x-50)+' 336 Q'+x+' 296 '+(x+50)+' 336 Q'+(x+25)+' 326 '+x+' 336 Q'+(x-25)+' 326 '+(x-50)+' 336Z" fill="#fbfbf8" stroke="#e1ddd2" stroke-width="2"/>'}).join("")
+   +datePalm(70,900,560)+datePalm(190,900,470,1)+datePalm(1530,900,430,1)+'</svg>'}},
+ aqsa:{sky:"#87cbe9",rider:"bird",
+  html:function(){var stone="#dcc195",gold="#f2b531";
+   return bands([[28,"#9fd5ee"],[38,"#bde2f3"]])+'<div class="sun" style="width:12vh;height:12vh;left:60vw;top:14vh"></div>'+clouds(4,[12,28])
+   +LAND+'<path d="M0 330 Q200 260 420 310 Q640 250 860 312 Q1080 262 1300 300 Q1460 270 1600 296 V900 H0Z" fill="#a0aa70"/><path d="M0 352 Q260 300 520 340 Q800 300 1060 338 Q1320 302 1600 334 V900 H0Z" fill="#8c9760"/>'
+   +'<rect y="372" width="1600" height="528" fill="#ebdfc6"/><rect y="600" width="1600" height="300" fill="#e2d4b6"/>'
+   // The old city wall with its gate.
+   +'<rect x="0" y="312" width="1600" height="62" fill="'+stone+'"/>'+rep(54,function(i){return '<rect x="'+(i*30)+'" y="300" width="18" height="14" fill="'+stone+'"/>'})+rep(16,function(i){return '<path d="M'+(i*100)+' 334 H'+(i*100+60)+' M'+(i*100+30)+' 352 H'+(i*100+90)+'" stroke="#c7a978" stroke-width="3"/>'})
+   +'<path d="M270 374 V336 Q300 312 330 336 V374Z" fill="#7a5a36"/>'
+   // The Dome of the Rock: blue tiles, golden dome.
+   +'<rect x="1080" y="352" width="310" height="22" fill="#efe5cf"/><rect x="1120" y="276" width="230" height="78" fill="#2f6db3"/><rect x="1120" y="276" width="230" height="14" fill="#4b8fd6"/>'
+   +rep(7,function(i){return '<path d="M'+(1134+i*31)+' 342 V316 Q'+(1144+i*31)+' 302 '+(1154+i*31)+' 316 V342Z" fill="#cfe3f6"/>'})+rep(11,function(i){return '<rect x="'+(1126+i*21)+'" y="280" width="9" height="6" fill="#9fd0ff"/>'})
+   +'<rect x="1168" y="246" width="134" height="32" fill="#3a7cc4"/>'+rep(6,function(i){return '<rect x="'+(1178+i*21)+'" y="254" width="10" height="16" rx="5" fill="#cfe3f6"/>'})
+   +'<path d="M1152 250 Q1150 156 1235 142 Q1320 156 1318 250Z" fill="'+gold+'"/><path d="M1152 250 Q1150 156 1235 142 Q1196 168 1194 250Z" fill="#f8cd5c"/><path d="M1235 142 V112" stroke="'+gold+'" stroke-width="5"/>'+crescent(1235,104,9,gold,"#87cbe9")
+   // Al-Aqsa mosque with its grey dome.
+   +'<rect x="1400" y="300" width="190" height="72" fill="#efe6d2"/>'+arches(1406,322,36,5,50,"#c8b48e")+'<path d="M1450 302 Q1450 262 1490 256 Q1530 262 1530 302Z" fill="#8e9aa6"/><path d="M1490 256 V236" stroke="#8e9aa6" stroke-width="4"/>'
+   +cypress(1070,374,170)+cypress(1380,374,130,"#3a7a48")+cypress(40,600,330)+cypress(130,640,260,"#3a7a48")
+   +ph('<path d="M226 900 Q232 760 218 700" stroke="#7a5a3a" stroke-width="16" fill="none"/><ellipse cx="216" cy="650" rx="92" ry="66" fill="#8fae6a"/><ellipse cx="180" cy="626" rx="50" ry="36" fill="#a3bf7c"/>',6,.4,1)
+   +ph('<path d="M1530 900 Q1524 760 1540 700" stroke="#7a5a3a" stroke-width="16" fill="none"/><ellipse cx="1540" cy="650" rx="88" ry="62" fill="#8fae6a"/><ellipse cx="1570" cy="626" rx="46" ry="34" fill="#a3bf7c"/>',6,.4,1)+'</svg>'}},
+ hira:{sky:"#1c2457",rider:"lantern",
+  html:function(){return bands([[30,"#22306a"],[40,"#2b3b7a"]])+stars(80,40)+[[8,6,22,11,1],[34,4,28,13,6],[52,12,18,9,3.5],[20,16,32,14,10]].map(function(z){return '<span class="shoot" style="left:'+z[0]+'vw;top:'+z[1]+'vh;--a:'+z[2]+'deg;--t:'+z[3]+'s"><b style="--d:'+z[4]+'s"><u></u><i></i></b></span>'}).join("")
+   +'<div style="position:absolute;left:62vw;top:13vh;width:9vh;height:9vh;border-radius:50%;box-shadow:inset 2.2vh -1.1vh 0 0 #ffe9a8;transform:rotate(-20deg)"></div>'
+   +LAND+'<path d="M0 380 Q160 330 320 362 Q480 320 660 360 Q760 342 880 372 V900 H0Z" fill="#2f2650"/>'
+   +rep(40,function(i){return '<rect class="glowwin" style="animation-delay:-'+(i*.37)+'s" x="'+(14+i*21)+'" y="'+(366+(i*37%22))+'" width="7" height="9" rx="2" fill="#ffd56b"/>'})
+   // Jabal al-Nour, with light coming from the cave near its top.
+   +'<path d="M860 400 L1010 290 L1110 230 L1200 140 L1280 98 L1350 120 L1430 190 L1530 270 L1600 300 V900 H860Z" fill="#4a3a63"/><path d="M1280 98 L1350 120 L1430 190 L1530 270 L1600 300 V900 H1300 L1330 500 L1300 300Z" fill="#3b2e52"/>'
+   +'<path d="M1010 290 L1060 300 L1110 230 M1150 330 L1200 300 L1240 340" stroke="#5c4b78" stroke-width="6" fill="none" stroke-linecap="round"/>'
+   +'<circle class="pulse" cx="1318" cy="152" r="70" fill="#ffd56b" opacity=".16"/><path class="pulse" d="M1318 152 L1470 60 L1490 96Z M1318 152 L1180 40 L1150 70Z" fill="#ffe9a8" opacity=".12"/>'
+   +'<path d="M1296 168 Q1300 134 1320 132 Q1342 136 1340 170Z" fill="#140d22"/><path d="M1306 168 Q1310 146 1322 145 Q1332 148 1330 168Z" fill="#ffd56b" opacity=".55" class="glowwin"/>'
+   +'<path d="M1550 900 Q1470 700 1500 560 Q1430 470 1400 380 Q1360 300 1330 172" stroke="#6a5a86" stroke-width="5" stroke-dasharray="10 14" fill="none"/>'
+   +rep(12,function(i){var x=i<6?20+i*30:1450+(i-6)*26;return ph('<path d="M'+x+' 900 Q'+(x-6)+' 840 '+(x+4)+' '+(790-i%3*30)+'" stroke="#3d5a46" stroke-width="7" fill="none" stroke-linecap="round"/>',12,.7,1)})+'</svg>'}},
+ thawr:{sky:"#9fd4f0",rider:"dove",
+  html:function(){var web='';for(var i=0;i<10;i++){var a=i*Math.PI/5;web+='<path d="M1282 262 L'+(1282+Math.cos(a)*78)+' '+(262+Math.sin(a)*64)+'"/>'}
+   [16,30,44,58,72].forEach(function(r){var p="";for(var i=0;i<=10;i++){var a=i*Math.PI/5;p+=(i?"L":"M")+(1282+Math.cos(a)*r).toFixed(1)+" "+(262+Math.sin(a)*r*.82).toFixed(1)}web+='<path d="'+p+'"/>'});
+   return bands([[26,"#b3dcf2"],[34,"#f6dfb0"]])+'<div class="sun" style="width:12vh;height:12vh;left:58vw;top:13vh"></div>'+clouds(3,[12,24])
+   +LAND+'<path d="M0 380 Q200 330 420 360 Q620 330 860 372 V900 H0Z" fill="#e5c58e"/>'
+   +'<path d="M880 400 L1010 280 L1130 180 L1250 118 L1380 136 L1500 206 L1600 252 V900 H880Z" fill="#b97a48"/><path d="M1250 118 L1380 136 L1500 206 L1600 252 V900 H1340 L1300 400Z" fill="#a66a3c"/>'
+   +'<path d="M1060 300 L1100 284 M1420 220 L1460 236 M1150 360 L1190 340" stroke="#8f5a32" stroke-width="7" stroke-linecap="round"/>'
+   // The cave mouth, the web across it and the dove on her nest.
+   +'<path d="M1196 330 Q1188 214 1282 194 Q1372 210 1366 330Z" fill="#3a2416"/>'
+   +ph('<g class="web" stroke="#fff" stroke-width="1.8" fill="none" opacity=".9">'+web+'</g><path d="M1282 196 V250" stroke="#fff" stroke-width="1"/><circle cx="1282" cy="256" r="5" fill="#1b1b1b"/>',16,.25)
+   +'<path d="M1180 342 Q1214 318 1250 342 Q1214 356 1180 342Z" fill="#8a6237"/><path d="M1186 338 L1246 338 M1190 344 L1240 336" stroke="#6b4a26" stroke-width="3"/>'
+   +'<g class="peck"><ellipse cx="1214" cy="324" rx="26" ry="15" fill="#fff"/><circle cx="1238" cy="312" r="10" fill="#fff"/><path d="M1247 312 L1256 315 L1247 317Z" fill="#f2a65a"/><circle cx="1241" cy="309" r="2" fill="#222"/><path d="M1192 320 Q1176 312 1170 326 Q1186 330 1196 328Z" fill="#dfe8f2"/></g>'
+   +'<rect y="760" width="1600" height="140" fill="#ecc98a"/><path d="M0 700 Q300 650 620 690 T1240 680 T1600 690 V900 H0Z" fill="#f1d39b"/><path d="M0 800 Q400 760 820 790 T1600 780 V900 H0Z" fill="#e5bf7c"/>'
+   +ph('<path d="M150 900 Q160 760 140 660" stroke="#7a5230" stroke-width="18" fill="none"/><path d="M144 668 L90 600 M146 660 L210 596" stroke="#7a5230" stroke-width="10"/><ellipse cx="150" cy="590" rx="140" ry="34" fill="#6b9a3e"/><ellipse cx="120" cy="572" rx="80" ry="22" fill="#7fb04c"/>',5,.35,1)
+   +ph('<path d="M1530 900 Q1524 800 1540 740" stroke="#7a5230" stroke-width="12" fill="none"/><ellipse cx="1540" cy="728" rx="90" ry="24" fill="#6b9a3e"/>',5,.35,1)+'</svg>'}},
+ ark:{sky:"#8ecdf0",rider:"dove",
+  html:function(){var R=["#e74c3c","#f39c34","#f6d13a","#4cb85c","#3a8fdc","#5a5bd6","#9b59c7"];
+   return bands([[22,"#9fd5f2"]])+clouds(4,[12,26])
+   +'<svg class="land" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice" aria-hidden="true">'+R.map(function(c,i){var r=330-i*13;return '<path d="M'+(1150-r)+' 360 A'+r+' '+r+' 0 0 1 '+(1150+r)+' 360" stroke="'+c+'" stroke-width="13" fill="none" opacity=".85"/>'}).join("")
+   +'<path d="M1440 340 L1520 270 L1600 300 V360 H1440Z" fill="#7a8c6a"/>'
+   +'<rect y="340" width="1600" height="560" fill="#2f8fd1"/><rect y="440" width="1600" height="460" fill="#2a83c2"/><rect y="600" width="1600" height="300" fill="#2477b3"/></svg>'
+   +'<div style="position:absolute;left:0;right:0;top:37vh;height:8vh;overflow:hidden"><svg class="wave" style="height:100%;animation-duration:12s" viewBox="0 0 3200 80" preserveAspectRatio="none"><path d="M0 30 '+rep(16,function(){return 'q100 -24 200 0 '})+'V80 H0Z" fill="#3a9ddb"/></svg></div>'
+   // The Ark floats on the swell (moved by the floats in phys()), animals looking out.
+   +'<svg class="land" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><g class="float" data-x="1300">'
+   // A solid hull with a flat deck, the cabin standing on the deck (it overlaps it, so there is no gap), then the roof.
+   +'<path d="M1124 270 L1170 296 H1436 L1484 268 L1462 330 Q1446 368 1400 372 H1206 Q1158 368 1144 330Z" fill="#8b5a2b"/>'
+   +'<path d="M1136 306 H1474 M1146 330 H1462 M1162 352 H1446" stroke="#6e4520" stroke-width="4" fill="none"/><path d="M1124 270 L1170 296 H1436 L1484 268" stroke="#a8743f" stroke-width="7" fill="none" stroke-linejoin="round"/>'
+   +'<rect x="1204" y="236" width="196" height="64" fill="#a8743f"/><path d="M1204 252 H1400 M1204 268 H1400 M1204 284 H1400" stroke="#946234" stroke-width="2.5"/>'
+   +'<path d="M1190 240 L1302 200 L1414 240Z" fill="#7a4a22"/><path d="M1190 240 H1414" stroke="#5e3716" stroke-width="5"/>'
+   +rep(4,function(i){return '<rect x="'+(1224+i*44)+'" y="254" width="24" height="22" rx="3" fill="#4a2c12"/>'})
+   // A giraffe looking out over the roof and an elephant's head at a window.
+   +'<path d="M1344 216 Q1342 172 1354 140" stroke="#f3c04d" stroke-width="14" fill="none" stroke-linecap="round"/><ellipse cx="1362" cy="136" rx="16" ry="10" fill="#f3c04d"/><circle cx="1366" cy="133" r="2.5" fill="#222"/><path d="M1354 128 l-3 -10 M1362 126 l1 -10" stroke="#8a5a2b" stroke-width="3"/><circle cx="1348" cy="182" r="3" fill="#b07a2c"/><circle cx="1345" cy="162" r="3" fill="#b07a2c"/>'
+   +'<circle cx="1236" cy="266" r="10" fill="#9aa3ad"/><path d="M1236 272 Q1228 290 1238 298" stroke="#9aa3ad" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="1240" cy="263" r="1.8" fill="#222"/></g>'
+   +'</svg><div style="position:absolute;left:0;right:0;top:46vh;bottom:0;overflow:hidden">'
+   +[[0,16,"#4aa8e6",14],[9,10,"#2f8fd1",10],[24,7,"#2a83c2",8]].map(function(w){return '<svg class="wave" style="top:'+w[0]+'vh;height:'+w[1]+'vh;animation-duration:'+w[3]+'s" viewBox="0 0 3200 100" preserveAspectRatio="none"><path d="M0 40 '+rep(16,function(){return 'q100 -30 200 0 '})+'V100 H0Z" fill="'+w[2]+'"/></svg>'}).join("")+'</div>'}},
+ sea:{sky:"#7fc4ee",rider:"bird",
+  html:function(){var fish=function(n,l,r){return rep(n,function(i){return '<i class="sfish" style="--l:'+l+'vw;--r:'+r+'vw;top:'+rnd(36,92)+'vh;animation-duration:'+rnd(9,16)+'s;animation-delay:-'+rnd(0,16)+'s;background:'+pick(FISH)+'"></i>'})};
+   return bands([[26,"#98d0f2"]])+clouds(5,[12,26])
+   +LAND+'<rect y="330" width="1600" height="570" fill="#e8cf98"/><path d="M770 340 L830 340 L1170 900 H430Z" fill="#e8cf98"/>'+rep(26,function(i){var t=i/26,y=360+t*t*520,x=800+(i%2?1:-1)*(20+t*300)*Math.random();return '<ellipse cx="'+x+'" cy="'+y+'" rx="'+(4+t*12)+'" ry="'+(2+t*6)+'" fill="#d4b77c"/>'})
+   +'<rect x="740" y="326" width="120" height="14" fill="#3aa0de"/>'
+   +'<path d="M0 120 L740 300 L770 340 L430 900 H0Z" fill="#1d78bd"/><path d="M740 300 L770 340 L430 900 L330 900 Z" fill="#2d92d6"/>'
+   +'<path d="M1600 120 L860 300 L830 340 L1170 900 H1600Z" fill="#1d78bd"/><path d="M860 300 L830 340 L1170 900 L1270 900Z" fill="#2d92d6"/>'
+   +rep(18,function(i){var t=i/18,x=t*740,y=120+t*180,r=26-t*18;return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="#3aa0de"/><circle cx="'+(1600-x)+'" cy="'+y+'" r="'+r+'" fill="#3aa0de"/>'})
+   +'<path class="foam" d="M0 120 L740 300 M1600 120 L860 300" stroke="#e8f6ff" stroke-width="12" stroke-dasharray="40 26" stroke-linecap="round" fill="none"/>'
+   +'<path class="foam" style="animation-duration:3s" d="M740 300 L770 340 L430 900 M860 300 L830 340 L1170 900" stroke="#bfe6ff" stroke-width="6" stroke-dasharray="18 22" fill="none"/></svg>'
+   +fish(6,2,30)+fish(6,70,98)+rep(12,function(){var s=rnd(1,2.6),l=Math.random()<.5;return '<i class="bub" style="left:'+(l?rnd(2,40):rnd(60,98))+'vw;width:'+s+'vh;height:'+s+'vh;animation-duration:'+rnd(8,14)+'s;animation-delay:-'+rnd(0,14)+'s"></i>'})}},
+ moon:{sky:"#0e1a44",rider:"lantern",
+  html:function(){return bands([[34,"#13235a"],[42,"#1a2c6b"]])+stars(110,44)
+   +LAND
+   +'<g class="half l"><path d="M1180 110 A80 80 0 0 0 1180 270Z" fill="#ffe7a3"/><circle cx="1140" cy="170" r="12" fill="#f0d488"/><circle cx="1150" cy="228" r="8" fill="#f0d488"/></g>'
+   +'<g class="half r"><path d="M1180 110 A80 80 0 0 1 1180 270Z" fill="#ffefbf"/><circle cx="1214" cy="150" r="10" fill="#f0d488"/><circle cx="1206" cy="214" r="14" fill="#f0d488"/></g>'
+   +'<path d="M940 384 L1080 300 L1180 250 L1290 306 L1430 384Z" fill="#141a3c"/><path d="M1180 250 L1290 306 L1430 384 H1200Z" fill="#10152f"/>'
+   +'<path d="M0 384 H1600 V900 H0Z" fill="#0b1230"/>'
+   +'<g fill="#0b1230"><rect x="0" y="330" width="220" height="60"/><rect x="200" y="300" width="120" height="90"/><path d="M340 390 V330 Q340 290 380 284 Q420 290 420 330 V390Z"/><rect x="430" y="250" width="16" height="140"/><path d="M430 250 h16 l-8 -30Z"/><rect x="460" y="320" width="300" height="70"/><rect x="760" y="296" width="140" height="94"/><rect x="1440" y="320" width="160" height="70"/></g>'
+   +[[30,350],[60,350],[90,350],[230,320],[262,320],[480,340],[530,340],[580,340],[630,340],[680,340],[790,316],[830,316],[860,350],[1470,340],[1520,340],[1560,340]].map(function(w,i){return '<rect class="glowwin" style="animation-delay:-'+i*.6+'s" x="'+w[0]+'" y="'+w[1]+'" width="12" height="18" rx="6" fill="#ffd56b"/>'}).join("")
+   +ph('<path d="M60 900 Q74 700 50 520" stroke="#0a1028" stroke-width="18" fill="none"/>'+[[-110,20],[-60,-50],[20,-60],[90,-20],[120,40]].map(function(p){return '<path d="M50 520 Q'+(50+p[0]*.5)+' '+(470+p[1])+' '+(50+p[0])+' '+(540+p[1])+' Q'+(50+p[0]*.5)+' '+(500+p[1])+' 50 520Z" fill="#0a1028"/>'}).join(""),7,.8,1)
+   +ph('<path d="M1540 900 Q1528 720 1552 580" stroke="#0a1028" stroke-width="16" fill="none"/>'+[[-110,20],[-60,-50],[20,-60],[90,-20],[120,40]].map(function(p){return '<path d="M1552 580 Q'+(1552+p[0]*.5)+' '+(530+p[1])+' '+(1552+p[0])+' '+(600+p[1])+' Q'+(1552+p[0]*.5)+' '+(560+p[1])+' 1552 580Z" fill="#0a1028"/>'}).join(""),7,.8,1)+'</svg>'}},
+ festival:{sky:"#2c1f6b",rider:"balloon",
+  html:function(){var C=["#e9a400","#1fae72","#2a9fe6","#ff5d73","#ffffff"];
+   var line=function(y,sag,n,o){var h='<path d="M-20 '+y+' Q800 '+(y+sag*2)+' 1620 '+y+'" stroke="#f3e6c9" stroke-width="4" fill="none"/>';for(var i=0;i<n;i++){var t=(i+.5)/n,x=-20+1640*t,yy=y+sag*2*2*t*(1-t);h+='<path class="flag" style="animation-delay:-'+(i*.3)+'s" d="M'+(x-22)+' '+yy+' L'+(x+22)+' '+yy+' L'+x+' '+(yy+52)+'Z" fill="'+C[(i+o)%4]+'"/>'}return h};
+   return bands([[40,"#35267c"],[62,"#3f2d8c"]])+stars(36,46)
+   +rep(6,function(i){var c=C[i%5];return '<div class="fw" style="left:'+(8+i*16+rnd(-4,4))+'vw;top:'+rnd(20,44)+'vh">'+rep(12,function(k){return '<i style="--c:'+c+';--r:'+(k*30)+'deg;animation-delay:-'+(i*.6)+'s"></i>'})+'</div>'})
+   +rep(26,function(i){return '<i class="fall" style="left:'+rnd(0,100)+'vw;background:'+C[i%5]+';animation-duration:'+rnd(7,12)+'s;animation-delay:-'+rnd(0,12)+'s"></i>'})
+   +LAND+'<path d="M0 760 Q300 700 640 740 T1300 720 T1600 730 V900 H0Z" fill="#25195c"/><path d="M0 830 Q500 780 1000 820 T1600 805 V900 H0Z" fill="#1b1247"/>'
+   +rep(30,function(i){var x=20+i*54,y=770+Math.sin(i/2.2)*14;return '<circle class="glowwin" style="animation-delay:-'+(i*.37)+'s" cx="'+x+'" cy="'+y+'" r="7" fill="'+C[i%4]+'"/>'})+'</svg>'
+   +'<div style="position:absolute;left:0;right:0;top:9vh;height:20vh;pointer-events:none"><svg viewBox="0 0 1600 200" preserveAspectRatio="none" style="width:100%;height:100%">'+line(10,40,18,0)+line(-10,70,22,2)+'</svg></div>'}}
+};
+/* The riders: each is drawn facing right; the physics flips and tilts the drawing (never the name). */
+var FISH=["#ff8a3d","#ffd23f","#ff6fa8","#3fe0c5","#b18cff"],HUES=["#ff5d73","#ffb03a","#4fc3ff","#7ee06a","#c77dff"];
+/* An insect's wing, beating up and down about its joint on the back (x, y); the far wing runs half a beat behind. */
+function wing(d,x,y,fill,op,t,far){return '<path class="wg" d="'+d+'" fill="'+fill+'" opacity="'+op+'" style="transform-origin:'+x+'px '+y+'px;animation-duration:'+t+'s'+(far?';animation-delay:-'+t+'s':'')+'"/>'}
+function art(kind,sub){var c=pick(FISH),h=pick(HUES);switch(kind){
+ case "fish":return '<svg viewBox="0 0 210 120" style="width:22vh;overflow:visible"><path class="tail" d="M62 60 C46 46 30 26 10 20 C18 42 18 78 10 100 C30 94 46 74 62 60Z" fill="'+c+'"/><path d="M96 20 Q118 2 146 14 L136 28Z" fill="'+c+'"/><path d="M104 98 Q116 112 132 104 L126 94Z" fill="'+c+'"/><ellipse cx="118" cy="60" rx="64" ry="40" fill="'+c+'"/><path d="M60 64 Q118 112 180 70 Q160 96 118 100 Q80 98 60 64Z" fill="#fff" opacity=".28"/><path d="M98 24 q-12 36 0 72" stroke="#fff" stroke-width="8" fill="none" opacity=".45" stroke-linecap="round"/><path d="M126 21 q-10 39 0 78" stroke="#fff" stroke-width="6" fill="none" opacity=".3" stroke-linecap="round"/><circle cx="154" cy="48" r="11" fill="#fff"/><circle cx="157" cy="48" r="5.5" fill="#0b2340"/><path d="M168 68 q6 5 12 0" stroke="#0b2340" stroke-width="4" fill="none" stroke-linecap="round"/></svg>';
+ case "pigeon":
+ case "dove":h=kind==="pigeon"?"#a7b0ba":"#ffffff";c=kind==="pigeon"?"#8a949e":"#dfe8f2";
+ case "bird":if(kind==="dove"||kind==="pigeon")return '<svg viewBox="0 0 220 120" style="width:20vh"><g transform="translate(220,0) scale(-1,1)"><path d="M150 70 L204 86 L196 58Z" fill="'+c+'"/><ellipse cx="120" cy="66" rx="48" ry="25" fill="'+h+'"/><circle cx="76" cy="54" r="21" fill="'+h+'"/><path d="M58 54 L40 60 L58 63Z" fill="#f2a65a"/><circle cx="71" cy="50" r="3" fill="#0b2340"/><path class="wing" d="M96 60 Q128 0 170 26 Q142 50 120 66Z" fill="'+c+'"/><path d="M60 46 q4 -12 14 -14" stroke="#7fbf6a" stroke-width="4" fill="none"/></g></svg>';
+  return '<svg viewBox="0 0 220 120" style="width:22vh"><g transform="translate(220,0) scale(-1,1)"><path d="M150 70 L200 92 L190 64Z" fill="'+h+'"/><ellipse cx="120" cy="66" rx="48" ry="26" fill="'+h+'"/><circle cx="76" cy="54" r="22" fill="'+h+'"/><path d="M58 54 L36 62 L58 64Z" fill="#ffc531"/><circle cx="72" cy="50" r="5" fill="#fff"/><circle cx="71" cy="50" r="2.6" fill="#0b2340"/><path class="wing" d="M96 60 Q130 4 168 30 Q140 50 120 66Z" fill="#fff" opacity=".9"/></g></svg>';
+ case "ball":var B=[["#ff5d73","#ffd23f","#3fa9f5"],["#ff8a3d","#3fe0c5","#ff6fa8"],["#7ee06a","#ff5d73","#ffd23f"]][Math.floor(Math.random()*3)];
+  return '<svg viewBox="0 0 100 100" style="width:11vh"><g><circle cx="50" cy="50" r="46" fill="#fff"/><path d="M50 4 A46 46 0 0 1 89.8 27 Q60 40 50 50Z" fill="'+B[0]+'"/><path d="M89.8 73 A46 46 0 0 1 50 96 Q46 62 50 50Z" fill="'+B[1]+'"/><path d="M10.2 73 A46 46 0 0 1 10.2 27 Q40 38 50 50 Q38 62 10.2 73Z" fill="'+B[2]+'"/><circle cx="50" cy="50" r="9" fill="#fff"/><circle cx="50" cy="50" r="46" fill="none" stroke="#0b2340" stroke-opacity=".12" stroke-width="3"/></g></svg>';
+ case "insect":switch(sub){
+  case "bee":return '<svg viewBox="0 0 160 110" style="width:19vh;overflow:visible"><path d="M20 66 L6 70 L20 74Z" fill="#2b2b2b"/><ellipse cx="72" cy="70" rx="54" ry="34" fill="#ffc531"/><path d="M52 38 q-8 32 0 64 M80 36 q-8 34 0 68" stroke="#2b2b2b" stroke-width="14" fill="none"/><circle cx="124" cy="64" r="20" fill="#2b2b2b"/><circle cx="130" cy="58" r="6" fill="#fff"/><path d="M132 46 q8 -20 20 -22 M124 44 q2 -20 12 -26" stroke="#2b2b2b" stroke-width="4" fill="none" stroke-linecap="round"/>'+wing("M84 40 C66 30 46 2 60 -8 C76 -16 92 14 84 40Z",84,40,"#d6eeff",.75,.07,1)+wing("M86 40 C80 12 92 -14 110 -8 C126 -2 110 26 86 40Z",86,40,"#f2faff",.9,.07,0)+'</svg>';
+  case "ladybird":return '<svg viewBox="0 0 150 110" style="width:16vh;overflow:visible">'+wing("M66 36 C48 14 20 2 6 8 C10 24 40 36 66 36Z",66,36,"#d6eeff",.7,.08,1)+'<path d="M40 92 l-10 12 M64 96 l-4 14 M88 94 l4 14" stroke="#2b2b2b" stroke-width="5" stroke-linecap="round"/><circle cx="114" cy="66" r="20" fill="#2b2b2b"/><path d="M20 70 A48 44 0 0 1 116 70Z" fill="#ff4b55"/><path d="M20 70 Q68 96 116 70Z" fill="#2b2b2b"/><path d="M68 28 V72" stroke="#2b2b2b" stroke-width="4"/><circle cx="46" cy="52" r="7" fill="#2b2b2b"/><circle cx="90" cy="50" r="7" fill="#2b2b2b"/><circle cx="62" cy="40" r="5" fill="#2b2b2b"/><circle cx="80" cy="62" r="5" fill="#2b2b2b"/><circle cx="122" cy="60" r="4" fill="#fff"/>'+wing("M70 32 C54 8 26 -6 10 -2 C14 16 44 30 70 32Z",70,32,"#f2faff",.85,.08,0)+'</svg>';
+  case "dragonfly":return '<svg viewBox="0 0 220 100" style="width:27vh;overflow:visible">'+wing("M128 46 C108 30 72 22 50 26 C64 38 100 46 128 46Z",128,46,"#a8e4f5",.7,.09,1)+wing("M140 45 C122 26 88 12 64 12 C78 26 112 40 140 45Z",140,45,"#a8e4f5",.7,.09,0)+'<rect x="10" y="44" width="122" height="10" rx="5" fill="#1aa8a0"/><path d="M30 44 v10 M50 44 v10 M70 44 v10 M90 44 v10 M110 44 v10" stroke="#0f7d77" stroke-width="3"/><ellipse cx="144" cy="49" rx="16" ry="11" fill="#1aa8a0"/><circle cx="166" cy="42" r="10" fill="#0f7d77"/><circle cx="166" cy="56" r="10" fill="#0f7d77"/><circle cx="169" cy="40" r="3.5" fill="#fff"/>'+wing("M130 44 C112 26 76 18 54 22 C68 34 104 42 130 44Z",130,44,"#d9f6ff",.85,.09,1)+wing("M142 43 C124 22 90 8 66 8 C80 22 114 36 142 43Z",142,43,"#d9f6ff",.85,.09,0)+'</svg>';
+  default:return '<svg viewBox="0 0 160 110" style="width:18vh;overflow:visible">'+wing("M64 40 C46 18 18 8 4 14 C10 30 38 40 64 40Z",64,40,"#d6eeff",.7,.08,1)+'<path d="M34 88 l-8 14 M60 94 l-2 14 M86 90 l6 14" stroke="#1d2b22" stroke-width="5" stroke-linecap="round"/><ellipse cx="62" cy="64" rx="48" ry="32" fill="#1f9d6a"/><path d="M62 32 V96" stroke="#137049" stroke-width="4"/><path d="M30 52 q10 -10 22 -12" stroke="#7fe3b5" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="116" cy="62" r="16" fill="#137049"/><path d="M126 52 q14 -24 30 -22 q-12 6 -18 28Z" fill="#137049"/><circle cx="120" cy="58" r="3.5" fill="#fff"/>'+wing("M68 36 C50 12 22 0 6 4 C12 22 42 34 68 36Z",68,36,"#f2faff",.85,.08,0)+'</svg>'}
+ case "butterfly":return '<svg viewBox="0 0 160 120" style="width:15vh"><g class="wx r"><path d="M80 60 Q30 -10 10 30 Q0 70 80 64Z" fill="'+h+'"/><path d="M80 64 Q20 80 40 110 Q66 112 80 66Z" fill="'+c+'"/></g><g class="wx"><path d="M80 60 Q130 -10 150 30 Q160 70 80 64Z" fill="'+h+'"/><path d="M80 64 Q140 80 120 110 Q94 112 80 66Z" fill="'+c+'"/></g><rect x="76" y="40" width="8" height="54" rx="4" fill="#3b2a4a"/><path d="M80 42 q-10 -26 -22 -30 M80 42 q10 -26 22 -30" stroke="#3b2a4a" stroke-width="3" fill="none"/></svg>';
+ case "kite":return '<svg viewBox="0 0 140 220" style="width:12vh"><path d="M70 0 L130 70 L70 150 L10 70Z" fill="'+h+'"/><path d="M70 0 L70 150 M10 70 L130 70" stroke="#fff" stroke-width="4"/><path d="M70 0 L130 70 L70 70Z" fill="#fff" opacity=".25"/><path class="swing" d="M70 150 q-20 20 0 36 q20 16 0 34" stroke="#fff" stroke-width="3" fill="none"/><path d="M60 170 l10 6 l10 -6 l-10 -4Z M60 200 l10 6 l10 -6 l-10 -4Z" fill="'+c+'"/></svg>';
+ case "rocket":return '<svg viewBox="0 0 220 100" style="width:24vh"><path class="thrust" d="M40 38 L0 50 L40 62Z" fill="#ffb03a" style="transform-origin:40px 50px"/><path d="M40 30 H150 Q200 34 214 50 Q200 66 150 70 H40Z" fill="#f1f5fb"/><path d="M150 30 Q200 34 214 50 Q200 66 150 70Z" fill="'+h+'"/><circle cx="120" cy="50" r="13" fill="#4fc3ff" stroke="#5b7089" stroke-width="5"/><path d="M50 30 L30 6 L84 30Z M50 70 L30 94 L84 70Z" fill="'+h+'"/></svg>';
+ case "plane":return '<svg viewBox="0 0 200 100" style="width:20vh"><path d="M196 40 L4 2 L60 52Z" fill="#fff"/><path d="M196 40 L60 52 L40 96Z" fill="#dfe6ee"/><path d="M60 52 L4 2 L40 96Z" fill="#c4d0dc"/></svg>';
+ case "lantern":return '<svg viewBox="0 0 100 150" style="width:9vh;overflow:visible"><circle cx="50" cy="76" r="62" fill="#ffcc5c" opacity=".16"/><path d="M50 0 V16" stroke="#e8b44a" stroke-width="4"/><path d="M30 16 H70 L64 30 H36Z" fill="#c8892c"/><path d="M36 30 Q10 70 36 120 H64 Q90 70 64 30Z" fill="#ffcc5c"/><path d="M42 36 Q26 70 42 114 M58 36 Q74 70 58 114 M50 32 V118" stroke="#d98e1f" stroke-width="3" fill="none"/><path d="M36 120 H64 L58 134 H42Z" fill="#c8892c"/></svg>';
+ case "balloon":return '<svg viewBox="0 0 140 190" style="width:14vh"><path d="M70 4 C20 4 4 50 14 84 C24 116 52 130 58 146 H82 C88 130 116 116 126 84 C136 50 120 4 70 4Z" fill="'+h+'"/><path d="M70 4 C48 4 40 60 58 146 H82 C100 60 92 4 70 4Z" fill="#fff" opacity=".35"/><path d="M60 146 L56 164 M80 146 L84 164" stroke="#7a5a3a" stroke-width="3"/><rect x="52" y="162" width="36" height="22" rx="4" fill="#9c6b3d"/></svg>'}}
+/* How the riders move. Each frame a rider's behaviour steers it (a fish kicks its tail and glides, a bird flaps and
+   glides, a ball is thrown and bounces), then its speed and position move on by the time passed. Positions are in vh
+   on both axes so gravity and turns look the same either way; SW is the screen's width in vh. */
+var RIDERS=[],RAF=0,LAST=0,G=60;
+function sw(){return innerWidth/innerHeight*100}
+function wave(r,f){return Math.sin(r.t*f+r.p1)*.6+Math.sin(r.t*f*2.3+r.p2)*.4}
+function damp(v,k,dt){return v*Math.exp(-k*dt)}
+var MOVE={
+ fish:function(r,dt){r.kick-=dt;
+  // Burst and glide: a stroke of the tail pushes it on, then the water slows it.
+  if(r.kick<=0){r.kick=rnd(.8,1.6);r.push=.35;r.turn=rnd(-1,1)}
+  if(r.push>0){r.push-=dt;r.vx+=r.dir*26*dt;r.vy+=r.turn*10*dt}
+  r.vx=damp(r.vx,.55,dt);r.vy=damp(r.vy,1.4,dt)+wave(r,.6)*3*dt;
+  r.ph+=dt*(5+Math.abs(r.vx)*.9+(r.push>0?14:0));r.parts.tail&&r.parts.tail.setAttribute("transform","rotate("+(Math.sin(r.ph)*(r.push>0?20:9))+" 62 60)");
+  r.a=Math.atan2(r.vy,Math.abs(r.vx))*.7},
+ bird:function(r,dt){r.kick-=dt;
+  // Flap to climb, then glide and sink a little.
+  if(r.kick<=0){r.flap=!r.flap;r.kick=r.flap?rnd(1,1.8):rnd(.9,1.6)}
+  r.vy+=(r.flap?-7:5)*dt;r.vy=damp(r.vy,.9,dt);r.vx+=(r.dir*16-r.vx)*.8*dt;
+  r.ph+=dt*(r.flap?15:0);var w=r.flap?Math.sin(r.ph):-.15;r.parts.wing&&(r.parts.wing.style.transform="scaleY("+(.2+.8*w)+")");
+  r.a=Math.atan2(r.vy,Math.abs(r.vx))*.8},
+ ball:function(r,dt){r.vy+=G*dt;
+  // Thrown in a real arc; it bounces on the sand, losing some speed each time, and rolls away.
+  if(r.y>r.floor&&r.vy>0){r.y=r.floor;r.vy=Math.abs(r.vy)>8?-r.vy*.58:0;r.vx*=.82}
+  if(r.y>=r.floor&&!r.vy)r.vx=damp(r.vx,.25,dt);
+  r.spin+=r.vx/5.5*dt},
+ butterfly:function(r,dt){
+  // Each beat of the wings lifts it; in between it falls and drifts.
+  var b=Math.sin(r.ph),nb;r.ph+=dt*11;nb=Math.sin(r.ph);if(b<0&&nb>=0)r.vy-=rnd(9,13)+(r.y-r.y0)*.25;
+  r.vy+=16*dt;r.vy=damp(r.vy,1.2,dt);r.vx+=(r.dir*(8+wave(r,.4)*3)-r.vx)*1.5*dt;
+  r.parts.wx.forEach(function(g){g.style.transform="scaleX("+(.3+.7*Math.abs(Math.cos(r.ph/2)))+")"});r.a=r.vx*.01*r.dir},
+ insect:function(r,dt){
+  if(r.sub==="dragonfly"){r.kick-=dt;
+   // Hover, then dart to a new spot.
+   if(r.kick<=0){r.kick=rnd(.7,1.4);r.vx+=r.dir*rnd(40,60);r.vy+=rnd(-14,14)+(r.y0-r.y)*.8}
+   r.vx=damp(r.vx,2.6,dt);r.vy=damp(r.vy,2.6,dt);r.a=r.vy*.008;return}
+  // Bees, ladybirds and beetles seek a point ahead of them, then pick a new one; bees buzz about on the way.
+  if(!r.goal||Math.hypot(r.goal[0]-r.x,r.goal[1]-r.y)<4){r.goal=[r.x+r.dir*rnd(14,28),r.y0+rnd(-6,6)]}
+  var top=r.sub==="bee"?18:11,dx=r.goal[0]-r.x,dy=r.goal[1]-r.y,d=Math.hypot(dx,dy)||1;
+  r.vx+=(dx/d*top-r.vx)*2*dt;r.vy+=(dy/d*top-r.vy)*2*dt;
+  if(r.sub==="bee"){r.vy+=Math.sin(r.t*13+r.p1)*30*dt}r.a=Math.atan2(r.vy,Math.abs(r.vx))*.5},
+ balloon:function(r,dt){
+  // Carried by the wind, rising and sinking a little with the warm air; the basket swings.
+  r.vx+=(r.dir*(6+wave(r,.25)*2)-r.vx)*.5*dt;r.vy+=((r.y0+wave(r,.18)*3-r.y)*.3-r.vy)*.8*dt;r.a=wave(r,1.1)*.04},
+ kite:function(r,dt){
+  // Gusts push it along and lift it against the pull of its string.
+  var g=wave(r,.5);r.vx+=(r.dir*(10+g*5)-r.vx)*1.2*dt;r.vy+=((r.y0-g*5)-r.y)*1.6*dt;r.vy=damp(r.vy,1.4,dt);r.a=g*.25+r.vy*.015},
+ rocket:function(r,dt){
+  // Speeds up under thrust; the flame grows with it.
+  r.vx+=r.dir*(14-Math.abs(r.vx)*.25)*dt;r.vy+=((r.y0+wave(r,.4)*3-r.y)*.6-r.vy)*dt;
+  r.parts.thrust&&(r.parts.thrust.style.transform="scaleX("+(1+Math.abs(r.vx)/30+Math.random()*.35)+")");r.a=Math.atan2(r.vy,Math.abs(r.vx))},
+ plane:function(r,dt){
+  // Glides along, banking into gentle climbs and dives.
+  r.vx+=(r.dir*15-r.vx)*dt;r.vy+=(wave(r,.35)*5-r.vy)*dt;r.a=Math.atan2(r.vy,Math.abs(r.vx))*1.3},
+ dove:function(r,dt){MOVE.bird(r,dt)},
+ pigeon:function(r,dt){MOVE.bird(r,dt)},
+ lantern:function(r,dt){
+  // Warm air lifts it towards a steady climb; the breeze sways it.
+  r.vy+=(-7-r.vy)*.6*dt;r.vx+=(wave(r,.3)*2.5-r.vx)*.8*dt;r.a=r.vx*.05}
+};
+/* The wind: a steady breeze with gusts that sweep across the screen from left to right. Each hanging or standing
+   piece is a damped spring pushed by it, so washing swings and settles, trees bend and spring back. */
+var PHY=[],PRAF=0,PL=0;
+function wind(t){return .5+.28*Math.sin(t*.6)+.16*Math.sin(t*1.7+1.3)+1.2*Math.pow(Math.max(0,Math.sin(t*.27)),8)}
+function physOn(el){PHY=[].map.call(el.querySelectorAll(".ph,.float"),function(e){var b=e.getBBox();return {e:e,f:e.classList.contains("float"),k:+e.dataset.k||10,s:(+e.dataset.s||1)*(e.classList.contains("b")?1:-1),x:b.x+b.width/2,a:0,v:0,y:0,vy:0}});
+ if(!RM&&PHY.length&&!PRAF){PL=0;PRAF=requestAnimationFrame(phys)}}
+function phys(now){var dt=PL?Math.min(.05,(now-PL)/1000):0,t=now/1000;PL=now;PHY=PHY.filter(function(p){return p.e.isConnected});
+ PHY.forEach(function(p){
+  if(p.f){// Floating: buoyancy pulls it to the swell under it and it tilts with the slope of the water.
+   var h=Math.sin(t*1.1-p.x/180)*8+Math.sin(t*.7+1)*4,sl=Math.cos(t*1.1-p.x/180)*2.6;
+   p.vy+=(6*(h-p.y)-2.2*p.vy)*dt;p.y+=p.vy*dt;p.v+=(5*(sl-p.a)-2*p.v)*dt;p.a+=p.v*dt;
+   p.e.style.transform="translateY("+p.y.toFixed(2)+"px) rotate("+p.a.toFixed(2)+"deg)";return}
+  var w=wind(t-p.x/700)+.07*Math.sin(t*3.3+p.x),goal=w*11*p.s;p.v+=(p.k*(goal-p.a)-.7*Math.sqrt(p.k)*p.v)*dt;p.a+=p.v*dt;
+  p.e.style.transform="rotate("+p.a.toFixed(2)+"deg)"});
+ PRAF=PHY.length?requestAnimationFrame(phys):0}
+function names(){var L=data&&(data.riders||data.teachers);return L&&L.length?L:[""]}
+function ride(box,kind){if(RM||!box.isConnected)return;var W0=sw(),y=rnd(18,24),el=document.createElement("div"),L=names(),
+  sub=kind==="insect"?pick(["bee","ladybird","dragonfly","beetle"]):"",
+  r={el:el,box:box,kind:kind,sub:sub,t:0,p1:rnd(0,6.3),p2:rnd(0,6.3),ph:0,kick:0,push:0,dir:Math.random()<.5?1:-1,y0:y,vy:0,a:0,spin:0};
+ // Keep away from the rider before it so they never stack.
+ RIDERS.forEach(function(o){if(o.box===box&&Math.abs(o.y0-r.y0)<5)r.y0=y=o.y0<21?rnd(23,26):rnd(16,18)});
+ r.x=r.dir>0?-14:W0+14;r.y=y;r.vx=r.dir*({fish:9,bird:16,dove:15,pigeon:15,butterfly:8,insect:10,balloon:6,kite:10,rocket:4,plane:15}[kind]||10);
+ if(kind==="lantern"){r.dir=1;r.x=Math.random()<.5?rnd(9,18):W0-rnd(9,18);r.y=112;r.vx=0;r.vy=-7}
+ if(kind==="ball"){// Aim the throw so it peaks over the podium and lands on the sand past it.
+  var peak=rnd(8,14),from=72,land=r.dir>0?W0*.93:W0*.07;r.floor=88;r.x=r.dir>0?-8:W0+8;r.y=from;
+  r.vy=-Math.sqrt(2*G*(from-peak));var T=-r.vy/G+Math.sqrt(2*(r.floor-peak)/G);r.vx=(land-r.x)/T}
+ el.className="rider";el.innerHTML='<span class="art">'+art(kind,sub)+'</span><span class="tag">'+(CLASSY?esc(L[teach++%L.length]):"")+'</span>';box.appendChild(el);
+ r.art=el.firstChild;r.parts={tail:el.querySelector(".tail"),wing:el.querySelector(".wing"),thrust:el.querySelector(".thrust"),wx:[].slice.call(el.querySelectorAll(".wx"))};
+ RIDERS.push(r);if(!RAF){LAST=0;RAF=requestAnimationFrame(tick)}}
+function tick(now){var dt=LAST?Math.min(.05,(now-LAST)/1000):0,W0=sw(),u=innerHeight/100;LAST=now;
+ RIDERS=RIDERS.filter(function(r){
+  if(!r.box.isConnected||r.x<-30||r.x>W0+30||r.y<-30||r.y>140||r.t>80){r.el.remove();return false}
+  r.t+=dt;MOVE[r.kind](r,dt);
+  if(r.kind==="fish"||r.kind==="bird"||r.kind==="dove"||r.kind==="pigeon"||r.kind==="plane")r.vy+=(r.y0-r.y)*.6*dt; // stay near its lane
+  if(r.kind!=="ball"&&r.kind!=="lantern"){if(r.y<12)r.vy+=(12-r.y)*5*dt;if(r.y>32)r.vy-=(r.y-32)*5*dt} // clear of the header and the podium
+  // Riders in the same scene drift apart up and down instead of passing through each other, and one catching up
+  // with another going the same way eases off rather than running into it.
+  RIDERS.forEach(function(o){if(o===r||o.box!==r.box||r.kind==="ball"||r.kind==="lantern")return;var dx=r.x-o.x,dy=r.y-o.y,d=Math.hypot(dx,dy);
+   if(d<24)r.vy+=(dy>=0?1:-1)*(24-d)*2*dt;
+   if(o.dir===r.dir&&(o.x-r.x)*r.dir>0&&(o.x-r.x)*r.dir<30&&Math.abs(dy)<12)r.vx+=(o.vx-r.vx)*1.5*dt});
+  r.x+=r.vx*dt;r.y+=r.vy*dt;
+  var fade=Math.max(0,Math.min(1,(r.x+14)/12,(W0+14-r.x)/12,(r.y+14)/12,(120-r.y)/12,r.t/.8));
+  r.el.style.opacity=fade.toFixed(3);r.el.style.transform="translate3d("+(r.x*u).toFixed(1)+"px,"+(r.y*u).toFixed(1)+"px,0) translate(-50%,-50%)";
+  r.art.style.transform=r.kind==="ball"?"rotate("+r.spin.toFixed(3)+"rad)":"scaleX("+r.dir+") rotate("+r.a.toFixed(4)+"rad)";
+  return true});
+ RAF=RIDERS.length?requestAnimationFrame(tick):0}
+
+/* ---------- Slides ---------- */
+function month(){return data.month}
+function cards(who,max){var h=who.slice(0,max).map(function(w){
+  // A class card puts its teacher first, big, with the year group under it ("Ustadh Yahya", then "Yr3A").
+  var t=/^(.*?)\s*\b(Ustadha? .+)$/.exec(w.class||""),c=w.name?[w.name,w.class]:t&&t[1]?[t[2],t[1]]:[w.class];return '<div class="pc '+(w.name?"":"cls ")+esc(w.house||"")+'"><span class="pn">'+esc(c[0])+'</span>'+(c[1]?'<span class="pcl">'+esc(c[1])+'</span>':'')+'</div>'}).join("");
+ return h+(who.length>max?'<div class="more">and '+(who.length-max)+' more</div>':'')}
+var CROWN='<div class="crown"><svg viewBox="0 0 100 70"><path d="M8 62 L4 16 L30 38 L50 6 L70 38 L96 16 L92 62Z" fill="#ffd23f" stroke="#c68a00" stroke-width="4" stroke-linejoin="round"/><circle cx="50" cy="44" r="7" fill="#ff5d73"/></svg></div>';
+/* Five stars filled to a Quran average (out of 5), drawn on its step. */
+var STAR='<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>';
+function meter(n){var five=rep(5,function(){return STAR});return '<i class="meter" role="img" aria-label="'+n.toFixed(1)+' out of 5"><i class="mt">'+five+'</i><i class="mf" style="width:'+Math.max(0,Math.min(100,n*20)).toFixed(1)+'%">'+five+'</i></i>'}
+function podium(steps,unit,empty,fmt,stars){if(!steps.length)return '<div class="empty">'+empty+'<small>Who will be first?</small></div>';
+ var by={};steps.forEach(function(s){by[s.place]=s});
+ return '<div class="podium'+(stars?' qs':'')+'">'+[2,1,3].map(function(p){var s=by[p];return '<div class="col p'+p+'"><div class="who">'+(s?(p===1?CROWN+'<i class="spark" style="left:-2vh;top:10%"></i><i class="spark" style="right:-2vh;top:40%;animation-delay:-1s"></i>':'')+cards(s.who,2):'')+'</div>'
+  +'<div class="step'+(s?'':' none')+'"><b>'+p+'</b>'+(s?(stars?meter(s.n):'')+'<span>'+(fmt?fmt(s.n):plural(s.n,unit))+'</span>':'')+'</div></div>'}).join("")+'</div>'}
+function ord(n){var t=n%100,u=n%10;return n+(t>10&&t<14?"th":u===1?"st":u===2?"nd":u===3?"rd":"th")}
+/* Bands on one board, each with its heading on the left and everyone on it in boxes of one size: first place for
+   memorisation passes (everyone tied on the most), then everyone who finished a book this month. */
+/* The TV's first slide: first place for Qaidah levels passed, then the book passes, on the same board. */
+function qaidahBands(){var B=[],q=(data.qaidah||[]).filter(function(s){return s.place===1})[0];
+ if(q)B.push({cls:"m1",head:"1st",sub:plural(q.n,"level"),who:q.who});
+ if(data.books&&data.books.length)B.push({cls:"bk",head:"Books",sub:data.books.length+" finished",who:data.books});
+ return B}
+/* The Presenter's memorisation board: first, second and third place (ties share a band), then the book passes. */
+function memoBands(){var B=(data.memo||[]).filter(function(s){return s.place<=3}).map(function(m){return {cls:"m"+m.place,head:ord(m.place),sub:plural(m.n,"pass"),who:m.who}});
+ if(data.books&&data.books.length)B.push({cls:"bk",head:"Books",sub:data.books.length+" finished",who:data.books});
+ return B}
+function ranks(bands,empty){if(!bands.length)return '<div class="empty">'+empty+'<small>Who will be first?</small></div>';
+ return '<div class="ranks"><div class="rk-in">'+bands.map(function(b){return '<div class="rk '+b.cls+'"><div class="rb"><b>'+esc(b.head)+'</b><span>'+esc(b.sub)+'</span></div><div class="rw">'
+  +b.who.map(function(w){return '<span class="chip '+esc(w.house||"")+'"><span class="pn">'+esc(w.name)+'</span>'+(w.class?'<span class="pcl">'+esc(w.class)+'</span>':'')+'</span>'}).join("")+'</div></div>'}).join("")+'</div></div>'}
+/* If the bands don't fit, the board stays on first place for a good while (reading slowly down it if it is taller
+   than the board), then glides on until the book passes are in view, stops, and glides slowly through the rest,
+   reaching the bottom 29 seconds in. */
+function fitRanks(el){var box=el.querySelector(".ranks"),inner=box&&box.firstChild;if(!box||RM)return;var view=box.clientHeight,over=inner.scrollHeight-view;if(over<=2)return;
+ var R=inner.querySelectorAll(".rk"),t2=R[1]?R[1].offsetTop:inner.scrollHeight,b2=R[1]?t2+R[1].offsetHeight:t2,end=29000,K=[],
+  at=function(t,y,ease){K.push({offset:t/end,transform:"translateY(-"+y+"px)",easing:ease||"linear"})},glide="cubic-bezier(.45,0,.55,1)";
+ var a1=Math.max(0,Math.min(t2-view,over)),s2=b2-view<=a1?a1:Math.min(t2,over);if(s2>=over)s2=Math.max(a1,Math.min(b2-view,over));
+ at(0,0);at(3000,0,"ease-in-out");at(11000,a1,glide);at(13500,s2);at(19000,s2,"ease-in-out");at(end,over);
+ inner.animate(K,{duration:end,fill:"both"})}
+/* The houses' logos, as simple black silhouettes: the Kaaba for Makkah, Masjid an-Nabawi for Madinah, the Dome of the Rock for Al-Aqsa. */
+var LOGO={
+ "Makkah":'<path d="M14 34 L46 25 L88 32 L58 42Z M14 36 L57 44 V92 L14 84Z M59 44 L88 34 V81 L59 92Z" fill="#111"/><path d="M14 47 L57 55 L88 45" stroke="#fff" stroke-width="3" fill="none"/><path d="M28 86 V66 H40 V88" stroke="#fff" stroke-width="2.4" fill="none"/><path d="M6 94 H94" stroke="#111" stroke-width="4" stroke-linecap="round"/>',
+ "Madinah":'<g fill="#111"><rect x="8" y="68" width="84" height="24"/><rect x="36" y="56" width="28" height="14"/><path d="M34 58 Q34 34 50 26 Q66 34 66 58Z"/><path d="M50 26 V14" stroke="#111" stroke-width="2.4"/><circle cx="50" cy="12" r="3"/>'
+  +'<rect x="11" y="22" width="7" height="48"/><rect x="9" y="36" width="11" height="3"/><path d="M11 22 L14.5 10 L18 22Z"/><rect x="82" y="22" width="7" height="48"/><rect x="80" y="36" width="11" height="3"/><path d="M82 22 L85.5 10 L89 22Z"/>'
+  +'<rect x="24" y="40" width="5" height="30"/><path d="M24 40 L26.5 31 L29 40Z"/><rect x="71" y="40" width="5" height="30"/><path d="M71 40 L73.5 31 L76 40Z"/></g>'
+  +'<g fill="#fff">'+[18,30,42,54,66,78].map(function(x){return '<path d="M'+x+' 90 V80 Q'+x+' 75 '+(x+2.5)+' 74 Q'+(x+5)+' 75 '+(x+5)+' 80 V90Z"/>'}).join("")+'</g>',
+ "Al-Aqsa":'<g fill="#111"><path d="M6 92 V66 L16 60 H84 L94 66 V92Z"/><rect x="27" y="46" width="46" height="16"/><path d="M24 48 Q22 20 50 14 Q78 20 76 48Z"/><path d="M50 14 V5" stroke="#111" stroke-width="2.4"/><path d="M46 4 Q50 9 54 4" stroke="#111" stroke-width="2" fill="none"/></g>'
+  +'<g fill="#fff">'+[12,24,36,48,60,72,84].map(function(x){return '<path d="M'+(x-3)+' 88 V76 Q'+(x-3)+' 71 '+x+' 70 Q'+(x+3)+' 71 '+(x+3)+' 76 V88Z"/>'}).join("")+[31,39,47,55,63].map(function(x){return '<rect x="'+x+'" y="50" width="5" height="8" rx="2.5"/>'}).join("")+'<path d="M6 66 H94" stroke="#fff" stroke-width="1.6"/></g>'};
+function logo(h){return LOGO[h]?'<svg class="logo" viewBox="0 0 100 100" aria-hidden="true">'+LOGO[h]+'</svg>':''}
+/* The house leaderboard: a step for each house, highest in the middle, with its logo, rank and points. Houses on the
+   same points share a rank and a height. */
+function houseBoard(H,unit){H=H.slice().sort(function(a,b){return b.n-a.n});
+ H.forEach(function(h){h.rank=1+H.filter(function(o){return o.n>h.n}).length});
+ var at=[1,0,2];return '<div class="podium hp">'+at.map(function(i){var h=H[i];if(!h)return '<div class="col"></div>';var p=Math.min(h.rank,3);
+  return '<div class="col p'+p+'"><div class="who">'+(h.rank===1&&h.n?CROWN:'')+'<div class="pc '+esc(h.house)+'">'+logo(h.house)+'<span class="pn">'+esc(h.house)+'</span>'+(h.top?earned(h.top):'')+'</div></div>'
+   +'<div class="step"><b>'+ord(h.rank)+'</b><span>'+plural(h.n,unit)+'</span></div></div>'}).join("")+'</div>'}
+/* Under a house's name on the House race: the class's top earners for it, with their points. */
+function earned(L){return '<span class="ern">'+(L.length?L.map(function(e,i){return '<span style="animation-delay:'+(1.2+i*.25)+'s"><b>'+esc(e.name)+'</b><em>'+e.n+'</em></span>'}).join(""):'<span class="none">No points yet</span>')+'</span>'}
+function schoolHouses(){return data.houses.map(function(h){return {house:h.house,n:h.points}})}
+function classHouses(){var n={};(data.houses||[]).forEach(function(s){s.who.forEach(function(w){n[w.house]=s.n})});
+ var E=data.earners;return ["Makkah","Al-Aqsa","Madinah"].map(function(h){return {house:h,n:n[h]||0,top:E?E[h]||[]:null}})}
+/* The podium sits below the title and above the base, so names on a step (ties included) shrink to fit the space
+   over it instead of rising behind the title. */
+function fitPodium(el){var z=1,W=[];[].forEach.call(el.querySelectorAll(".podium .col"),function(c){var w=c.querySelector(".who"),st=c.querySelector(".step");if(!w||!st)return;
+ var room=c.clientHeight-parseFloat(getComputedStyle(c).paddingTop)-st.offsetHeight-parseFloat(getComputedStyle(w).marginBottom),h=w.offsetHeight;W.push(w);
+ if(h>room&&room>0)z=Math.min(z,room/h)});
+ // One size for every step, so first place never looks smaller than the others.
+ if(z<1)W.forEach(function(w){w.style.zoom=Math.max(.5,z).toFixed(3)})}
+function fitNames(el){[].forEach.call(el.querySelectorAll(".pc.cls .pn"),function(n){var f=parseFloat(getComputedStyle(n).fontSize)/innerHeight*100;
+ while(f>2.4&&n.scrollWidth>n.clientWidth+1){f-=.2;n.style.fontSize=f+"vh"}})}
+/* ---------- Presenter: the class at a glance and the class rankings ---------- */
+function place(p){return p?ord(p.place)+" of "+p.of:""}
+function stageName(st){return st==="primary"?"Primary Years":st==="secondary"?"Secondary Years":""}
+function glanceTiles(){var g=data.glance||{},T=[];
+ if(g.memo)T.push({c:"memo",n:g.memo,t:g.memo===1?"Memorisation pass":"Memorisation passes",s:g.memo_students+" of "+plural(g.students,"student")+" passed"});
+ if(g.quran)T.push({c:"quran",n:g.quran.toFixed(1),t:"Quran average",s:"Over "+plural(g.quran_days,"lesson day"),m:g.quran});
+ if(g.books)T.push({c:"books",n:g.books,t:g.books===1?"Book finished":"Books finished"});
+ if(g.qaidah)T.push({c:"qaidah",n:g.qaidah,t:g.qaidah===1?"Qaidah level passed":"Qaidah levels passed"});
+ if(g.points)T.push({c:"points",n:g.points,t:"House points"});
+ if(g.merits)T.push({c:"merits",n:g.merits,t:g.merits===1?"Merit":"Merits"});
+ return T}
+function glance(){var T=glanceTiles(),S=data.school||{},st=stageName(S.stage),P=[];
+ if(!T.length)return '<div class="empty">Nothing recorded yet this month.<small>Every pass and score will show here.</small></div>';
+ // Where the class stands among the school's classes, when it has a place.
+ if(S.memo)P.push('<span class="gp"><i>'+ord(S.memo.place)+'</i>for memorisation passes<small>of '+plural(S.memo.of,"class")+(st?" in "+st:"")+'</small></span>');
+ if(S.quran)P.push('<span class="gp q"><i>'+ord(S.quran.place)+'</i>for Quran scores<small>of '+plural(S.quran.of,"class")+(st?" in "+st:"")+'</small></span>');
+ var cols=T.length<=2?T.length:T.length===4?2:3,big=T.length<=2?14:T.length<=4?11:9;
+ return '<div class="glance"><div class="gl-tiles" style="--gc:'+cols+';--gn:'+big+'vh'+(T.length<=2?';--gw:'+(T.length===1?44:42)+'vw':'')+'">'+T.map(function(t,i){return '<div class="gl '+t.c+'" style="animation-delay:'+(.3+i*.12)+'s"><b>'+esc(t.n)+'</b><span>'+esc(t.t)+'</span>'+(t.m?meter(t.m):'')+(t.s?'<small>'+esc(t.s)+'</small>':'')+'</div>'}).join("")+'</div>'
+  +(P.length?'<div class="gl-place">'+P.join("")+'</div>':'')+'</div>'}
+/* A ranking slide's rows: everyone on each place, in order. */
+function rankRows(steps){var R=[];(steps||[]).forEach(function(s){s.who.forEach(function(w){R.push({place:s.place,n:s.n,name:w.name,house:w.house})})});return R}
+function rankList(s){var R=rankRows(s.steps());if(!R.length)return '<div class="empty">'+esc(s.empty)+'<small>Who will be first?</small></div>';
+ return '<div class="rlist"></div>'}
+var RPAGE=36; // at most three columns of twelve on a page
+function fillRanks(el,s){var box=el.querySelector(".rlist");if(!box)return;var R=rankRows(s.steps()),top=R[0].n,pages=Math.ceil(R.length/RPAGE),per=Math.ceil(R.length/pages),i=0,pg=el.querySelector(".pg");
+ function draw(){var P=R.slice(i*per,i*per+per),n=P.length,cols=n<=7?1:n<=16?2:3,rows=Math.ceil(n/cols),g=document.createElement("div");g.className="rpage";
+  g.style.setProperty("--rc",cols);g.style.setProperty("--rr",rows);
+  g.innerHTML=P.map(function(r,k){return '<div class="rrow r'+r.place+'" style="animation-delay:'+(.4+k*.05)+'s"><span class="rpl">'+ord(r.place)+'</span><span class="rnm '+esc(r.house||"")+'">'+(s.bar?'<i class="bar" style="width:'+(r.n/top*100).toFixed(1)+'%;animation-delay:'+(.6+k*.05)+'s"></i>':'')+'<b>'+esc(r.name)+'</b></span><span class="rv">'+s.val(r.n)+'</span></div>'}).join("");
+  var old=box.querySelector(".rpage:not(.leave)");if(old){old.classList.add("leave");setTimeout(function(){old.remove()},650)}
+  box.appendChild(g);
+  // As big as fits: a short list gets big rows, a long one smaller.
+  var f=Math.min(6.4,(box.clientHeight/innerHeight*100-3.2)/(rows*1.95+.6));g.style.setProperty("--rf",f+"vh");
+  while(f>2.2&&g.scrollHeight>g.clientHeight+2){f-=.2;g.style.setProperty("--rf",f+"vh")}
+  pg.textContent=pages>1?(i+1)+" of "+pages:""}
+ draw();if(pages>1)PT=setInterval(function(){i=(i+1)%pages;draw()},SLIDE_MS/pages);}
+/* Last month's winners: first place in each TV category for last month, a card each. Ties all show, up to three
+   names a card ("and 2 more" after that). Categories nobody won are left out. */
+var MEDAL='<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M30 4 H46 L56 40 H40Z" fill="#2a9fe6"/><path d="M70 4 H54 L44 40 H60Z" fill="#e9604f"/><circle cx="50" cy="64" r="32" fill="#ffd23f" stroke="#c68a00" stroke-width="5"/><circle cx="50" cy="64" r="22" fill="none" stroke="#e8a900" stroke-width="3"/><path d="M50 48 L54.7 58.5 L66 59.6 L57.5 67.2 L60 78.4 L50 72.6 L40 78.4 L42.5 67.2 L34 59.6 L45.3 58.5Z" fill="#fff"/></svg>';
+function lastWins(){var L=data.last||{};return [
+ {head:"Qaidah levels",sub:"Most levels passed",step:L.qaidah,unit:"level"},
+ {head:"Top Class for Memorisation",sub:"(Primary Years)",step:L.primary,unit:"pass"},
+ {head:"Top Class for Memorisation",sub:"(Secondary Years)",step:L.secondary,unit:"pass"},
+ {head:"House points",sub:"Most points earned",step:L.houses,unit:"point",house:1}]
+ .filter(function(c){return c.step&&c.step.length}).map(function(c){c.step=c.step[0];return c})}
+function winner(w,house){if(house)return '<span class="wp">'+logo(w.house)+'<span class="pn">'+esc(w.house)+'</span></span>';
+ var t=/^(.*?)\s*\b(Ustadha? .+)$/.exec(w.class||""),c=w.name?[w.name,w.class]:t&&t[1]?[t[2],t[1]]:[w.class];
+ return '<span class="wp"><span class="pn">'+esc(c[0])+'</span>'+(c[1]?'<span class="pcl">'+esc(c[1])+'</span>':'')+'</span>'}
+function winCards(C){if(!C.length)return '<div class="empty">No winners from last month yet.</div>';
+ return '<div class="wins" style="--n:'+C.length+'">'+C.map(function(c){var who=c.step.who,one=who.length===1&&c.house?who[0].house:"";
+  return '<div class="win '+esc(one)+'"><div class="wh">'+esc(c.head)+'<small>'+esc(c.sub)+'</small></div><div class="medal">'+MEDAL+'</div><div class="wl">'
+   +who.slice(0,3).map(function(w){return winner(w,c.house)}).join("")+(who.length>3?'<span class="wmore">and '+(who.length-3)+' more</span>':'')+'</div>'
+   +'<span class="wn">'+plural(c.step.n,c.unit)+'</span></div>'}).join("")+'</div>'}
+function fitWins(el){[].forEach.call(el.querySelectorAll(".win .wl"),function(l){var f=1;while(f>.45&&l.scrollHeight>l.clientHeight+1){f-=.05;l.style.zoom=f.toFixed(2)}
+ [].forEach.call(l.querySelectorAll(".pn"),function(n){var z=parseFloat(getComputedStyle(n).fontSize)/innerHeight*100;while(z>2.4&&n.scrollWidth>n.clientWidth+1){z-=.2;n.style.fontSize=z+"vh"}})})}
+/* id, world, which window it belongs to, title, subtitle, and what it shows. */
+var SLIDES=[
+ {id:"qaidah",world:"madinah",kind:"qaidah",title:"Qaidah level and book passes",sub:function(){return "Most Qaidah levels passed in "+month()+", and every book finished"},ranks:qaidahBands,empty:"No Qaidah level or book passes yet this month."},
+ {id:"memo-primary",world:"aqsa",kind:"memo",title:"Top Class for Memorisation",stage:"(Primary Years)",sub:function(){return "Years 2 to 6, in "+month()},steps:function(){return data.classes.memo.primary},unit:"pass",empty:"No primary memorisation passes yet."},
+ {id:"memo-secondary",world:"makkah",kind:"memo",title:"Top Class for Memorisation",stage:"(Secondary Years)",sub:function(){return "Years 7 to 10, in "+month()},steps:function(){return data.classes.memo.secondary},unit:"pass",empty:"No secondary memorisation passes yet."},
+ {id:"houses",world:"festival",kind:"all",title:"House points",sub:function(){return "The house leaderboard"},board:schoolHouses,unit:"point"},
+ {id:"last",world:"moon",kind:"all",title:"Last month's winners",stage:function(){return "("+(data.last&&data.last.month||"")+")"},sub:function(){return "First place in each category, looking back at last month"},wins:lastWins}];
+/* A class's Presenter: this month's tops in the class. */
+var QD=3; // Quran scores a student needs this month to be ranked (QURAN_DAYS in tv.py)
+var PSLIDES=[
+ {id:"glance",world:"ark",kind:"all",title:"Our class this month",sub:function(){return "Everything "+data["class"]+" has done in "+month()},glance:1,count:function(){return glanceTiles()}},
+ {id:"quran",world:"makkah",kind:"all",title:"Quran",sub:function(){return "Best average lesson score in "+month()},steps:function(){return data.quran},fmt:function(n){return n.toFixed(1)+" out of 5"},stars:1,empty:"Not enough Quran scores yet this month."},
+ {id:"quran-rank",world:"sea",kind:"all",title:"Quran ranking",sub:function(){return "Average lesson score in "+month()+", for everyone with "+QD+" or more scores"},steps:function(){return data.quran_all||[]},list:1,val:function(n){return n.toFixed(1)+'<small>/ 5</small>'},empty:"Not enough Quran scores yet this month."},
+ {id:"memo",world:"hira",kind:"all",title:"Memorisation and book passes",sub:function(){return "Top three for memorisation passes in "+month()+", and every book finished"},ranks:memoBands,empty:"No memorisation or book passes yet this month."},
+ {id:"memo-rank",world:"thawr",kind:"all",title:"Memorisation ranking",sub:function(){var g=data.glance||{};return "Everyone's memorisation passes in "+month()+(g.students?": "+g.memo_students+" of "+plural(g.students,"student")+" have passed":"")},steps:function(){return data.memo||[]},list:1,bar:1,val:function(n){return n+'<small>'+(n===1?"pass":"passes")+'</small>'},empty:"No memorisation passes yet this month."},
+ {id:"qaidah",world:"madinah",kind:"all",title:"Qaidah level passes",sub:function(){return "Most levels passed in "+month()},steps:function(){return data.qaidah},unit:"level",empty:"No Qaidah levels passed yet this month."},
+ {id:"points",world:"aqsa",kind:"all",title:"House points",sub:function(){return "Most points earned in "+month()},steps:function(){return data.points},unit:"point",empty:"No house points earned yet this month."},
+ {id:"houses",world:"festival",kind:"all",title:"House race",sub:function(){return "Points this class earned for each house in "+month()+", and who earned the most"},board:classHouses,unit:"point"},
+ {id:"merits",world:"thawr",kind:"all",title:"Merits",sub:function(){return "Most merits in "+month()},steps:function(){return data.merits},unit:"merit",empty:"No merits yet this month."},
+ {id:"stars",world:"moon",kind:"all",title:"Stars of the week",sub:function(){return month()+", up to the end of last week"},list:function(){return data.stars},empty:"No stars of the week yet this month.",week:1,one:1}];
+if(CLASSY)SLIDES=PSLIDES;
+function focusNow(){if(FOCUS==="qaidah"||FOCUS==="memo")return [FOCUS];return data&&data.focus}
+function playing(){if(PIN){var p=SLIDES.filter(function(s){return s.id===PIN});if(p.length)return p}
+ var f=focusNow(),L=SLIDES.filter(function(s){return !f||f.indexOf(s.kind)>=0});
+ var full=L.filter(function(s){return (s.count?s.count():s.steps?s.steps():s.ranks?s.ranks():s.board?s.board():s.wins?s.wins():s.list()).length});return full.length?full:L}
+function build(s){s.w=typeof s.world==="string"?s.world:s.world[(s.turn=(s.turn||0)+1)%s.world.length];var w=W[s.w],el=document.createElement("section");el.className="slide";el.style.background=w.sky;
+ var body=s.glance?glance():s.list&&s.steps?rankList(s):s.steps?podium(s.steps(),s.unit,s.empty,s.fmt,s.stars):s.ranks?ranks(s.ranks(),s.empty):s.board?houseBoard(s.board(),s.unit):s.wins?winCards(s.wins()):'<div class="cycle"></div>';
+ el.innerHTML='<div class="scene">'+w.html()+'</div><div class="carriers"></div><div class="content"><div class="title"><h2>'+esc(s.title)+'<span class="pg"></span></h2>'+(s.stage?'<span class="stage">'+esc(typeof s.stage==="function"?s.stage():s.stage)+'</span>':'')+'<p>'+esc(s.sub())+'</p></div>'+body+'</div>';
+ return el}
+/* A list takes turns a page at a time so everyone is seen within the slide's 30 seconds:
+   up to six pages, each at least five seconds, as many names on a page as that needs.
+   Stars of the week are all on one page (one per class), as big as fits. */
+function cycle(el,s){var L=s.list(),box=el.querySelector(".cycle");if(!L.length){box.innerHTML='<div class="empty">'+esc(s.empty)+'<small>Keep going!</small></div>';return}
+ var pages=s.one?1:Math.min(L.length,6),per=Math.ceil(L.length/pages),i=0,pg=el.querySelector(".pg");pages=Math.ceil(L.length/per);
+ var cols=per===4?2:per<=3?per:per<=9?3:per<=16?4:per<=20?5:6,size=per===1?12:per<=2?8.4:per<=4?7:per<=6?6.4:per<=9?5.8:per<=16?5.2:4;
+ function draw(){var P=L.slice(i*per,i*per+per),g=document.createElement("div");g.className="names"+(per===1?" solo":"");
+  g.style.gridTemplateColumns=per===1?"minmax(0,64vw)":"repeat("+Math.min(cols,P.length)+",minmax(0,"+(per<=2?40:per===4?38:per<=9?28:Math.floor(88/cols))+"vw))";g.style.fontSize=size+"vh";
+  g.innerHTML=P.map(function(w,k){return '<div class="nc '+esc(w.house||"")+'" style="animation-delay:'+(.15+k*.08)+'s"><span class="pn">'+esc(w.name)+'</span>'+(w.class?'<span class="pcl">'+esc(w.class)+'</span>':'')+''+(s.week?'<span class="wk">'+esc(w.label)+'</span>':'')+'</div>'}).join("");
+  var old=box.querySelector(".names:not(.leave)");if(old){old.classList.add("leave");setTimeout(function(){old.remove()},650)}
+  box.appendChild(g);var f=size;while(f>2.4&&g.scrollHeight>box.clientHeight+2){f-=.2;g.style.fontSize=f+"vh"}
+  pg.textContent=pages>1?(i+1)+" of "+pages:""}
+ draw();if(pages>1)PT=setInterval(function(){i=(i+1)%pages;draw()},SLIDE_MS/pages)}
+function confetti(el){if(RM)return;var c=el.querySelector(".p1 .step");if(!c)return;var r=c.getBoundingClientRect(),C=["#ffd23f","#ff5d73","#4fc3ff","#7ee06a","#c77dff","#fff"];
+ for(var i=0;i<46;i++){var p=document.createElement("i");p.className="confetti";p.style.background=pick(C);p.style.left=(r.left+r.width/2)+"px";p.style.top=(r.top)+"px";el.appendChild(p);
+  var dx=rnd(-30,30),dy=rnd(-55,-25);var a=p.animate([{transform:"translate(0,0) rotate(0)",opacity:1},{transform:"translate("+dx+"vw,"+dy+"vh) rotate("+rnd(200,700)+"deg)",opacity:1,offset:.45},{transform:"translate("+dx*1.3+"vw,"+(dy+60)+"vh) rotate("+rnd(700,1200)+"deg)",opacity:0}],{duration:rnd(2600,3800),delay:1200,easing:"cubic-bezier(.2,.6,.4,1)",fill:"both"});
+  a.onfinish=(function(p){return function(){p.remove()}})(p)}}
+function show(){if(!data)return;clearTimeout(ST);clearInterval(PT);clearInterval(RT);
+ var L=playing(),k=0;for(var j=0;j<L.length;j++)if(L[j].id===curId){k=(j+1)%L.length;break}
+ var s=L[k],el=build(s),old=cur;curId=s.id;cur=el;$("stage").appendChild(el);
+ $("dots").innerHTML=L.map(function(x,j){return '<i'+(j===k?' class="on"':'')+'></i>'}).join("");
+ var f=focusNow();$("mode").textContent=f&&!PIN?(f.length>1?"Qaidah and Memo time":f[0]==="qaidah"?"Qaidah time":"Memo time"):"";
+ void el.offsetWidth;el.classList.add("on");
+ if(old){old.classList.add("out");setTimeout(function(){old.remove()},1500)}
+ if(s.list&&s.steps)fillRanks(el,s);else if(s.list)cycle(el,s);else if(s.glance){}else{if(!s.wins)confetti(el);fitNames(el);fitPodium(el);fitRanks(el);fitWins(el)}
+ physOn(el);
+ if(s.board)PT=setInterval(function(){confetti(el)},9000); // the house leaderboard keeps celebrating
+ // Only the Presenter has riders, carrying the class's names; the TV's scenes move on their own.
+ if(CLASSY){var box=el.querySelector(".carriers"),kind=W[s.w].rider;setTimeout(function(){ride(box,kind)},1800);RT=setInterval(function(){ride(box,kind)},7000)}
+ var p=$("prog");p.className="";p.style.transitionDuration="0ms";void p.offsetWidth;p.style.transitionDuration=SLIDE_MS+"ms";p.className="run";
+ ST=setTimeout(show,SLIDE_MS)}
+function ended(t){$("off").style.display="flex";$("off").textContent=t||"This Presenter link has ended. Press Presenter on the dashboard to open a new one."}
+function load(){fetch(URL,{credentials:"same-origin",cache:"no-store",headers:LIVE?{"X-View":VIEW}:{}}).then(function(r){
+  if(LIVE&&r.status===410){try{sessionStorage.removeItem(LK)}catch(e){}clearInterval(LT);ended();return null}
+  if(r.status===404||r.status===401){$("off").style.display="flex";$("off").textContent=r.status===401?"Sign in to see the dashboard.":"This screen's link has been turned off. Ask an administrator for a new one.";return null}
+  return r.ok?r.json():null}).then(function(d){if(d){var first=!data;data=d;$("off").style.display="none";
+   if(CLASSY){$("brand").innerHTML=esc(d.class)+"<small>"+esc(SITE)+"</small>";document.title=d.class+" · Presenter"}if(first)show()}}).catch(function(){/* keep showing the last data */})}
+var LT=0;function start(){load();LT=setInterval(load,DATA_MS)}
+clock();setInterval(clock,1000);
+/* A new Presenter link: claim it for this tab first. Opened anywhere else (or too late), it says so. */
+if(LIVE&&!VIEW)fetch(path+"/open",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json","X-Dashboard-Request":"1"},body:"{}"})
+ .then(function(r){return r.json().then(function(d){if(!r.ok||!d.key)throw d;VIEW=d.key;try{sessionStorage.setItem(LK,VIEW)}catch(e){}start()})})
+ .catch(function(d){ended(d&&d.error)});
+else start();
+/* The full-screen icon shows while the mouse moves, on a TV and in the Presenter. The Presenter runs on a teacher's
+   screen, so it also has Close; Escape also closes. */
+(function(){var C=$("ctl"),CT=0,F=$("fs");C.hidden=false;
+ function wake(){C.classList.add("on");clearTimeout(CT);CT=setTimeout(function(){C.classList.remove("on")},2500)}
+ document.addEventListener("mousemove",wake);document.addEventListener("touchstart",wake,{passive:true});if(PRESENT)wake();
+ F.hidden=!document.documentElement.requestFullscreen;
+ F.onclick=function(){if(document.fullscreenElement)document.exitFullscreen();else if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen()};
+ document.addEventListener("fullscreenchange",function(){var on=!!document.fullscreenElement,t=on?"Exit full screen":"Full screen";F.classList.toggle("full",on);F.setAttribute("aria-label",t);F.title=t});
+ if(!PRESENT)return;
+ // The Presenter opens in its own tab, so Close closes it. One opened in the dashboard's own tab (a blocked pop-up)
+ // can't be closed by script, so Close goes back to the class there instead.
+ function close(){if(window.opener){window.close();setTimeout(back,300)}else back()}
+ function back(){location.href="/"+(data&&data.id?"#"+data.id:"")}
+ $("close").hidden=false;$("close").onclick=close;document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!document.fullscreenElement)close()});
+})();
+/* Pick up new versions of this page, unless the network is down. */
+setInterval(function(){fetch(location.href,{cache:"no-store"}).then(function(r){if(r.ok)location.reload()}).catch(function(){})},6*3600*1000);
+})();
+</script>
+</body>
+</html>

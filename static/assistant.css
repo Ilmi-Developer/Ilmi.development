@@ -1,0 +1,151 @@
+/* Ask Ilmi (static/assistant.js): the assistant's page on the dashboard, built on the dashboard's tokens
+   (src/tokens.css) so it follows light and dark mode. The thinking line (.thought-line) and the prompt box
+   (.prompt-bar) follow the React Bits ThoughtLine and PromptBar designs. */
+
+/* --- The page ------------------------------------------------------------------------------------------------- */
+html.ai-page #band{display:none}
+html.ai-page .content{padding-top:14px;padding-bottom:0}
+#vA.ws{background:none;box-shadow:none;padding:0;margin:0;border-radius:0}
+.sai{--sai-w:768px;display:flex;flex-direction:column;height:calc(100dvh - 14px);min-height:420px;position:relative}
+.sai-top{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:4px 0 6px;flex:none;min-height:46px}
+.sai-dt{font-size:.75rem;font-weight:750;padding:4px 10px;border-radius:var(--r-pill);background:var(--warn-soft,#fdf3e7);color:var(--warn-ink,#8a4b0f);white-space:nowrap}
+.sai-new{display:inline-grid;place-items:center;width:40px;height:40px;border:1px solid var(--line-2);border-radius:50%;background:var(--surface);color:var(--ink-2);cursor:pointer}
+.sai-new:hover{background:var(--surface-2);color:var(--ink)}
+.sai-new svg{width:18px;height:18px}
+.sai[data-empty] .sai-new{visibility:hidden}
+.sai-log{flex:1;overflow-y:auto;overscroll-behavior:contain;scroll-behavior:smooth;min-height:0}
+.sai-col{max-width:var(--sai-w);margin:0 auto;padding:4px 4px 24px;display:flex;flex-direction:column;gap:22px}
+.sai-u{display:flex;justify-content:flex-end}
+.sai-ub{max-width:80%;padding:10px 16px;border-radius:20px;border-bottom-right-radius:6px;background:var(--primary-soft);color:var(--ink);font-size:1rem;line-height:1.5;overflow-wrap:anywhere}
+.sai-ub p{margin:0}
+.sai-a{display:flex;flex-direction:column;gap:10px;color:var(--ink)}
+.sai-a .thought-line{--tl-color:var(--mute);--tl-glyph:var(--primary)}
+.sai-text{font-size:1rem;line-height:1.6;overflow-wrap:anywhere}
+.sai-text.in{animation:sai-in .35s cubic-bezier(.23,1,.32,1) both}
+@keyframes sai-in{from{opacity:0;transform:translateY(4px);filter:blur(2px)}}
+.sai-text p{margin:0 0 .75em}.sai-text p:last-child{margin-bottom:0}
+.sai-text h3{font-size:1rem;margin:1em 0 .4em}
+.sai-text ol,.sai-text ul{margin:.25em 0 .75em;padding-left:1.4em}
+.sai-text li{margin:.2em 0}
+.sai-text code{font-size:.875em;background:var(--sunk);padding:1px 5px;border-radius:5px}
+.sai-tw{overflow-x:auto;margin:.5em 0 .9em;border:1px solid var(--line);border-radius:var(--r)}
+.sai-tw table{border-collapse:collapse;font-size:.9375rem;min-width:100%}
+.sai-tw th,.sai-tw td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.sai-tw tr:last-child td{border-bottom:0}
+.sai-tw th{font-weight:750;color:var(--ink-2);background:var(--surface-2)}
+.sai-muted{color:var(--mute)}
+.sai-err{color:var(--bad-ink)}
+.sai-dock{flex:none;max-width:var(--sai-w);width:100%;margin:0 auto;padding:6px 4px 18px}
+.sai-dock .prompt-bar{width:100%}
+/* Before the first question: a greeting, as Claude does, in the overview greeting's type, and the box, in the middle. */
+.sai-hero{display:none}
+.sai[data-empty] .sai-log{flex:0 0 0;overflow:hidden}
+.sai[data-empty] .sai-hero{display:flex;align-items:center;justify-content:center;gap:.4em;margin:auto 0 0;padding:0 8px 26px;text-align:left;
+  font-family:var(--font);font-size:clamp(1.75rem,3.4vw,2.5rem);font-weight:800;
+  line-height:1.15;letter-spacing:-.015em;color:var(--navy-text);animation:sai-in .6s cubic-bezier(.23,1,.32,1) both}
+.sai[data-empty] .sai-dock{margin-bottom:auto;padding-bottom:12vh}
+.sai-mark{display:inline-flex;flex:none;width:1.05em;height:1.05em;color:var(--navy-text)}
+.sai-mark svg{width:100%;height:100%;stroke-width:1.6}
+/* A change to confirm (admins). */
+.sai-card{border:1px solid var(--line-2);border-left:4px solid var(--warn,#b8641e);border-radius:var(--r);padding:12px 16px;background:var(--surface);font-size:.9375rem}
+.sai-ch{margin:0 0 8px;font-weight:800}
+.sai-ci{padding:8px 0;border-top:1px solid var(--line)}
+.sai-ci ul{margin:4px 0 0;padding-left:1.2em;color:var(--ink-2)}
+.sai-ca{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:10px}
+.sai-exp{margin-right:auto;font-size:.8125rem;color:var(--mute)}
+.sai-res{border-top:1px solid var(--line);margin-top:8px;padding-top:8px}
+.sai-res p{margin:0 0 4px;font-weight:700}
+.sai-res ul{list-style:none;padding:0;margin:0}
+.sai-res li{padding:3px 0}
+.sai-res li.ok::before{content:"✓ ";color:var(--ok-ink,#1f6b3a);font-weight:800}
+.sai-res li.no::before{content:"✕ ";color:var(--bad-ink);font-weight:800}
+@media (prefers-reduced-motion:reduce){.sai-mark,.sai-text.in,.sai[data-empty] .sai-hero{animation:none}}
+@media print{.sai-dock,.sai-new{display:none}}
+@media (max-width:959.98px){
+  .sai{height:calc(100dvh - 16px - var(--dock-h,0px) - var(--dock-gap,0px) - 14px)}
+  .sai-ub{max-width:88%}
+  .sai[data-empty] .sai-hero{flex-direction:column;text-align:center;gap:.3em}
+  .sai[data-empty] .sai-dock{padding-bottom:6vh}
+}
+
+/* --- Thinking line ---------------------------------------------------------------------------------------------- */
+.thought-line{--tl-ease-out:cubic-bezier(.23,1,.32,1);--tl-ease-in-out:cubic-bezier(.77,0,.175,1);--tl-font:15px;--tl-color:currentColor;
+  --tl-glyph:currentColor;--tl-settle:350ms;--tl-blur:2px;--tl-shimmer:1.8s;--tl-done:.75;--tl-timer:.55;--tl-trough:.55;--tl-period:1.6s;
+  display:inline-flex;flex-direction:column;align-items:flex-start;color:var(--tl-color);font-family:inherit;font-size:var(--tl-font);font-weight:500;line-height:1.2}
+.thought-line__head{position:relative;display:inline-flex;align-items:center;gap:.3em;margin:0;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;white-space:nowrap;outline:none;cursor:default}
+.thought-line__head[data-toggle]{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.thought-line__head:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:6px}
+.thought-line__glyph{display:inline-flex;flex:none;width:1.1em;height:1.1em;margin-right:.2em;color:var(--tl-glyph);opacity:.55;transition:opacity var(--tl-settle) var(--tl-ease-out)}
+.thought-line[data-working] .thought-line__glyph{animation:tl-breath var(--tl-period) var(--tl-ease-in-out) infinite}
+@keyframes tl-breath{0%,100%{opacity:var(--tl-trough)}50%{opacity:1}}
+.thought-line__glyph svg{display:block;width:100%;height:100%}
+.thought-line__dot{width:.5em;height:.5em;margin:auto;border-radius:50%;background:currentColor}
+.thought-line__label{display:inline-grid}
+.thought-line__text{grid-area:1/1;width:max-content;opacity:0;filter:blur(var(--tl-blur));transition:opacity var(--tl-settle) var(--tl-ease-out),filter var(--tl-settle) var(--tl-ease-out)}
+.thought-line__text[data-active]{opacity:1;filter:blur(0)}
+.thought-line__text--done[data-active]{opacity:var(--tl-done)}
+.thought-line__breath{display:inline-block}
+.thought-line[data-working] .thought-line__breath[data-shimmer]{
+  background:linear-gradient(100deg,color-mix(in srgb,var(--tl-color) 50%,transparent) 30%,var(--ink) 50%,color-mix(in srgb,var(--tl-color) 50%,transparent) 70%);
+  background-size:250% 100%;background-position:125% 0;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
+  animation:tl-shimmer var(--tl-shimmer) linear infinite}
+@keyframes tl-shimmer{to{background-position:-125% 0}}
+.thought-line__timer{font-variant-numeric:tabular-nums;opacity:var(--tl-timer);transition:opacity var(--tl-settle) ease,transform var(--tl-settle) var(--tl-ease-in-out)}
+.thought-line__timer[data-done]{opacity:var(--tl-done)}
+.thought-line__chevron{display:inline-flex;width:1em;height:1em;margin-left:.1em;opacity:0;transition:opacity .2s ease,transform .2s var(--tl-ease-out)}
+.thought-line__chevron svg{width:100%;height:100%}
+.thought-line__chevron[data-on]{opacity:.55}
+.thought-line[data-open] .thought-line__chevron{transform:rotate(180deg)}
+.thought-line__sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.thought-line__trace{display:grid;grid-template-rows:0fr;width:0;min-width:100%;transition:grid-template-rows var(--tl-settle) var(--tl-ease-out)}
+.thought-line__trace[data-open]{grid-template-rows:1fr}
+.thought-line__fold{min-height:0;overflow-x:visible;overflow-y:clip}
+.thought-line__steps{display:flex;flex-direction:column;gap:.45em;width:max-content;padding:.6em 0 .2em 1.6em;font-size:.875em;font-weight:400;white-space:nowrap}
+.thought-line__step{display:flex;align-items:center;gap:.5em;opacity:1;transform:translateY(0);transition:opacity .2s var(--tl-ease-out),transform .2s var(--tl-ease-out)}
+@starting-style{.thought-line__step{opacity:0;transform:translateY(-4px)}}
+.thought-line__mark{display:inline-grid;flex:none;place-items:center;width:1em;height:1em;opacity:.55}
+.thought-line__mark svg{width:100%;height:100%}
+.thought-line__pulse{display:block;width:.4em;height:.4em;border-radius:50%;background:currentColor;animation:tl-pulse 1.6s var(--tl-ease-in-out) infinite}
+@keyframes tl-pulse{0%,100%{opacity:.55}50%{opacity:1}}
+.thought-line__step-text{transition:opacity var(--tl-settle) ease}
+.thought-line__step[data-done] .thought-line__step-text{opacity:.55}
+@media (prefers-reduced-motion:reduce){
+  .thought-line__text{filter:none!important;transition:opacity var(--tl-settle) ease}
+  .thought-line__timer{transition:opacity var(--tl-settle) ease}
+  .thought-line__step{transform:none!important;transition:opacity .2s ease}
+  .thought-line[data-working] .thought-line__glyph{animation-duration:2.4s}
+  .thought-line[data-working] .thought-line__breath[data-shimmer]{animation:none;background:none;color:inherit;-webkit-text-fill-color:currentColor}
+  .thought-line__pulse{animation-duration:2.4s}
+}
+
+/* --- Prompt box ------------------------------------------------------------------------------------------------- */
+.prompt-bar{--pb-ink:var(--ink);--pb-radius:24px;--pb-press:.96;--pb-ease-out:cubic-bezier(.23,1,.32,1);
+  --pb-muted:color-mix(in srgb,var(--pb-ink) 55%,transparent);--pb-hover:color-mix(in srgb,var(--pb-ink) 7%,transparent);
+  position:relative;color:var(--pb-ink);font-family:inherit;font-size:16px;line-height:24px}
+.prompt-bar__menu{position:absolute;right:0;bottom:calc(100% + 8px);left:0;z-index:20;padding:4px;border-radius:14px;background:var(--surface);border:1px solid var(--line);
+  box-shadow:0 10px 30px -10px rgba(0,0,0,.3),0 1px 2px rgba(0,0,0,.08);transform-origin:bottom center;animation:pb-pop 180ms var(--pb-ease-out) both}
+@keyframes pb-pop{from{opacity:0;transform:translateY(4px) scale(.98)}}
+.prompt-bar__glow{position:absolute;right:4px;left:4px;border-radius:9px;background:var(--pb-hover);opacity:0;pointer-events:none;transition:top 220ms var(--pb-ease-out),height 220ms var(--pb-ease-out),opacity 150ms ease}
+.prompt-bar__row{position:relative;z-index:1;display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:0 10px;border:0;border-radius:9px;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;outline:none}
+.prompt-bar__row-name{flex:none;font-size:14px;font-weight:700;color:var(--navy-text)}
+.prompt-bar__row-desc{flex:1 1 auto;min-width:0;overflow:hidden;color:var(--pb-muted);font-size:13px;white-space:nowrap;text-overflow:ellipsis}
+.prompt-bar__field{display:flex;align-items:flex-end;gap:10px;padding:12px 12px 12px 20px;border-radius:var(--pb-radius);background:var(--surface);
+  border:1px solid var(--line-2);box-shadow:0 2px 6px rgba(28,34,48,.05),0 12px 32px -12px rgba(28,34,48,.16);cursor:text;transition:border-color .2s ease,box-shadow .2s ease}
+.prompt-bar__field:focus-within{border-color:color-mix(in srgb,var(--primary) 45%,var(--line-2));box-shadow:0 0 0 4px color-mix(in srgb,var(--primary) 10%,transparent),0 12px 32px -12px rgba(28,34,48,.18)}
+.prompt-bar__input{flex:1;min-width:0;min-height:0;height:24px;margin:6px 0;padding:0;border:0;border-radius:0;box-shadow:none;background:transparent;color:inherit;font:inherit;font-size:16px;line-height:24px;resize:none;outline:none;overflow-wrap:anywhere}
+.prompt-bar__input:focus-visible{outline:none}
+.prompt-bar__input::placeholder{color:color-mix(in srgb,var(--pb-ink) 45%,transparent)}
+.prompt-bar__send{flex:none;position:relative;display:inline-grid;place-items:center;width:36px;height:36px;padding:0;border:0;border-radius:12px;font:inherit;cursor:pointer;outline:none;
+  user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  background:color-mix(in srgb,var(--pb-ink) 10%,var(--surface));color:color-mix(in srgb,var(--pb-ink) 45%,var(--surface));transition:background-color 200ms ease,color 200ms ease,transform 160ms var(--pb-ease-out)}
+.prompt-bar__send:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.prompt-bar__send:disabled{cursor:default}
+.prompt-bar__send[data-armed]{background:var(--primary);color:#fff}
+.prompt-bar__send[data-armed]:hover{background:var(--primary-hover)}
+.prompt-bar__send[data-pressed]{transform:scale(var(--pb-press))}
+.prompt-bar__glyph{display:block;width:17px;height:17px;transform-origin:50% 50%}
+@media (prefers-reduced-motion:reduce){
+  .prompt-bar__menu{animation:none}
+  .prompt-bar__glow{transition:opacity 150ms ease}
+  .prompt-bar__send[data-pressed]{transform:none}
+}

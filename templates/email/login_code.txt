@@ -1,0 +1,15 @@
+Assalamu alaikum {{ name }},
+
+Your sign-in code for Ilmi is:
+
+{{ code }}
+
+Type it on the sign-in page to finish signing in as an administrator. It works once, in the browser where you typed your password, and expires in {{ code_minutes }} minutes. Never share it: nobody from the school will ask you for it.
+
+Asked for: {{ at|when }} (UK time)
+
+Didn't just sign in? Someone knows your password. Change it on the Account page straight away, or use "Forgotten your password?" on the sign-in page.
+{% if support_email %}
+Questions? Email the school office at {{ support_email }}.
+{% endif %}
+{{ site_title() or "Ilmi" }}

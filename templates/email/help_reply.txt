@@ -1,0 +1,15 @@
+Assalamu alaikum {{ name }},
+
+{{ by }} replied to the {{ kind|lower }} message you sent from the dashboard on {{ asked_at|when }}.
+
+You wrote:
+{{ body }}
+
+{{ by }} replied:
+{{ reply }}
+
+The reply is also on the dashboard, under Help or Requests at the bottom of your overview.
+
+Open the dashboard: {{ site }}
+
+{{ site_title() or "Ilmi" }}

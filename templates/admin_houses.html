@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Set houses{% endblock %}
+{% block width %} narrow{% endblock %}
+{% block content %}
+<div class="band slim"><div class="band-top"><h1>Set houses</h1></div>
+<p class="lede">Gives every student on the school's list their house and school details, matched by name.</p>
+<details class="how"><summary>How this works</summary><div><p>Each student on the list gets their house, Family ID, Student ID, year group, gender and Arabic and Islamic Studies class. Anyone not on the list keeps their details. The version of each class from just before is kept in Class history.</p></div></details></div>
+{% if done is defined %}
+<div class="panel" role="status"><p><b>Updated {{ done }} {{ "student" if done == 1 else "students" }}.</b> Open dashboards need a reload to show it.</p></div>
+{% endif %}
+{% if notice %}<div class="panel" role="status"><p>{{ notice }}</p></div>{% endif %}
+{% if error %}<div class="panel" role="alert"><p>{{ error }}</p></div>{% endif %}
+<div class="mod line">
+  <h2>{{ "The school's list" if listed else "Upload the school's list" }}</h2>
+  <p class="sub">{% if listed %}A list of {{ listed }} {{ "student" if listed == 1 else "students" }} is saved in the database. Uploading another replaces it.{% else %}No list has been uploaded yet. It is kept in the database, not with the code.{% endif %} Columns: MySafar Name, QM, AI, MySafar ID, Family ID, House, Year Group, Gender.</p>
+  <form method="post" action="/admin/set-houses/list" enctype="multipart/form-data" class="pickrow">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="btn filepick"><input type="file" name="csv" accept=".csv,text/csv" required aria-label="The school's list, CSV file"><span class="fp-none">Choose CSV file</span><span class="fp-some" aria-hidden="true">CSV file chosen</span></label>
+    <button class="btn primary">{{ "Replace the list" if listed else "Upload the list" }}</button>
+  </form>
+  {% if listed %}<form method="post" action="/admin/set-houses/list" class="pickrow">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <button class="btn" name="remove" value="1">Remove the list</button>
+  </form>{% endif %}
+</div>
+{% if listed %}
+<p class="sub">After this: Makkah {{ counts["Makkah"] }}, Madinah {{ counts["Madinah"] }}, Al-Aqsa {{ counts["Al-Aqsa"] }} students.</p>
+{% if twice %}<p class="sub">Names on the list twice, told apart by class: {{ twice | join(", ") }}</p>{% endif %}
+{% if ids %}<div class="panel" role="alert"><p><b>Student IDs that differ from the list and will change ({{ ids | length }}):</b> {{ ids | join(", ") }}</p></div>{% endif %}
+{% if missing %}<div class="panel" role="alert"><p><b>On the list but not found on the dashboard ({{ missing | length }}):</b> {{ missing | join(", ") }}</p></div>{% endif %}
+<div class="tablewrap"><table class="tbl stackable">
+<thead><tr><th scope="col">Class</th><th scope="col" class="n">Houses</th><th scope="col" class="n">Family IDs</th><th scope="col" class="n">Student IDs</th><th scope="col" class="n">Year groups</th><th scope="col" class="n">Genders</th><th scope="col" class="n">AI classes</th><th scope="col">On the dashboard but not on the list</th></tr></thead>
+<tbody>
+{% for c in classes %}
+<tr><td class="lead">{{ c.name }}</td><td data-label="Houses" class="n">{{ c.house }}</td><td data-label="Family IDs" class="n">{{ c.fid }}</td><td data-label="Student IDs" class="n">{{ c.sid }}</td><td data-label="Year groups" class="n">{{ c.sy }}</td><td data-label="Genders" class="n">{{ c.gender }}</td><td data-label="AI classes" class="n">{{ c.ist }}</td>
+<td data-label="Not on the list">{{ c.extra | join(", ") or "None" }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% if total %}
+<div class="mod line">
+  <h2>Make {{ total }} {{ "change" if total == 1 else "changes" }}</h2>
+  <form method="post" action="/admin/set-houses" class="inline-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="field">Type HOUSES to confirm<input name="confirm" autocomplete="off" required></label>
+    <button class="btn primary">Update students</button>
+  </form>
+</div>
+{% else %}
+<p class="sub">{{ "Every listed student already has these details." if not missing else "No house would change." }}</p>
+{% endif %}
+{% endif %}
+{% endblock %}

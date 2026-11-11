@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Enter your sign-in code{% endblock %}
+{% block body_class %}solo{% endblock %}
+{% block head %}<script src="/code.js" defer></script>{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>Check your email</h1>
+  <p class="lede">We've emailed a 6-digit code to {{ email }}. Type it here to finish signing in. It expires in {{ minutes }} minutes.</p>
+  <form method="post" action="/login/code">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="hidden" name="next" value="{{ next }}">
+    {% if remember %}<input type="hidden" name="remember" value="1">{% endif %}
+    <label class="field">Sign-in code<span class="fin"><input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" maxlength="7" spellcheck="false" required autofocus>{{ icon("lock") }}</span></label>
+    <button class="btn primary">Sign in</button>
+  </form>
+  <p class="sub">No email after a minute? Check your spam folder, or sign in again for a new code.</p>
+  <div class="alt"><a href="/login">Back to sign in</a></div>
+</div>
+{% endblock %}

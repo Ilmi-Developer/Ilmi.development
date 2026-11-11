@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% from "_avatar.html" import avatar %}
+{% block title %}Manage users{% endblock %}
+{% block width %} narrow{% endblock %}
+{% block content %}
+<div class="band slim"><div class="band-top"><h1>Manage users</h1><div class="acts"><a class="btn" href="#invite">Invite staff</a></div></div>
+<div class="figs"><div class="fig"><b>{{ users|length }}</b><span>Accounts</span></div><div class="fig"><b>{{ users|selectattr("role", "equalto", "teacher")|list|length }}</b><span>Teachers</span></div>{% set heads = users|selectattr("role", "equalto", "head")|list|length %}{% if heads %}<div class="fig"><b>{{ heads }}</b><span>HeadTeachers</span></div>{% endif %}<div class="fig"><b>{{ users|selectattr("role", "equalto", "admin")|list|length }}</b><span>Administrators</span></div><div class="fig{{ ' alert' if users|rejectattr('active')|rejectattr('disabled')|list }}"><b>{{ users|rejectattr("active")|rejectattr("disabled")|list|length }}</b><span>Invites not accepted</span></div></div></div>
+{% if link %}
+<div class="panel linkbox" role="status">
+  <p><b>Send this link to {{ link_for }}</b>{% if not mail_enabled %} (email isn't set up yet){% else %} (the email couldn't be sent){% endif %}. It works once.</p>
+  <input readonly value="{{ link }}" aria-label="Link to send">
+</div>
+{% endif %}
+{# Invite staff is a pop-up over the blurred page. It opens from the Invite staff button (#invite; this page runs no
+   scripts), or stays open when an invite just failed and needs fixing. #}
+{% set inv_close = "/admin/users" if invite_open else "#_" %}
+<div class="invite{{ ' open' if invite_open }}" id="invite">
+  <a class="invbg" href="{{ inv_close }}" aria-label="Close" tabindex="-1"></a>
+  <div class="mod invcard" role="dialog" aria-modal="true" aria-labelledby="invt">
+  <div class="invh"><h2 id="invt">Invite staff</h2><a class="btn sm" href="{{ inv_close }}">Close</a></div>
+  {% if invite_open and error %}<p class="error">{{ error }}</p>{% endif %}
+  <p class="sub">They get {{ "an email with " if mail_enabled }}a link to choose their password. It expires in 72 hours. Teachers see only the classrooms you tick. HeadTeachers see every classroom, Record, House points, Rankings, Presenter and FAQs, but can't give house points or open the Administration pages. Admins see everything.</p>
+  <form method="post" action="/admin/users/invite">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="formrow">
+      <label class="field">Name<input name="name" maxlength="80" autocomplete="off" required></label>
+      <label class="field">Email<input type="email" name="email" maxlength="254" autocomplete="off" spellcheck="false" required></label>
+      <label class="field">Role<select name="role"><option value="teacher">Teacher</option><option value="head">HeadTeacher</option><option value="admin">Administrator</option></select></label>
+    </div>
+    {% if rooms %}
+    <fieldset><legend>Classrooms (for teachers)</legend>
+      <div class="rooms">{% for id, name in rooms %}<label class="check"><input type="checkbox" name="classes" value="{{ id }}"> {{ name }}</label>{% endfor %}</div>
+    </fieldset>
+    {% endif %}
+    <button class="btn primary">Send invite</button>
+  </form>
+</div>
+</div>
+<section class="accounts" aria-labelledby="acch"><h2 id="acch">Accounts</h2>
+{% for u in users %}
+<details class="user{{ ' off' if u.disabled }}">
+  <summary>
+    {{ avatar(u.id, u.name, u.avatar_at, 40) }}
+    <span class="who"><b>{{ u.name }}</b><span class="sub">{{ u.email }}</span></span>
+    <span class="tags">
+      <span class="pill blue">{{ role_name(u.role) }}</span>
+      {% if u.disabled %}<span class="pill grey">Turned off</span>{% elif not u.active %}<span class="pill amber">Invite not accepted</span>{% endif %}
+      {% if u.role == "teacher" %}<span class="pill">{{ u.classes|length }} classroom{{ "s" if u.classes|length != 1 }}</span>{% endif %}
+    </span>
+  </summary>
+  <div class="body">
+  <p class="sub">Last signed in: {{ u.last_login_at|when if u.last_login_at else "never" }}</p>
+  <form method="post" action="/admin/users/{{ u.id }}/update">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="formrow">
+      <label class="field">Name<input name="name" value="{{ u.name }}" maxlength="80" autocomplete="off" required></label>
+      <label class="field">Role<select name="role"><option value="teacher"{{ " selected" if u.role == "teacher" }}>Teacher</option><option value="head"{{ " selected" if u.role == "head" }}>HeadTeacher</option><option value="admin"{{ " selected" if u.role == "admin" }}>Administrator</option></select></label>
+    </div>
+    {% if rooms %}
+    <fieldset><legend>Classrooms (for teachers)</legend>
+      <div class="rooms">{% for id, name in rooms %}<label class="check"><input type="checkbox" name="classes" value="{{ id }}"{{ " checked" if id in u.classes }}> {{ name }}</label>{% endfor %}</div>
+    </fieldset>
+    {% endif %}
+    <button class="btn primary">Save changes</button>
+  </form>
+  <div class="actions">
+    {% if not u.disabled %}
+    <form method="post" action="/admin/users/{{ u.id }}/link"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn">{{ "Send password reset link" if u.active else "Send a new invite" }}</button></form>
+    {% endif %}
+    {% if u.id != user.id %}
+    <form method="post" action="/admin/users/{{ u.id }}/access"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="disable" value="{{ '0' if u.disabled else '1' }}"><button class="btn{{ '' if u.disabled else ' danger' }}">{{ "Turn account back on" if u.disabled else "Turn off account" }}</button></form>
+    {% endif %}
+  </div>
+  {% if u.active and not u.disabled %}<p class="hint after">Nobody can see a password, admins included. A reset link lets {{ u.name }} choose a new one; their old password keeps working until they do.</p>{% endif %}
+  </div>
+</details>
+{% endfor %}
+</section>
+<div class="mod line mail" id="email">
+  <h2>Email</h2>
+  {% if mail_enabled %}
+  <p class="sub">Invites, password reset links and password-change notices are emailed from <b>{{ mail_from }}</b>.{% if mail_test_mode %} <b>Test mode is on:</b> every email goes to one test address, not to the person it's for.{% endif %}</p>
+  {% if mail_test_mode %}<details class="how"><summary>How this works</summary><div><p>Test mode is set by MAIL_REDIRECT_TO on the site’s service on Railway. Remove it to send emails to the people they're for.</p></div></details>{% endif %}
+  {% else %}
+  <p class="sub">Email isn't set up, so invite and reset links appear here for you to copy and send yourself.</p>
+  <details class="how"><summary>How this works</summary><div><p>To turn email on, add RESEND_API_KEY and MAIL_FROM to the site’s service on Railway.</p></div></details>
+  {% endif %}
+  <p class="sub">See what staff receive: {% for key, label in email_previews %}<a href="/admin/email/preview/{{ key }}" target="_blank" rel="noopener">{{ label }}</a>{{ ", " if not loop.last }}{% endfor %}.</p>
+  {% if mail_enabled %}
+  <form method="post" action="/admin/email/test"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn">Send me a test email</button></form>
+  {% endif %}
+</div>
+{% endblock %}

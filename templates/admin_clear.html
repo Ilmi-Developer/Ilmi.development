@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Clear progress records{% endblock %}
+{% block width %} narrow{% endblock %}
+{% block content %}
+<div class="band slim"><div class="band-top"><h1>Clear progress records</h1><div class="acts"><a class="btn" href="/admin/clear-test-data/backup.json">Download a backup</a></div></div>
+<p class="lede"><b>Removes</b> every student's Quran scores, memo passes and fails, level tests, merits, warnings and missed breaks, house tokens (house points go back to 0) and stars of the week. Every student goes back to the first memo target and no Qaidah level.</p>
+<p class="lede"><b>Keeps</b> students, their details and houses, classes, accounts and TV screens. The version of each class from just before the clear is kept in Class history.</p></div>
+{% if done is defined %}
+<div class="panel" role="status"><p><b>Cleared {{ done }} {{ "class" if done == 1 else "classes" }}.</b> Open dashboards need a reload to show it.</p></div>
+{% endif %}
+{% if error %}<div class="panel" role="alert"><p>{{ error }}</p></div>{% endif %}
+{% if classes %}
+<div class="tablewrap"><table class="tbl stackable">
+<thead><tr><th scope="col">Class</th>{% for k, label in kinds %}<th scope="col" class="n">{{ label }}</th>{% endfor %}</tr></thead>
+<tbody>
+{% for c in classes %}
+<tr><td class="lead">{{ c.name }}</td>{% for k, label in kinds %}<td data-label="{{ label }}" class="n">{{ c.counts[k] }}</td>{% endfor %}</tr>
+{% endfor %}
+<tr><td class="lead"><b>Total</b></td>{% for k, label in kinds %}<td data-label="{{ label }}" class="n"><b>{{ totals[k] }}</b></td>{% endfor %}</tr>
+</tbody></table></div>
+<div class="mod line">
+  <h2>Clear it</h2>
+  <form method="post" action="/admin/clear-test-data" class="inline-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="field">Type CLEAR to confirm<input name="confirm" autocomplete="off" required></label>
+    <button class="btn danger solid">Clear progress records</button>
+  </form>
+</div>
+{% else %}
+<p class="sub">There are no progress records to clear.</p>
+{% endif %}
+{% endblock %}

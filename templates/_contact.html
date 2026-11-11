@@ -1,0 +1,3 @@
+{# A direct way to reach the school office, set with SUPPORT_EMAIL. #}
+{% if support_email %}<div class="contact"><b>{{ contact_title or "Need help from an administrator?" }}</b><a class="btn" href="mailto:{{ support_email }}?subject={{ contact_subject|default('Ilmi: password help')|urlencode }}">Email {{ support_email }}</a></div>
+{% else %}<p class="sub">{{ contact_fallback or "An administrator can send you a password reset link from Manage users." }}</p>{% endif %}

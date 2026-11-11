@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Presenter{% endblock %}
+{% block body_class %}solo{% endblock %}
+{% block content %}
+<div class="card">
+  {% include "_mark.html" %}
+  <h1>This Presenter link has ended</h1>
+  <p class="lede">A Presenter link works in the tab that opened it, until that tab is closed. Press Presenter on the dashboard to open a new one.</p>
+</div>
+{% endblock %}

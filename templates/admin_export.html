@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Spreadsheet{% endblock %}
+{% block width %} narrow{% endblock %}
+{% block content %}
+<div class="band slim"><div class="band-top"><h1>Spreadsheet</h1><div class="acts"><a class="btn primary" href="/admin/export.xlsx" download>Download the spreadsheet</a></div></div>
+<p class="lede">An Excel workbook of every class's records as they are right now. It holds students' details and staff emails, so keep it somewhere private.</p>
+<details class="how"><summary>How this works</summary><div><p>There's a sheet for each part of the dashboard. Each sheet has filters on its top row, so you can sort it or pick what to show straight away. It opens in Excel, Google Sheets and Numbers.</p></div></details></div>
+<h2>What's inside</h2>
+<div class="tablewrap"><table class="tbl">
+<thead><tr><th scope="col">Sheet</th><th scope="col">What it holds</th></tr></thead>
+<tbody>
+{% for title, about in sheets %}
+<tr><td class="lead">{{ title }}</td><td>{{ about }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endblock %}

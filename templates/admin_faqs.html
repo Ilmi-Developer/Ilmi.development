@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}FAQs{% endblock %}
+{% block width %} narrow{% endblock %}
+{% macro item(r, answered) %}
+<article class="mod line faq{{ ' wait' if not answered }}" id="faq-{{ r.id }}" aria-labelledby="faq-{{ r.id }}-h">
+  <div class="faqh" id="faq-{{ r.id }}-h"><span class="pill {{ 'blue' if r.kind == 'help' else 'amber' }}">{{ kinds[r.kind] }}</span><b>{{ r.name }}</b><span class="sub">{{ r.email }}</span><span class="sub faqt">{{ r.created_at|when }}</span></div>
+  <p class="faqm">{{ r.body }}</p>
+  {% if answered %}
+  <div class="faqr"><p class="sub">{{ r.replied_by_name or "An admin" }} replied {{ r.replied_at|when }}, {{ "in the app and by email" if r.emailed else "in the app" }}{{ "" if r.seen_at else " · not read yet" }}</p><p class="faqm">{{ r.reply }}</p></div>
+  {% endif %}
+  {% if answered %}<details class="confirm faqedit"><summary class="btn sm">Change reply</summary>{% endif %}
+  <form method="post" action="/admin/faqs/{{ r.id }}/reply" class="faqf">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="field">{{ "New reply" if answered else "Reply" }}<span class="sr-only"> to {{ r.name }}</span><textarea name="reply" rows="3" maxlength="4000" required>{{ r.reply or "" }}</textarea></label>
+    <fieldset class="faqsend"><legend>Send it</legend>
+      <label><input type="radio" name="send" value="app"{{ " checked" if not mail_enabled }}> In the app</label>
+      <label><input type="radio" name="send" value="email"{{ " checked" if mail_enabled else " disabled" }}> In the app and by email{% if not mail_enabled %} <span class="sub">(email isn't set up yet)</span>{% endif %}</label>
+    </fieldset>
+    <div class="faqa"><button class="btn primary">Send reply</button></div>
+  </form>
+  {% if answered %}</details>{% endif %}
+  {% if user.role == "admin" %}<details class="confirm faqdel"><summary class="btn sm quiet">Delete<span class="sr-only"> {{ r.name }}'s message</span></summary>
+  <form method="post" action="/admin/faqs/{{ r.id }}/delete"><p>This removes the message{{ " and its reply" if answered }} for everyone, {{ r.name }} included.</p><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn sm danger solid">Yes, delete it</button></form></details>{% endif %}
+</article>
+{% endmacro %}
+{% block content %}
+<div class="band slim"><div class="band-top"><h1>FAQs</h1></div>
+<p class="lede">What staff have sent from Help or Requests on their dashboard.</p>
+<details class="how"><summary>How this works</summary><div><p>Your reply shows in their app straight away, with a dot on their button until they open it, and can go by email too. Every Sunday at 12:00 a summary of the week goes to {{ summary_to or "nobody until HELP_SUMMARY_TO is set on Railway" }}{{ "" if mail_enabled else " once email is set up" }}.</p></div></details></div>
+<h2 class="faqs-h">Waiting for a reply <span class="pill {{ 'amber' if waiting else 'grey' }}">{{ waiting|length }}</span></h2>
+{% for r in waiting %}{{ item(r, False) }}{% else %}<p class="sub faqnone">Nothing is waiting. New messages appear here.</p>{% endfor %}
+<h2 class="faqs-h">Answered <span class="pill grey">{{ answered|length }}</span></h2>
+{% for r in answered %}{{ item(r, True) }}{% else %}<p class="sub faqnone">No replies yet.</p>{% endfor %}
+{% endblock %}

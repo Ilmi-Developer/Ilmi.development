@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt pip-audit==2.9.0
+      - name: Generated pages match src/
+        run: |
+          python tools/build.py
+          git diff --exit-code -- Master_Dashboard.html Master_Dashboard_standalone.html
+      - name: Tests (SQLite and PostgreSQL)
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+        run: python -m unittest -v test_server
+      - name: Known vulnerabilities in dependencies
+        run: pip-audit -r requirements.txt
+      - name: Docker image builds
+        run: docker build -t safar-dashboard .

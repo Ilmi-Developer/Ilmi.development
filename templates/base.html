@@ -1,0 +1,153 @@
+{% from "_icons.html" import icon %}{% from "_avatar.html" import avatar %}<!DOCTYPE html>
+{# Each person's theme (Account, themes.py) only where the signed-in shell shows: the sign-in, password and
+   must-change pages always keep Ilmi's own look. #}
+{% set look = theme_of(user) if user and not user.must_change and self.body_class() != "solo" else none %}
+<html lang="en"{{ ' class="has-dock"'|safe if look }}{{ theme_attrs(look)|safe if look }}>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="same-origin">
+<meta name="theme-color" content="{{ look.menu if look else "#f4efe4" }}">
+<title>{% block title %}{% endblock %} · Ilmi</title>
+<link rel="preload" href="/fonts/figtree-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/cormorant-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/amiri-ilmi.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" type="image/png" href="/favicon.png?v=4">
+<link rel="apple-touch-icon" href="/favicon.png?v=4">
+<link rel="stylesheet" href="/auth.css">
+{# Where the wash page turn starts from; only on pages whose policy lets a script of ours run (server.py). #}
+{% if request.path in ("/login", "/login/code") or request.path.startswith("/account") or request.path.startswith("/admin/") %}<script src="/wash.js"></script>{% endif %}
+{% if look and look.css %}<link rel="stylesheet" href="{{ look.css }}" id="themecss">{% endif %}
+{% if intro %}<script src="/intro.js" defer></script>{% endif %}
+{% block head %}{% endblock %}
+{% if user and (request.path.startswith("/account") or request.path.startswith("/admin/")) %}<script src="/menu.js" defer></script>{% endif %}
+{# The dock, in place of the side menu, wherever the signed-in menu shows (static/dock.js). #}
+{% if look %}<script src="/warm-tooltip.js" defer></script><script src="/dock.js" defer></script>{% endif %}
+</head>
+{% set shell = user and not user.must_change and self.body_class() != "solo" %}
+<body class="{% block body_class %}app{% endblock %}{{ " cine" if intro }}">
+{% if shell %}
+{% set here = request.path %}
+<a class="skip" href="#main">Skip to main content</a>
+<div class="shell">
+<header><div class="rail">
+  <a class="brand" href="/" translate="no"><span class="ilmi"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span>{% if site_title() %}<small>{{ site_title() }}</small>{% endif %}</a>
+  {# Search opens the dashboard's search (Ctrl+K does the same here, static/menu.js). #}
+  <a class="qkb" href="/#search" aria-label="Search" aria-keyshortcuts="Control+K Meta+K"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span class="qkt">Search</span><kbd aria-hidden="true">Ctrl K</kbd></a>
+  <input type="checkbox" id="navt" class="navt" aria-label="Show the menu">
+  <div class="navw">
+  <nav class="navs" aria-label="Main">
+    {# The same items in the same order as the dashboard's menu (src/page.html and railway-storage.js). The page
+       you are on carries a .navsel pill, which glides from item to item as pages change (tokens.css). Groups
+       (.ngrp) fold open and shut with a branched line to each item (static/menu.js); without the script they stay open. #}
+    {% macro nl(href, ic, label, on=False, sub=False) -%}
+    <a class="nav{{ ' nsub' if sub }}" href="{{ href }}"{{ ' aria-current="page"'|safe if on }}>{% if on %}<span class="navsel" aria-hidden="true"></span>{% endif %}{{ icon(ic) }}{{ label }}</a>
+    {%- endmacro %}
+    {% macro grp(key, ic, label, cls="") -%}
+    <div class="ngrp{{ ' ' ~ cls if cls }}" data-g="{{ key }}"><button type="button" class="nav ngh" aria-expanded="true" aria-controls="ng-{{ key }}">{{ icon(ic) }}<span class="ngt">{{ label }}</span>{{ icon("chev") }}</button><div class="ngb" id="ng-{{ key }}"><div class="ngf"><div class="ngi">{{ caller() }}</div></div></div></div>
+    {%- endmacro %}
+    {% macro ext(href, ic, label) -%}
+    <a class="nav nsub" href="{{ href }}" target="_blank" rel="noopener noreferrer">{{ icon(ic) }}<span translate="no">{{ label }}</span><span class="ext" aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a>
+    {%- endmacro %}
+    {{ nl("/", "home", "Overview") }}
+    {% set all_classes = user.role in ("admin", "head") %}
+    {% if all_classes %}{{ nl("/#record", "pen", "Record") }}{% endif %}
+    {{ nl("/#classes", "grid", "Classes") }}
+    {% if all_classes %}{{ nl("/#house-points", "pie", "House points") }}
+    {{ nl("/#rankings", "trophy", "Rankings") }}
+    {% endif %}
+    {# Teachers and HeadTeachers open one class's Presenter; admins have the Presenter page (TV screens) below. #}
+    {% if user.role != "admin" %}{{ nl("/#presenter", "presenter", "Presenter") }}{% endif %}
+    {% if config.ASSISTANT_ENABLED %}{{ nl("/#ask", "rehal", "Ask Ilmi") }}{% endif %}
+    {# A HeadTeacher has FAQs but none of the Administration pages. #}
+    {% if user.role == "head" %}{{ nl("/admin/faqs", "faq", "FAQs", here == "/admin/faqs") }}{% endif %}
+    {% if user.role == "admin" %}
+    <div class="navh" id="adminh">Administration</div>
+    {% call grp("users", "idcard", "User management") %}
+    {{ nl("/#students", "students", "Students", sub=True) }}
+    {{ nl("/admin/users", "users", "Manage users", here == "/admin/users", sub=True) }}
+    {% endcall %}
+    {% call grp("live", "pulse", "Live Activity") %}
+    {{ nl("/admin/activity", "activity", "Activity", here == "/admin/activity", sub=True) }}
+    {{ nl("/admin/history", "history", "Class history", here.startswith("/admin/history"), sub=True) }}
+    {% endcall %}
+    {% call grp("data", "db", "Data handling") %}
+    {{ nl("/admin/house-points", "pie", "Counted coins", here == "/admin/house-points", sub=True) }}
+    {{ nl("/admin/export", "sheet", "Spreadsheet", here == "/admin/export", sub=True) }}
+    {{ nl("/admin/import", "upload", "Import", here.startswith("/admin/import"), sub=True) }}
+    {% endcall %}
+    {{ nl("/admin/faqs", "faq", "FAQs", here == "/admin/faqs") }}
+    {% if config.ASSISTANT_ENABLED %}{{ nl("/admin/requests", "faq", "Assistant requests", here == "/admin/requests") }}{% endif %}
+    {{ nl("/admin/tv", "tv", "Presenter", here == "/admin/tv") }}
+    {% endif %}
+    {# Links to the school's other sites sit at the foot of the menu, just above the signed-in name. #}
+    {% call grp("links", "link", "Links", "j2jb") %}
+    {{ ext("https://journey2jannah.com", "book", "Journey2Jannah") }}
+    {{ ext("https://flickpermanentmakeupacademy.com/login/", "play", "FlickLearning") }}
+    {% endcall %}
+  </nav>
+  <div class="me">
+    <div class="who">{{ avatar(user.id, user.name, user.avatar_at, 38) }}<div class="wt"><b>{{ user.name }}</b><span>{{ role_name(user.role) }}</span></div></div>
+    <div class="row">
+      <a class="linkbtn" href="/account"{{ ' aria-current="page"'|safe if here == "/account" }}>Account</a>
+      <form method="post" action="/logout"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="linkbtn">Sign out</button></form>
+    </div>
+  </div>
+  </div>
+  {# The phone dock (tokens.css), as on the dashboard: these pages have no scripts, so its items are links back to
+     the dashboard's pages, and More opens the full menu through the checkbox. #}
+  <label for="navt" class="dscrim" aria-hidden="true"></label>
+  <nav class="dock" aria-label="Shortcuts">
+    <a class="dk dk-home" href="/"><span class="dki">{{ icon("home") }}</span><span>Home</span></a>
+    {% if all_classes %}
+    <a class="dk dk-classes" href="/#classes"><span class="dki">{{ icon("grid") }}</span><span>Classes</span></a>
+    <a class="dk dk-record" href="/#record"><span class="dki">{{ icon("pen") }}</span><span>Record</span></a>
+    {% else %}
+    <a class="dk dk-quran" href="/#tab-Q"><span class="dki">{{ icon("quran") }}</span><span>Quran</span></a>
+    <a class="dk dk-memo" href="/#tab-T"><span class="dki">{{ icon("target") }}</span><span>Memo</span></a>
+    {% endif %}
+    <label for="navt" class="dk dk-more" aria-hidden="true"><span class="dki">{{ icon("more") }}</span><span>More</span></label>
+  </nav>
+</div></header>
+<div class="work">
+<main><div class="content{% block width %}{% endblock %}" id="main" tabindex="-1">
+{% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+{% block content %}{% endblock %}
+</div></main>
+</div>
+</div>
+{% else %}
+{% if intro %}
+{# Opening titles on a fresh visit to the sign-in page: on paper, a watercolour wash blooms and splashes of paint
+   land around the centre one after another while علمي is written in by hand, a pen running through each letter in
+   the order a calligrapher writes it with wet olive ink drying to ink behind it, ي's dots last; then the stage fades
+   into the sign-in screen, the card settles and the welcome panel's drawing inks itself in. The word keeps the
+   wordmark's font and sits level as everywhere (templates/art/intro-word.svg, made by tools/art/word.py). CSS only. #}
+<div class="intro" aria-hidden="true">
+  <span class="iwash"></span>
+  <span class="isplats"><span class="isplat s1"></span><span class="isplat s2"></span><span class="isplat s3"></span><span class="isplat s4"></span></span>
+  <div class="iword">{% include "art/intro-word.svg" %}</div>
+</div>
+{% endif %}
+<header class="solo-band"><a href="/welcome" class="ilmi" translate="no"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span><span class="sr-only">, start page</span></a>{% if site_title() %}<small>{{ site_title() }}</small>{% endif %}</header>
+<main>
+{% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+{{ self.content() }}
+</main>
+{# The welcome panel follows the form in reading order; on a computer the grid draws it on the right. #}
+<aside class="welcome" aria-label="Welcome">
+  {# Olive watercolour, with pale mist drifting slowly across it (auth.css). #}
+  <div class="wsky" aria-hidden="true"><span class="wdrift d1"></span><span class="wdrift d2"></span></div>
+  <a class="wmark" href="/welcome" translate="no"><span class="ilmi"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span>{% if site_title() %}<small>{{ site_title() }}</small>{% endif %}</a>
+  <figure class="wquote">
+    <span class="wtab">Welcome</span>
+    <blockquote><p>“The best of you are those who learn the Qur’ān and teach it.”</p></blockquote>
+    <figcaption>The Prophet Muhammad (peace be upon him), Ṣaḥīḥ al-Bukhārī 5027</figcaption>
+  </figure>
+  <div class="wart" aria-hidden="true">{% include "art/skyline.svg" %}</div>
+</aside>
+{% endif %}
+</body>
+</html>

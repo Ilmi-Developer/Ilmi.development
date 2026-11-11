@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Remove Quran tab house points{% endblock %}
+{% block width %} narrow{% endblock %}
+{% block content %}
+<div class="band slim"><div class="band-top"><h1>Remove Quran tab house points</h1><div class="acts"><a class="btn" href="/admin/clear-test-data/backup.json">Download a backup</a></div></div>
+<p class="lede">These students have house coins from the Quran tab, which no longer gives coins. Removing them takes those coins and their points away.</p>
+<details class="how"><summary>How this works</summary><div><p>Only coins that were given from a student's name on the Quran tab are removed. Coins from the Record page and from passed level tests stay. The version of each class from just before is kept in Class history.</p></div></details></div>
+{% if done is defined %}
+<div class="panel" role="status"><p><b>Removed {{ done }} {{ "coin" if done == 1 else "coins" }}.</b> Open dashboards need a reload to show it.</p></div>
+{% endif %}
+{% if error %}<div class="panel" role="alert"><p>{{ error }}</p></div>{% endif %}
+{% if students %}
+<p class="sub">{{ students|length }} {{ "student" if students|length == 1 else "students" }}, {{ total }} points:
+{% for h, v in houses|dictsort %}{{ h }} {{ v }}{{ "," if not loop.last else "." }} {% endfor %}</p>
+<div class="tablewrap"><table class="tbl stackable">
+<thead><tr><th scope="col">Student</th><th scope="col">Class</th><th scope="col">House</th><th scope="col" class="n">Green</th><th scope="col" class="n">Blue</th><th scope="col" class="n">Red</th><th scope="col" class="n">Points</th><th scope="col">Latest</th></tr></thead>
+<tbody>
+{% for s in students %}
+<tr><td class="lead">{{ s.name }}{% if s.sid %} <span class="sub">{{ s.sid }}</span>{% endif %}</td><td data-label="Class">{{ s.cls }}</td><td data-label="House">{{ s.house or "No house" }}</td>
+<td data-label="Green" class="n">{{ s.counts.tg }}</td><td data-label="Blue" class="n">{{ s.counts.tb }}</td><td data-label="Red" class="n">{{ s.counts.tr }}</td><td data-label="Points" class="n"><b>{{ s.points }}</b></td><td data-label="Latest">{{ s.when }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+<div class="mod line">
+  <h2>Remove them</h2>
+  <form method="post" action="/admin/remove-quran-coins" class="inline-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="field">Type DELETE to confirm<input name="confirm" autocomplete="off" required></label>
+    <button class="btn danger solid">Remove these house points</button>
+  </form>
+</div>
+{% else %}
+<p class="sub">No student has house points from the Quran tab.</p>
+{% endif %}
+{% endblock %}

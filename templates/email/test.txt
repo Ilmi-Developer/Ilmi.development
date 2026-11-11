@@ -1,0 +1,12 @@
+Assalamu alaikum {{ name }},
+
+This test came from Manage users on Ilmi. If you can read it, invites and password reset links will reach staff by email.
+
+Sent to: {{ email }}
+Sent: {{ at|when }} (UK time)
+
+Didn't arrive in the inbox straight away? Check the spam or junk folder, and mark it as not spam so later emails arrive normally.
+
+Open the dashboard: {{ signin }}
+
+{{ site_title() or "Ilmi" }}

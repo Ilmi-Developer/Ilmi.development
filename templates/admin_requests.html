@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Assistant requests{% endblock %}
+{% block width %} narrow{% endblock %}
+{% block content %}
+<div class="band slim"><div class="band-top"><h1>Assistant requests</h1></div>
+<p class="lede">Features, changes and problems staff have sent through the assistant, after it showed them its summary and they confirmed it. New ones come first. Staff can ask the assistant for the status of their own requests.</p></div>
+{% set waiting = items|selectattr("status", "equalto", "new")|list %}
+<h2 class="faqs-h">New <span class="pill {{ 'amber' if waiting else 'grey' }}">{{ waiting|length }}</span></h2>
+{% for r in items %}
+{% if loop.index0 == waiting|length %}<h2 class="faqs-h">Done or declined <span class="pill grey">{{ items|length - waiting|length }}</span></h2>{% endif %}
+<article class="mod line faq{{ ' wait' if r.status == 'new' }}" id="req-{{ r.id }}" aria-labelledby="req-{{ r.id }}-h">
+  <div class="faqh" id="req-{{ r.id }}-h"><span class="pill {{ 'red' if r.category == 'problem' else 'blue' if r.category == 'feature' else 'amber' if r.category == 'change' else 'grey' }}">{{ categories[r.category] }}</span><b>{{ r.name }}</b>{% if r.email %}<span class="sub">{{ r.email }}</span>{% endif %}<span class="sub faqt">{{ r.created_at|when }}</span></div>
+  <p class="faqm">{{ r.summary }}</p>
+  {% if r.status != "new" %}<p class="sub">{{ statuses[r.status] }}{% if r.updated_by_name %} by {{ r.updated_by_name }}{% endif %}{% if r.updated_at %}, {{ r.updated_at|when }}{% endif %}</p>{% endif %}
+  <div class="faqa">
+    {% for value, label in (("done", "Mark done"), ("declined", "Decline"), ("new", "Back to new")) if value != r.status %}
+    <form method="post" action="/admin/requests/{{ r.id }}/status"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="status" value="{{ value }}"><button class="btn sm{{ ' primary' if value == 'done' else '' }}">{{ label }}<span class="sr-only">: {{ r.name }}'s request</span></button></form>
+    {% endfor %}
+  </div>
+</article>
+{% else %}
+<p class="sub faqnone">No requests yet. They appear here when staff send one through the assistant.</p>
+{% endfor %}
+{% endblock %}

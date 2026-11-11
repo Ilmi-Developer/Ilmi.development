@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Activity{% endblock %}
+{% block content %}
+<div class="band slim"><div class="band-top"><h1>Activity</h1></div><p class="lede">The last {{ config.RETENTION_DAYS }} days, newest first, up to 300 entries. Saves by one person within 15 minutes show once.</p></div>
+{% if rows %}
+<div class="tablewrap"><table class="tbl stackable">
+<thead><tr><th scope="col">When</th><th scope="col">Who</th><th scope="col">What</th><th scope="col">Classroom</th><th scope="col">IP address</th></tr></thead>
+<tbody>
+{% for r in rows %}
+<tr><td data-label="When" class="num">{{ r.at|when }}</td><td data-label="Who">{{ r.name or "–" }}</td><td data-label="What">{{ r.action|action }}{% if r.action == "class.saved" and r.detail and (r.detail|fromjson).via == "assistant" %} <span class="sub">via assistant: {{ (r.detail|fromjson).change }}</span>{% endif %}{% if r.action.startswith("login.") and r.detail %} <span class="sub">({{ (r.detail|fromjson).email }})</span>{% endif %}</td><td data-label="Classroom">{{ r.class_id or "" }}</td><td data-label="IP address" class="sub">{{ r.ip or "" }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% else %}
+<p class="sub">No activity in the last {{ config.RETENTION_DAYS }} days.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,5 @@
+{# A person's profile picture, or their first name's initial on pastel blue (avatars.py). Decorative: the name is
+   always written beside it. #}
+{% macro avatar(id, name, at, size=36, cls="") -%}
+<span class="av{{ ' ' ~ cls if cls }}" aria-hidden="true">{% if at %}<img src="{{ avatar_url(id, at) }}" alt="" width="{{ size }}" height="{{ size }}" loading="lazy" decoding="async">{% else %}{{ initial(name) }}{% endif %}</span>
+{%- endmacro %}

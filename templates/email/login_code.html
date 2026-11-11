@@ -1,0 +1,13 @@
+{% extends "email/_layout.html" %}
+{% from "email/_parts.html" import p, facts %}
+{% block preheader %}Your sign-in code is {{ code }}. It expires in {{ code_minutes }} minutes.{% endblock %}
+{% block kicker %}Sign-in code{% endblock %}
+{% block heading %}{{ code }}{% endblock %}
+{% block content %}
+{% call p() %}Assalamu alaikum {{ name }},{% endcall %}
+{% call p() %}Type this code on the sign-in page to finish signing in to Ilmi as an administrator.{% endcall %}
+{{ facts([("Code", code), ("Asked for", at|when ~ " (UK time)")]) }}
+{% call p(True) %}It works once, in the browser where you typed your password, and expires in {{ code_minutes }} minutes. Never share it: nobody from the school will ask you for it.{% endcall %}
+{% call p(True) %}<b style="color:#44453a">Didn't just sign in?</b> Someone knows your password. Change it on the Account page straight away, or use "Forgotten your password?" on the sign-in page.{% endcall %}
+{% endblock %}
+{% block why %}You're getting this because someone signed in to the admin account {{ email }} with its password.<br>{% endblock %}

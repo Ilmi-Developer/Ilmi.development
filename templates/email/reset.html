@@ -1,0 +1,18 @@
+{% extends "email/_layout.html" %}
+{% from "email/_parts.html" import button, fallback, p %}
+{% block preheader %}Choose a new password. The link expires in {{ reset_hours }}.{% endblock %}
+{% block kicker %}Password reset{% endblock %}
+{% block heading %}Reset your password{% endblock %}
+{% block content %}
+{% call p() %}Assalamu alaikum {{ name }},{% endcall %}
+{% if by %}
+{% call p() %}{{ by }}, an administrator, has sent you a link to choose a new password for your Ilmi account.{% endcall %}
+{% else %}
+{% call p() %}Someone asked to reset the password for your Ilmi account ({{ email }}).{% endcall %}
+{% endif %}
+{{ button(link, "Choose a new password") }}
+{% call p(True) %}The link works once and expires in {{ reset_hours }}. Your current password keeps working until you choose a new one; then you'll be signed out on your other devices.{% endcall %}
+{% if not by %}{% call p(True) %}<b style="color:#44453a">Didn't ask for this?</b> Ignore this email and your password stays the same.{% endcall %}{% endif %}
+{{ fallback(link) }}
+{% endblock %}
+{% block why %}You're getting this because a reset link was requested for {{ email }}.<br>{% endblock %}

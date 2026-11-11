@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+{# Ilmi's start page (server.py /welcome): where anyone signed out arrives. Paper, ink drawings and olive watercolour,
+   after the brief's reference. The drawings are inline (templates/art, from tools) so they can draw themselves on;
+   /welcome.js reveals each part as it scrolls into view, and without it everything simply shows. With motion allowed,
+   the scroll also drives the page (welcome.js, welcome.css): [data-scrub] parts get their progress through the window,
+   and [data-pin] parts hold still while it plays (the sideways gallery, the statement read in word by word, the
+   preview's three steps). Under reduced motion nothing is pinned and every part rests in its finished state. The preview of the
+   overview is drawn in HTML with made-up figures, never real pupils. The site title (site_settings.py), when an
+   admin has set one, sits under the wordmark and in the footer. #}
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="same-origin">
+<meta name="theme-color" content="#f4efe4">
+<title>Ilmi{{ " · " ~ site_title() if site_title() }}</title>
+<meta name="description" content="Ilmi is a madrasah manager for Qur’an lessons, memorisation, classes and house points{{ ", at " ~ site_title() if site_title() }}.">
+<link rel="preload" href="/fonts/cormorant-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/amiri-ilmi.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/amiri-text.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/garamond-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" type="image/png" href="/favicon.png?v=4">
+<link rel="apple-touch-icon" href="/favicon.png?v=4">
+<link rel="stylesheet" href="/welcome.css">
+<script src="/wash.js"></script>
+<script src="/welcome.js"></script>
+</head>
+<body class="wl">
+<a class="skip" href="#main">Skip to main content</a>
+<div class="sprog" aria-hidden="true"><i></i></div>
+{% set go = "/" if user else "/login" %}
+{% set go_label = "Open Ilmi" if user else "Sign in" %}
+<header class="wnav">
+  <a class="wbrand" href="/welcome"><span class="ilmi" translate="no"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span>{% if site_title() %}<small>{{ site_title() }}</small>{% endif %}<span class="sr-only">, start page</span></a>
+  <nav class="wlinks" aria-label="Start page">
+    <a href="#what">What it does</a>
+    <a href="#inside">Inside Ilmi</a>
+    <a href="#values">Our values</a>
+  </nav>
+  <a class="wbtn sm" href="{{ go }}">{{ go_label }}<svg class="arr" viewBox="0 0 20 12" aria-hidden="true" focusable="false"><path d="M1 6h17M13 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+</header>
+
+<main id="main" tabindex="-1">
+<section class="hero" aria-labelledby="hero-h">
+  <span class="hwash hw1" aria-hidden="true"></span><span class="hwash hw2" aria-hidden="true"></span>
+  <div class="hero-art">
+    {# A splash of paint under the stand as it inks itself in, and another where the drop lands on the i (welcome.css). #}
+    <span class="splat hs1" aria-hidden="true"></span>
+    {% include "art/sprig.svg" %}
+    <h1 class="hmark" id="hero-h"><span class="sr-only">Ilmi (علمي)</span><span class="hm-en" aria-hidden="true" translate="no"><span class="l l1">I</span><span class="l l2">l</span><span class="l l3">m</span><span class="l l4">ı<span class="splat dsplat"></span><span class="dot"></span></span></span><span class="hm-ar" lang="ar" dir="rtl" aria-hidden="true" translate="no">علمي</span></h1>
+    {% include "art/rahle.svg" %}
+  </div>
+  <div class="hero-text">
+    <p class="tagline">Every step in learning matters.</p>
+    <p class="lede">A madrasah manager for Qur’an lessons, memorisation, classes and house points.</p>
+    <div class="cta">
+      <a class="wbtn" href="{{ go }}">{{ go_label }}<svg class="arr" viewBox="0 0 20 12" aria-hidden="true" focusable="false"><path d="M1 6h17M13 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a class="wbtn ghost" href="#what">See how it works</a>
+    </div>
+  </div>
+  <span class="cue" aria-hidden="true"><span>Scroll</span><i></i></span>
+</section>
+
+{# A hadith on learning the Qur’an together (Ṣaḥīḥ Muslim 2699), in Arabic and in English. The Arabic is set in an
+   Amiri subset holding only the letters this page uses (amiri-text.woff2, made by tools/art/fonts.py). #}
+<section class="band rv" id="hadith" data-scrub aria-labelledby="band-h">
+  <span class="bwash" aria-hidden="true"></span><span class="bmist" aria-hidden="true"></span>
+  <div class="band-in">
+    <div class="band-ar">
+      <h2 class="band-k" id="band-h">Hadith</h2>
+      <blockquote lang="ar" dir="rtl"><p class="hq-ar"><span class="ln">مَا اجْتَمَعَ قَوْمٌ فِي بَيْتٍ مِنْ بُيُوتِ اللَّهِ</span> <span class="ln"><span class="hl">يَتْلُونَ كِتَابَ اللَّهِ وَيَتَدَارَسُونَهُ بَيْنَهُمْ</span></span> <span class="ln">إِلَّا نَزَلَتْ عَلَيْهِمُ السَّكِينَةُ وَغَشِيَتْهُمُ الرَّحْمَةُ</span> <span class="ln">وَحَفَّتْهُمُ الْمَلَائِكَةُ وَذَكَرَهُمُ اللَّهُ فِيمَنْ عِنْدَهُ</span></p></blockquote>
+    </div>
+    <figure class="band-t">
+      <blockquote><p class="big">“No people gather in one of the houses of Allah, <span class="hl">reciting the Book of Allah and studying it together</span>, but tranquillity descends upon them, mercy covers them, the angels surround them, and Allah mentions them among those who are with Him.”</p></blockquote>
+      <figcaption>The Prophet Muhammad (peace be upon him), Ṣaḥīḥ Muslim 2699</figcaption>
+    </figure>
+  </div>
+  <div class="band-sprig" aria-hidden="true">{% include "art/sprig.svg" %}</div>
+</section>
+
+<section class="feats" id="what" aria-labelledby="what-h" data-pin>
+ <div class="pin-view">
+ <div class="f-track">
+  <div class="f-intro rv">
+    <p class="v-k">What it does</p>
+    <h2 id="what-h">Four things, <em>done well.</em></h2>
+    <p>Everything a madrasah keeps track of, in one calm record.</p>
+  </div>
+  <ul>
+    <li class="rv">{% include "art/i-quran.svg" %}<span class="f-n" aria-hidden="true">01</span><h3>Qur’an tracking</h3><p>Score each lesson on the day-by-day sheet, and record Qaidah levels and book passes.</p></li>
+    <li class="rv">{% include "art/i-memo.svg" %}<span class="f-n" aria-hidden="true">02</span><h3>Memorisation</h3><p>Memo levels, weekly targets and level tests, followed pupil by pupil.</p></li>
+    <li class="rv">{% include "art/i-houses.svg" %}<span class="f-n" aria-hidden="true">03</span><h3>Houses and rewards</h3><p>Makkah, Madinah and Al-Aqsa: tokens, house points and the race on the hall TV.</p></li>
+    <li class="rv">{% include "art/i-progress.svg" %}<span class="f-n" aria-hidden="true">04</span><h3>Progress at a glance</h3><p>Rankings, pass history and pupils by level, so you can see growth and who needs help.</p></li>
+  </ul>
+ </div>
+ <div class="f-bar" aria-hidden="true"><i></i></div>
+ </div>
+</section>
+
+{# A statement that is read in as it scrolls: each word darkens from faint to ink (welcome.js splits the words). #}
+<section class="idea" aria-labelledby="idea-h" data-pin>
+ <div class="pin-view">
+  <span class="i-splash" aria-hidden="true"></span>
+  <div class="idea-in">
+    <h2 class="v-k" id="idea-h">The idea</h2>
+    <p class="idea-t" data-words>Lessons, levels, passes and points used to live in notebooks, spreadsheets and memory. Ilmi keeps them together, so every teacher can see each pupil’s next step, and no effort goes <em>unnoticed.</em></p>
+  </div>
+ </div>
+</section>
+
+<section class="inside" id="inside" aria-labelledby="inside-h" data-pin data-steps="3">
+ <div class="pin-view">
+  <span class="iswoosh" aria-hidden="true"></span>
+  <div class="in-text rv">
+    <h2 id="inside-h">Every class, every pupil, <em>in one place.</em></h2>
+    <hr>
+    <p>A clear, calm view of your classes and each pupil’s learning, so you can spend more time teaching and less time organising.</p>
+    <ol class="steps">
+      <li><b>Score every lesson</b><span>The day’s Qur’an lessons, scored on one sheet.</span></li>
+      <li><b>Follow memo targets</b><span>See who met their target and who is still to test.</span></li>
+      <li><b>Run the house race</b><span>Points add up live, on the overview and the hall TV.</span></li>
+    </ol>
+  </div>
+  <div class="mock-3d">
+  <figure class="mock rv" role="img" aria-label="A preview of Ilmi’s school overview with made-up figures: lessons scored today, memo targets met, classes and pupils, the house race and passes per week.">
+    <div class="mk-rail" aria-hidden="true">
+      <span class="ilmi"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span>
+      <ul><li class="on">Overview</li><li>Record</li><li>Classes</li><li>House points</li><li>Rankings</li><li>Presenter</li></ul>
+    </div>
+    <div class="mk-main" aria-hidden="true">
+      <p class="mk-h">Assalāmu ʿalaykum, Ustādha Maryam!</p>
+      <p class="mk-s">School overview</p>
+      <div class="mk-stats">
+        <div><small>Qur’an lessons today</small><b data-n="64">64</b><i class="ok">Scored</i></div>
+        <div><small>Memo targets met</small><b data-n="38">38</b><i class="warn">6 still to test</i></div>
+        <div><small>Classes</small><b data-n="12">12</b><i>All recorded</i></div>
+        <div><small>Pupils</small><b data-n="186">186</b><i>Total</i></div>
+      </div>
+      <div class="mk-row">
+        <div class="mk-card">
+          <p class="mk-t">House race</p>
+          <ol class="mk-houses">
+            <li class="mk"><span>Makkah</span><span class="bar"><i></i></span><b>1,240</b></li>
+            <li class="md"><span>Madinah</span><span class="bar"><i></i></span><b>1,185</b></li>
+            <li class="ma"><span>Al-Aqsa</span><span class="bar"><i></i></span><b>1,120</b></li>
+          </ol>
+        </div>
+        <div class="mk-card">
+          <p class="mk-t">Passes per week</p>
+          <div class="mk-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="now"></i></div>
+        </div>
+      </div>
+    </div>
+  </figure>
+  </div>
+ </div>
+</section>
+
+{# What we care about: three values, each drawn in ink over a splash of paint that lands as the card arrives. #}
+<section class="values" id="values" aria-labelledby="values-h" data-scrub>
+  <div class="v-head rv">
+    <p class="v-k">Our values</p>
+    <h2 id="values-h">What we care about.</h2>
+  </div>
+  <ul class="v-list">
+    <li class="vcard rv"><span class="v-art"><span class="splat vs" aria-hidden="true"></span>{% include "art/v-generation.svg" %}</span><span class="v-ar" lang="ar" dir="rtl" aria-hidden="true">تَرْبِيَة</span><h3>The next generation</h3><p>We care about the learning of the generation to come, so every pupil’s progress is noticed, nurtured and kept.</p></li>
+    <li class="vcard rv"><span class="v-art"><span class="splat vs" aria-hidden="true"></span>{% include "art/v-lamp.svg" %}</span><span class="v-ar" lang="ar" dir="rtl" aria-hidden="true">اِبْتِكَار</span><h3>Innovation</h3><p>New ways to serve an old tradition: tools that give teachers back their time and make each pupil’s growth easy to see.</p></li>
+    <li class="vcard rv"><span class="v-art"><span class="splat vs" aria-hidden="true"></span>{% include "art/v-key.svg" %}</span><span class="v-ar" lang="ar" dir="rtl" aria-hidden="true">أَمَانَة</span><h3>Amānah, a trust</h3><p>Every pupil’s record is a trust. We keep it accurate, private and safe, and only the right people can see it.</p></li>
+  </ul>
+</section>
+
+<section class="close" aria-labelledby="close-h" data-scrub>
+  <span class="cwash" aria-hidden="true"></span>
+  <p class="c-big" aria-hidden="true" translate="no"><span>Ilmi</span><span lang="ar" dir="rtl">علمي</span><span>Ilmi</span><span lang="ar" dir="rtl">علمي</span><span>Ilmi</span><span lang="ar" dir="rtl">علمي</span></p>
+  <div class="close-in rv">
+    <h2 id="close-h" data-words>Supporting Qur’an learning for the <em>next generation.</em></h2>
+    <a class="wbtn" href="{{ go }}">{{ go_label + " to Ilmi" if not user else go_label }}<svg class="arr" viewBox="0 0 20 12" aria-hidden="true" focusable="false"><path d="M1 6h17M13 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+  </div>
+  <div class="close-art rv" aria-hidden="true">{% include "art/grass.svg" %}{% include "art/skyline.svg" %}</div>
+</section>
+</main>
+
+<footer class="wfoot">
+  <span class="ilmi" translate="no"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span>
+  {% if site_title() %}<span>{{ site_title() }}</span>{% endif %}
+  <a href="{{ go }}">{{ "Open Ilmi" if user else "Staff sign in" }}</a>
+</footer>
+</body>
+</html>

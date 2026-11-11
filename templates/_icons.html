@@ -1,0 +1,35 @@
+{# Stroke icons for the navigation rail and the sign-in fields. The dashboard (src/page.html) carries copies of the same paths. #}
+{% macro icon(name) -%}
+<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+{%- if name == "rehal" %}<path d="M12 6.8C9.6 5.2 6.4 4.8 3.5 5.6v8.6c2.9-.8 6.1-.4 8.5 1.2 2.4-1.6 5.6-2 8.5-1.2V5.6c-2.9-.8-6.1-.4-8.5 1.2z"/><path d="M12 6.8v8.6"/><path d="m7 16.8 10 3.7M17 16.8 7 20.5"/>
+{%- elif name == "home" %}<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>
+{%- elif name == "users" %}<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.3-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.8a3.4 3.4 0 0 1 0 6.4"/><path d="M18 14.8c1.8.7 3 2.4 3.5 5.2"/>
+{%- elif name == "history" %}<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4.5h4.5"/><path d="M12 7.5V12l3 2"/>
+{%- elif name == "activity" %}<path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/>
+{%- elif name == "tv" %}<rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M8 20h8"/><path d="M12 16.5V20"/>
+{%- elif name == "presenter" %}<rect x="3" y="4" width="18" height="12" rx="2"/><path d="m10.5 7.8 4 2.2-4 2.2z"/><path d="M12 16v4"/><path d="M8 20h8"/>
+{%- elif name == "sheet" %}<rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M3.5 9.5h17"/><path d="M3.5 15h17"/><path d="M9.5 9.5v11"/>
+{%- elif name == "upload" %}<path d="M12 15V4"/><path d="m7.5 8.5 4.5-4.5 4.5 4.5"/><path d="M4 15v4.5h16V15"/>
+{%- elif name == "book" %}<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20v3H6.5"/>
+{%- elif name == "grid" %}<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>
+{%- elif name == "students" %}<path d="M2.5 9 12 4.5 21.5 9 12 13.5z"/><path d="M6.5 11.2v4.3c1.5 1.5 3.4 2.2 5.5 2.2s4-.7 5.5-2.2v-4.3"/><path d="M21.5 9v5"/>
+{%- elif name == "pie" %}<path d="M20.5 13.5A8.5 8.5 0 1 1 10.5 3.5v10z"/><path d="M14 3.2A8.5 8.5 0 0 1 20.8 10H14z"/>
+{%- elif name == "trophy" %}<path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5a2.5 2.5 0 0 0 2.5 4"/><path d="M17 6h2.5a2.5 2.5 0 0 1-2.5 4"/>
+{%- elif name == "person" %}<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>
+{%- elif name == "lock" %}<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+{%- elif name == "pen" %}<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>
+{%- elif name == "quran" %}<path d="M12 6.5C10.2 5 7.8 4.5 3.5 4.5v13c4.3 0 6.7.5 8.5 2 1.8-1.5 4.2-2 8.5-2v-13c-4.3 0-6.7.5-8.5 2z"/><path d="M12 6.5v13"/>
+{%- elif name == "target" %}<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r=".9" fill="currentColor"/>
+{%- elif name == "chart" %}<path d="M4 19.5h16"/><path d="m5 15 4.5-4.5 3 3L19 7"/><path d="M14.5 7H19v4.5"/>
+{%- elif name == "star" %}<path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>
+{%- elif name == "faq" %}<path d="M20.5 12a8.5 8.5 0 0 1-12.3 7.6L3.5 20.5l1-4.4A8.5 8.5 0 1 1 20.5 12z"/><path d="M9.8 9.6a2.3 2.3 0 0 1 4.4.9c0 1.5-2.2 2-2.2 3.2"/><path d="M12 16.4h.01"/>
+{%- elif name == "more" %}<circle cx="5.5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="18.5" cy="12" r="1.5" fill="currentColor"/>
+{%- elif name == "chev" %}<path d="m6.5 9.5 5.5 5.5 5.5-5.5"/>
+{%- elif name == "link" %}<path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.1 1.1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1.1-1.1"/>
+{%- elif name == "pay" %}<path d="M16.5 7.5A3.5 3.5 0 0 0 9.5 8v4.5c0 3-1 5-3 6.5h11"/><path d="M6.5 12.5h7"/>
+{%- elif name == "play" %}<circle cx="12" cy="12" r="8.5"/><path d="m10.2 8.8 5 3.2-5 3.2z"/>
+{%- elif name == "idcard" %}<rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16c.6-1.6 1.8-2.4 3.2-2.4s2.6.8 3.2 2.4"/><path d="M15 10h3"/><path d="M15 13.5h3"/>
+{%- elif name == "pulse" %}<path d="M3 12h4l2.5-6 5 12 2.5-6h4"/>
+{%- elif name == "db" %}<ellipse cx="12" cy="5.5" rx="7.5" ry="2.5"/><path d="M4.5 5.5v13c0 1.4 3.4 2.5 7.5 2.5s7.5-1.1 7.5-2.5v-13"/><path d="M4.5 12c0 1.4 3.4 2.5 7.5 2.5s7.5-1.1 7.5-2.5"/>
+{%- endif %}</svg>
+{%- endmacro %}

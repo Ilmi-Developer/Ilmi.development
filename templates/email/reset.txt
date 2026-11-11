@@ -1,0 +1,14 @@
+Assalamu alaikum {{ name }},
+
+{% if by %}{{ by }}, an administrator, has sent you a link to choose a new password for your Ilmi account.{% else %}Someone asked to reset the password for your Ilmi account ({{ email }}).{% endif %}
+
+Choose a new password here:
+{{ link }}
+
+The link works once and expires in {{ reset_hours }}. Your current password keeps working until you choose a new one; then you'll be signed out on your other devices.
+{% if not by %}
+Didn't ask for this? Ignore this email and your password stays the same.
+{% endif %}
+{% if support_email %}Questions? Email the school office at {{ support_email }}.
+{% endif %}
+{{ site_title() or "Ilmi" }}

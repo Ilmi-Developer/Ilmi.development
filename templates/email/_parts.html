@@ -1,0 +1,36 @@
+{# Pieces shared by the HTML emails. Styles are inline because many email apps drop <style>.
+   Figtree is the dashboard's font; Apple Mail and iOS Mail load it, others fall back to the system sans. #}
+{% set sans = "Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" %}
+
+{% macro button(href, label) -%}
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px">
+  <tr><td bgcolor="#4d5a2c" style="background-color:#4d5a2c;border-radius:999px;mso-padding-alt:14px 28px">
+    <a href="{{ href }}" target="_blank" style="display:inline-block;padding:14px 28px;font-family:{{ sans }};font-size:15px;font-weight:700;line-height:20px;color:#fbf8f1;text-decoration:none;border-radius:999px">{{ label }}</a>
+  </td></tr>
+</table>
+{%- endmacro %}
+
+{% macro fallback(href) -%}
+<p style="margin:18px 0 0;font-family:{{ sans }};font-size:13px;line-height:1.5;color:#67654f">If the button doesn't work, copy this link into your browser:<br>
+<a href="{{ href }}" style="color:#4a5628;word-break:break-all">{{ href }}</a></p>
+{%- endmacro %}
+
+{% macro p(muted=False) -%}
+<p style="margin:0 0 14px;font-family:{{ sans }};font-size:{{ '14px' if muted else '16px' }};line-height:1.6;color:{{ '#67654f' if muted else '#44453a' }}">{{ caller() }}</p>
+{%- endmacro %}
+
+{# Details sit in a soft grey rounded panel, like the dashboard's inner cards. #}
+{% macro facts(rows) -%}
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#f6f1e6" style="margin:10px 0 18px;background-color:#f6f1e6;border-radius:12px">
+  <tr><td style="padding:6px 18px">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+      {% for label, value in rows %}
+      <tr>
+        <td valign="top" style="padding:10px 12px 10px 0;{% if not loop.last %}border-bottom:1px solid #e4dccb;{% endif %}font-family:{{ sans }};font-size:14px;line-height:1.5;color:#67654f;width:38%">{{ label }}</td>
+        <td valign="top" style="padding:10px 0;{% if not loop.last %}border-bottom:1px solid #e4dccb;{% endif %}font-family:{{ sans }};font-size:14px;line-height:1.5;color:#22231b;font-weight:700">{{ value }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </td></tr>
+</table>
+{%- endmacro %}

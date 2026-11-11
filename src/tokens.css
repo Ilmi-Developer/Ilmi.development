@@ -1,0 +1,704 @@
+/* Ilmi: shared tokens, application shell and controls.
+   Used by the dashboard (inlined by tools/build.py) and by the sign-in and admin pages (served in /auth.css).
+   See DESIGN.md for the reasoning behind each value. */
+@font-face{font-family:"Figtree";src:url(/fonts/figtree-latin.woff2) format("woff2");font-weight:300 900;font-display:swap;
+ unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Figtree";src:url(/fonts/figtree-latin-ext.woff2) format("woff2");font-weight:300 900;font-display:swap;
+ unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+/* Ilmi's type (see DESIGN.md): EB Garamond for titles and figures, Cormorant Garamond for the wordmark and the
+   large italic lines, Amiri for علمي (a subset with just those letters), and Figtree for everything you read and use. */
+@font-face{font-family:"EB Garamond";src:url(/fonts/garamond-latin.woff2) format("woff2");font-weight:400 800;font-display:swap;
+ unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"EB Garamond";src:url(/fonts/garamond-latin-ext.woff2) format("woff2");font-weight:400 800;font-display:swap;
+ unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:"Cormorant";src:url(/fonts/cormorant-latin.woff2) format("woff2");font-weight:500 700;font-display:swap;
+ unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Cormorant";src:url(/fonts/cormorant-latin-ext.woff2) format("woff2");font-weight:500 700;font-display:swap;
+ unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:"Cormorant";font-style:italic;src:url(/fonts/cormorant-italic-latin.woff2) format("woff2");font-weight:500 700;font-display:swap;
+ unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Cormorant";font-style:italic;src:url(/fonts/cormorant-italic-latin-ext.woff2) format("woff2");font-weight:500 700;font-display:swap;
+ unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:"Amiri Ilmi";src:url(/fonts/amiri-ilmi.woff2) format("woff2");font-weight:700;font-display:block;unicode-range:U+0639,U+0644-0645,U+064A}
+:root{
+ /* Brand: Ilmi's olive (#4d5a2c), the colour of the start page's watercolour band. The one accent colour: the main
+    button on a screen, the page you are on, links and focus. Everything else is warm paper and ink, so the olive
+    always means something. (The --navy names come from the old navy look; they hold the olive now.) */
+ --navy:#4d5a2c;--navy-2:#404b23;--navy-soft:#e8e9d6;
+ /* The olive as a text colour, and the cream that pastel tints are mixed with. Dark mode lightens both. */
+ --navy-text:#4a5628;--paper:#fbf8f1;
+ /* Navigation: an olive side menu with cream type, like the start page's band, washed with darker watercolour at
+    its foot. The page you are on is a cream pill with olive type. */
+ --rail-bg:#4b552f;--rail-ink:#ece6d3;--rail-mute:#cdc9ae;--rail-line:rgba(255,250,235,.14);--rail-hover:rgba(255,250,235,.08);--rail-on:#f4efe2;
+ /* The menu's strongest text (names, hover) and the selected item's text; themes (themes.py) set both. */
+ --rail-strong:#fffaf0;--rail-on-ink:#3c4524;
+ /* Surfaces and text: warm off-white paper, cards a shade lighter, and olive-black ink. */
+ --bg:#f3eee2;--surface:#fbf8f1;--surface-2:#f6f1e6;--sunk:#ede6d6;--line:#e4dccb;--line-2:#cfc5ae;
+ --ink:#22231b;--ink-2:#44453a;--mute:#67654f;
+ /* The page's own background (paper, with its texture), and text that sits straight on it (page titles, tabs). A
+    theme with a coloured page or a photo sets them apart (themes.py). */
+ --canvas:#f4efe4;--c-ink:var(--ink);--c-ink-2:var(--ink-2);--c-mute:var(--mute);--c-title:var(--ink);--c-hover:rgba(60,52,30,.05);
+ /* Actions and status. Every colour that carries white text is at least 4.5:1. */
+ --primary:#4d5a2c;--primary-hover:#404b23;--primary-soft:#e8e9d6;--primary-ink:#4a5628;
+ --ok:#4f7a43;--ok-soft:#e9efdf;--ok-ink:#34572b;
+ --warn:#a35f14;--warn-soft:#f6ead6;--warn-ink:#7c4609;
+ --bad:#a8392b;--bad-soft:#f6e3dc;--bad-ink:#8a2c20;
+ --focus:#5d6d2c;
+ /* Quiet accents: sage for healthy states, gold for achievement. The sky and teal names stay for older rules. */
+ --sage:#6b8a4e;--sage-soft:#ebefdf;--sage-ink:#3c5a2a;
+ --sky:#5b7486;--sky-soft:#f1eee5;--sky-ink:#3d5566;
+ --teal:#6b8a4e;--teal-soft:#f1eee5;--teal-ink:#3c5a2a;
+ --gold:#b0832a;--gold-soft:#f3e8cf;--gold-ink:#6a4c0e;
+ /* Meaningful colours kept from the original dashboard, a little softer to sit on paper: houses and house tokens */
+ --makkah:#c0901f;--aqsa:#3478b0;--madinah:#2f8a62;
+ --tok-g:#3d9150;--tok-b:#3a6fb5;--tok-r:#c0453b;--tok-g-ink:#2e6b3b;--tok-b-ink:#2f5d99;--tok-r-ink:#97352d;
+ /* Warning levels: 1 notice, 2 serious, 3 miss break */
+ --w1:#d9ac3f;--w1-ink:#4a3200;--w2:#b5541d;--w3:#a8392b;
+ /* Shape, space, type, depth and motion */
+ /* Soft corners: 10px on fields, 16px on cards, 22px on dialogs and sheets; buttons and badges are pills. */
+ --r-sm:6px;--r:10px;--r-lg:16px;--r-xl:22px;--r-pill:999px;
+ /* One spacing scale on a 4px grid. */
+ --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px;--s7:48px;
+ --font:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+ /* Titles and figures in a book face; the wordmark and the big italic lines in Cormorant; علمي in Amiri. */
+ --font-display:"EB Garamond","Cormorant",Georgia,"Times New Roman",serif;
+ --font-hand:"Cormorant","EB Garamond",Georgia,serif;
+ --font-ar:"Amiri Ilmi","Amiri","Noto Naskh Arabic","Geeza Pro","Times New Roman",serif;
+ /* Three weights only: regular for reading, medium for labels and buttons, semibold for titles and figures. */
+ --w-regular:400;--w-medium:500;--w-semibold:600;
+ /* Depth: cards lie on the paper with a hairline and a soft, warm shadow beneath; things that float (menus, pop-ups,
+    dialogs, messages) lift further. */
+ --shadow:0 0 0 1px var(--line);
+ --shadow-card:0 0 0 1px var(--line),0 1px 2px rgba(60,52,30,.04),0 10px 24px -14px rgba(60,52,30,.22);
+ --shadow-float:0 1px 2px rgba(50,44,24,.08),0 10px 30px rgba(50,44,24,.14);
+ --shadow-lift:0 1px 3px rgba(50,44,24,.1),0 18px 44px rgba(50,44,24,.2);
+ /* Motion: quick and soft. Feedback in 150ms, panels in 200ms, one easing; larger moments ease out slowly. */
+ --ease:cubic-bezier(.2,0,0,1);--ease-out:cubic-bezier(.16,1,.3,1);--t-fast:.15s;--t:.2s;
+ /* Ink and water (see DESIGN.md, Motion): ink is drawn at a steady hand, a wash spreads fast and slows as the paper
+    takes it, and a sheet settles. --t-wash is a page turning; --t-drop a drop of colour landing in a box. */
+ --ease-ink:cubic-bezier(.45,.05,.25,1);--ease-wash:cubic-bezier(.3,.6,.4,1);--ease-settle:cubic-bezier(.16,1,.3,1);
+ --t-wash:.5s;--t-drop:.42s;--t-settle:.5s;
+ --raised:#fdfbf6;
+ --rail:248px;
+ /* Paper: a faint speckle laid over the canvas colour (static/art/paper.webp), and the menu's watercolour foot. */
+ --paper-tex:url(/art/paper.webp);
+ --page-wash:url(/art/wash-page.webp);
+ --rail-wash:url(/art/wash-rail.webp);
+ --splat:url(/art/splat-c.webp);
+ /* Older names used by the admin pages */
+ --navy-ink:var(--rail-ink);--navy-mute:var(--rail-mute);--navy-line:var(--rail-line);
+ --band-ink:var(--ink);--band-mute:var(--mute);--band-line:var(--line-2);
+ color-scheme:light}
+
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+/* The page is paper: a faint speckle over the canvas colour and a grey-green watercolour cloud in the top right
+   corner, as on the start page. --page-bg is reused by the dashboard's sticky header (template.css). */
+:root{--page-bg:var(--page-wash) right -60px top -170px/900px auto no-repeat,var(--paper-tex),var(--canvas)}
+body{margin:0;background:var(--page-bg);color:var(--ink);font:400 1rem/1.5 var(--font);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+/* On a computer the paper stays still while the page scrolls, so a sticky header's own paper lines up with it. */
+@media (min-width:960px){body{background-attachment:fixed}}
+/* Calm type, after GitHub's Primer: 14px body text on a computer (16px on phones, where it is read at arm's
+   length), page titles 24px semibold, section titles 16px semibold. */
+@media (min-width:960px){body{font-size:.875rem;line-height:1.5}}
+h1,h2,h3{margin:0;line-height:1.25;text-wrap:balance}
+h1{font-size:1.75rem;font-weight:600;letter-spacing:-.01em;font-family:var(--font-display)}
+/* Section titles in the book face too, a size up from the text so they read as titles. */
+h2{font-size:1.1875rem;font-weight:600;letter-spacing:-.005em;font-family:var(--font-display)}
+h3{font-size:.9375rem;font-weight:600}
+p{margin:0 0 .75rem}
+a{color:var(--primary-ink);text-underline-offset:.18em}
+button,a,summary,label,input,select,textarea{touch-action:manipulation;-webkit-tap-highlight-color:rgba(77,90,44,.14)}
+a:hover{color:var(--primary-hover)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.skip{position:absolute;left:12px;top:-60px;z-index:200;background:var(--surface);color:var(--navy-text);font-weight:600;padding:8px 16px;border-radius:var(--r)}
+.skip:focus{top:12px;box-shadow:var(--shadow-lift)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.hide,[hidden]{display:none!important}
+.sub,.hint{color:var(--mute)}
+.hint{font-size:.875rem}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- Application shell: an olive rail on wide screens, an olive top bar on narrow ones ---------- */
+.shell{min-height:100vh;min-height:100dvh}
+/* <header> and <main> stay bare tags: the server adds inert to them while records load. */
+.shell>header{display:contents}
+.rail{background:var(--rail-bg);color:var(--rail-ink);display:flex;flex-direction:column;z-index:20}
+/* Ilmi's own looks (light and dark) wash the foot of the menu with darker watercolour, as the sign-in panel is;
+   a theme's menu (html[data-logo]) stays its own flat colour. */
+@media (min-width:960px){.rail{background:var(--rail-wash) center bottom/100% auto no-repeat,var(--rail-bg)}}
+.rail a,.rail button{color:inherit}
+.rail .brand{display:flex;flex-direction:column;align-items:flex-start;gap:0;text-decoration:none;color:var(--rail-strong);padding:18px 20px 14px;min-width:0}
+/* The Ilmi wordmark: "Ilmi" in Cormorant with علمي beside it in Amiri, as on the start page. It is the logo, so it
+   keeps its own faces and weights wherever it appears. */
+.ilmi{display:inline-flex;align-items:baseline;gap:.3em;line-height:1;white-space:nowrap}
+.ilmi b{font:600 1em/1 var(--font-hand);letter-spacing:-.01em}
+/* Amiri's required ligatures (rlig) stack لم so علمي steps down diagonally; turned off, it sits level on the line. */
+.ilmi [lang="ar"]{font:700 .92em/1 var(--font-ar);letter-spacing:0;transform:translateY(-.04em);font-feature-settings:"rlig" 0}
+.rail .brand .ilmi{font-size:1.75rem}
+.brand small{display:block;margin-top:9px;font-size:.75rem;color:var(--rail-mute);line-height:1.25;max-width:100%;overflow-wrap:anywhere}
+/* The mark (ع on an olive disc), where a round logo is wanted. */
+.badge{flex:none;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:none}
+.badge img{width:100%;height:100%;display:block}
+.navt{position:absolute;opacity:0;pointer-events:none}
+.menu-btn{display:none}
+.navs{display:flex;flex-direction:column;gap:2px;padding:4px 12px 12px;flex:1;min-height:0;overflow-y:auto}
+.navs .j2jb{margin-top:auto}
+/* Search, under the logo: a quiet box with its shortcut (Ctrl K, or ⌘K on a Mac), as Linear and Notion have it. On a
+   phone it is an icon in the top bar. It opens the dashboard's search (page.html); an admin page's goes to /#search. */
+.qkb{display:flex;align-items:center;gap:8px;margin:2px 12px 10px;padding:0 12px;min-height:36px;border:1px solid var(--rail-line);border-radius:var(--r-pill);
+ background:var(--rail-hover);color:var(--rail-mute);font:inherit;font-size:.875rem;text-align:left;text-decoration:none;cursor:pointer}
+.qkb:hover{color:var(--rail-strong)}
+.qkb:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+.qkb .ic{width:16px;height:16px;flex:none}
+.qkb kbd{margin-left:auto;font:500 .6875rem/1 var(--font);padding:3px 4px;border:1px solid var(--rail-line);border-radius:var(--r-sm);color:var(--rail-mute)}
+@media (max-width:959.98px){.qkb{width:44px;height:44px;margin:0 4px 0 0;padding:0;justify-content:center;border:0;background:none;color:var(--rail-ink)}
+ .qkb .qkt,.qkb kbd{display:none}.qkb .ic{width:22px;height:22px}}
+.navh{margin:18px 12px 6px;font-size:.6875rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--rail-mute)}
+.nav{display:flex;align-items:center;gap:10px;width:100%;min-height:36px;padding:6px 12px;border-radius:var(--r-pill);border:0;background:none;font:inherit;font-size:.875rem;font-weight:500;text-align:left;text-decoration:none;cursor:pointer;color:var(--rail-ink);transition:background-color var(--t-fast) var(--ease),color var(--t-fast) var(--ease)}
+.nav:hover{background:var(--rail-hover);color:var(--rail-strong)}
+.nav[aria-current="page"],.nav[aria-current="true"]{background:var(--rail-on);color:var(--rail-on-ink);font-weight:600;box-shadow:0 1px 2px rgba(20,24,10,.14)}
+.nav[aria-current="page"]:hover,.nav[aria-current="true"]:hover{color:var(--rail-on-ink)}
+.nav:focus-visible{outline:2px solid var(--rail-strong);outline-offset:-2px}
+.rail :focus-visible{outline-color:var(--rail-strong)}
+.nav .ic{flex:none;width:16px;height:16px;stroke-width:1.75}
+.nav .ext{margin-left:auto;opacity:.75}
+.nav.j2j .dot{width:8px;height:8px;border-radius:50%;background:var(--sage);flex:none;margin:0 4px}
+.classes{display:flex;flex-direction:column;gap:1px;max-height:40vh;overflow-y:auto;margin:0 -2px;padding:0 2px}
+.classes .nav{font-size:.875rem;min-height:32px;padding:4px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.me{border-top:1px solid var(--navy-line);padding:12px 16px 16px;display:flex;flex-direction:column;gap:8px;font-size:.8125rem}
+.me .who{display:flex;align-items:center;gap:8px;min-width:0}
+.me .who .wt{min-width:0}
+.me .who b{display:block;color:var(--rail-strong);font-weight:500;overflow-wrap:anywhere}
+.me .who .wt>span{color:var(--rail-mute)}
+.me .av{--av:32px;box-shadow:0 0 0 1px var(--rail-line)}
+/* Profile pictures (avatars.py): a photo in a circle, or the first name's initial in blue on pastel blue. */
+.av{--av:36px;width:var(--av);height:var(--av);flex:none;border-radius:50%;display:inline-grid;place-items:center;overflow:hidden;
+ background:var(--navy-soft);color:var(--navy-text);font-weight:600;font-size:calc(var(--av) * .44);line-height:1;letter-spacing:0;user-select:none}
+.av img{width:100%;height:100%;object-fit:cover;display:block}
+.me .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.me form{margin:0}
+.me .linkbtn{font:inherit;font-size:.8125rem;font-weight:500;background:none;border:1px solid var(--navy-line);border-radius:var(--r-pill);padding:4px 12px;min-height:30px;cursor:pointer;color:var(--rail-ink);text-decoration:none;display:inline-flex;align-items:center}
+.me .linkbtn:hover{background:var(--rail-hover)}
+.me .linkbtn[aria-current="page"]{background:var(--rail-on);color:var(--rail-on-ink);border-color:var(--rail-on);font-weight:600}
+.work{min-width:0;display:flex;flex-direction:column}
+/* Every page has the same width, at most 1280px, as GitHub caps its pages. */
+.content{width:100%;max-width:1280px;margin:0 auto;padding:28px 40px 56px}
+/* Settings pages keep the dashboard's left edge; their sections stay at a readable width. The pop-ups that sit
+   over the whole page (Invite staff, the picture cropper) are left out. */
+.content.narrow>:not(.invite):not(.crop){max-width:880px}
+/* With no side menu, every page sits in the middle of the screen, the settings pages' narrower column too. */
+.content.narrow{max-width:960px}
+
+@media (min-width:960px){
+ .shell{display:grid;grid-template-columns:var(--rail) minmax(0,1fr)}
+ /* The menu ends in a hairline on its right edge, not a change of colour alone. */
+ .rail{position:sticky;top:0;height:100vh;height:100dvh;box-shadow:inset -1px 0 0 var(--rail-line)}
+ html:not([data-logo]) .rail{box-shadow:none}
+}
+/* On wide screens the menu wrapper adds no box: the nav list and the account block sit in the rail as before. */
+.navw{display:contents}
+.dock,.dscrim,.dkx{display:none}
+@media (max-width:959.98px){
+ :root{--dock-h:56px;--dock-gap:env(safe-area-inset-bottom,0px)}
+ .rail{position:relative;flex-direction:row;flex-wrap:wrap;align-items:center;box-shadow:inset 0 -1px 0 var(--rail-line)}
+ .rail .brand{padding:10px 16px;flex:1;flex-direction:row;align-items:baseline;gap:10px}
+ .rail .brand .ilmi{font-size:1.5rem}
+ .rail .brand small{margin:0;color:var(--rail-mute);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .content{padding:16px 16px calc(var(--dock-h) + 24px + env(safe-area-inset-bottom,0px))}
+
+ /* The tab bar: the main items, always within thumb reach, in a standard full-width bar along the bottom of the
+    screen, as iPhone and Android apps have it. The selected item is navy; the rest are grey. */
+ .dock{position:fixed;z-index:80;left:0;right:0;bottom:0;display:flex;gap:0;
+  height:calc(var(--dock-h) + var(--dock-gap));padding:0 4px var(--dock-gap);
+  background:var(--surface);border-top:1px solid var(--line);
+  transition:transform var(--t) var(--ease),opacity var(--t) var(--ease)}
+ .dk{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:0;border-radius:0;
+  background:none;padding:0;font:inherit;font-size:.6875rem;line-height:1.2;font-weight:500;color:var(--mute);text-decoration:none;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+ .rail .dk{color:var(--mute)}
+ .rail .dk:hover{color:var(--ink)}
+ .dk .dki{display:grid;place-items:center;height:24px}
+ .dk .ic{width:22px;height:22px;stroke-width:1.75}
+ .dk span:last-child{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
+ .dk:active{opacity:.6}
+ .rail .dk[aria-current="page"],.dk[aria-current="page"]{color:var(--navy-text);font-weight:600}
+ .dk[aria-current="page"] .dki{background:var(--navy-soft);border-radius:var(--r-pill);width:52px}
+ .dk[aria-current="page"] .ic{stroke-width:2}
+ .dk:focus-visible{outline:2px solid var(--focus);outline-offset:-2px;border-radius:var(--r)}
+ .navt:checked~.dock .dk.dk-more,.rail .dk.dk-more.on{color:var(--navy-text);font-weight:600}
+ .navt:focus-visible~.dock .dk.dk-more{outline:2px solid var(--focus);outline-offset:-2px}
+ /* While typing on a phone the tab bar steps aside, so it never sits on top of the keyboard. */
+ .typing .dock{transform:translateY(100%);opacity:0;pointer-events:none}
+
+ @media (max-width:379px){.dk{font-size:.625rem}}
+ /* More: the full menu opens as a sheet that slides up above the tab bar. */
+ .menu-btn{display:none}
+ .navw{display:flex;flex-direction:column;position:fixed;z-index:82;left:0;right:0;bottom:calc(var(--dock-gap) + var(--dock-h));
+  max-height:calc(100dvh - var(--dock-h) - 48px);overflow-y:auto;overscroll-behavior:contain;
+  background:var(--rail-bg);border-radius:var(--r-xl) var(--r-xl) 0 0;box-shadow:var(--shadow-lift);padding:8px 0 0;
+  opacity:0;visibility:hidden;transform:translateY(12px);
+  transition:opacity var(--t) var(--ease),transform var(--t) var(--ease),visibility 0s var(--t)}
+ .navt:checked~.navw{opacity:1;visibility:visible;transform:none;transition:opacity var(--t) var(--ease),transform var(--t) var(--ease),visibility 0s}
+ .navw .navs{flex:none;overflow:visible;padding:4px 8px 8px}
+ .navw .nav{min-height:44px}
+ .navw .me{display:flex;border-top:1px solid var(--navy-line)}
+ .navw .me[hidden]{display:none}
+ .navw .dkx{display:flex}
+ .navw .dkx[hidden]{display:none}
+ .dscrim{display:block;position:fixed;inset:0;z-index:79;background:rgba(16,24,40,.32);opacity:0;visibility:hidden;transition:opacity var(--t) var(--ease),visibility 0s var(--t);cursor:pointer}
+ .navt:checked~.dscrim{opacity:1;visibility:visible;transition:opacity var(--t) var(--ease),visibility 0s}
+}
+
+/* ---------- The dock (static/dock.js) ----------
+   No side menu: the page takes the whole width, centred, with Ilmi's wordmark in the dock, and the menu is a row of
+   icons floating at the foot of the screen, as the macOS dock is. An olive bar with the menu's watercolour, cream
+   icons, and the page you are on on a cream tile that glides between them. Folders (Administration, Links, your
+   account) open the old side menu's groups in a small olive menu above their icon. Each icon names itself in a warm
+   tooltip (static/warm-tooltip.js). */
+html.has-dock{--dock-h:60px;--dock-gap:calc(14px + env(safe-area-inset-bottom,0px))}
+:root{--wt-ilmi-surface:color-mix(in srgb,var(--rail-bg) 78%,#14170a);--wt-ilmi-ink:var(--rail-strong)}
+/* The server marks <html> with has-dock wherever dock.js runs, so the side menu never shows first; a copy of the
+   dashboard opened on its own (Master_Dashboard_standalone.html, the artifact) keeps the side menu above. */
+.has-dock .shell{display:block}
+.has-dock .rail{position:relative;z-index:20;display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;height:auto;
+ background:none;box-shadow:none;color:var(--c-title);width:100%;max-width:1280px;margin:0 auto;padding:20px 40px 0}
+.has-dock .rail .brand{flex:none;flex-direction:row;align-items:baseline;gap:12px;padding:0;color:var(--c-title)}
+/* On a computer the wordmark lives in the dock (dock.js), so the page starts near the top. */
+@media (min-width:960px){.has-dock .rail{justify-content:center;padding-top:28px}}
+.has-dock .rail .brand .ilmi{font-size:1.875rem}
+.has-dock .rail .brand small{margin:0;color:var(--c-mute);font-size:.8125rem}
+.has-dock .navw,.has-dock .navt,.has-dock .dscrim,.has-dock .dock,.has-dock .rail>.qkb{display:none}
+.has-dock .content{padding-bottom:calc(var(--dock-h) + var(--dock-gap) + 48px)}
+@media (max-width:959.98px){
+ .has-dock .rail{padding:14px 16px 0}
+ .has-dock .rail .brand .ilmi{font-size:1.5rem}
+ .has-dock .rail .brand small{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .has-dock .content{padding:12px 16px calc(var(--dock-h) + var(--dock-gap) + 32px)}
+}
+.has-dock .idk-pop .dkx{display:flex}
+.idock{position:fixed;z-index:80;left:50%;bottom:var(--dock-gap);transform:translateX(-50%);max-width:calc(100vw - 24px);
+ transition:transform .3s var(--ease-out),opacity .2s var(--ease)}
+.idk-bar{--sz:44px;position:relative;display:flex;align-items:flex-end;gap:6px;padding:8px;height:60px;border-radius:22px;
+ background:var(--rail-wash) center 70%/cover no-repeat,color-mix(in srgb,var(--rail-bg) 94%,transparent);
+ box-shadow:inset 0 0 0 1px var(--rail-line),inset 0 1px 0 rgba(255,250,235,.12),0 1px 2px rgba(30,30,14,.16),0 14px 34px -10px rgba(30,30,14,.45);
+ -webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2)}
+.idk-sep{flex:none;align-self:center;width:1px;height:28px;margin:0 2px;background:var(--rail-line)}
+.idk-i{position:relative;flex:none;display:flex;align-items:flex-end;justify-content:center;width:var(--sz);height:44px;z-index:1}
+.idk-i:has(>[hidden]),.idk-i[hidden],.idk-sep[hidden]{display:none}
+/* Each icon: the old menu item itself, its words hidden (they stay its name for screen readers). */
+.idk-bar .idk-i>.nav,.idk-bar .idk-i>.qkb,.idk-bar .idk-i>.dk{position:relative;flex:none;display:flex;align-items:center;justify-content:center;width:var(--sz);height:var(--sz);
+ min-height:0;margin:0;padding:0;gap:0;border:0;border-radius:calc(var(--sz) * .3);background:none;box-shadow:none;
+ font-size:0;line-height:0;color:var(--rail-ink);cursor:pointer;text-decoration:none;
+ transition:background-color var(--t-fast) var(--ease),color var(--t-fast) var(--ease)}
+.idk-bar .idk-i>*>.ic,.idk-bar .idk-i>.dk .ic{width:calc(var(--sz) * .48);height:calc(var(--sz) * .48);stroke-width:1.7}
+.idk-bar .idk-i>.dk .dki{display:contents}
+.idk-bar .idk-i>.dk>span:last-child,.idk-bar .idk-i>.qkb>.qkt,.idk-bar .idk-i>.qkb>kbd{display:none}
+.idk-bar .idk-i>:hover{color:var(--rail-strong)}
+/* With a mouse the icons swell instead of lighting a tile; on touch and from the keyboard they light up. */
+@media not ((hover:hover) and (pointer:fine)){.idk-bar .idk-i>:hover{background:var(--rail-hover)}}
+@media (prefers-reduced-motion:reduce){.idk-bar .idk-i>:hover{background:var(--rail-hover)}}
+.idk-bar .idk-i>[aria-current="page"],.idk-bar .idk-i>[aria-current="true"]{background:none;box-shadow:none;color:var(--rail-strong)}
+.idk-bar .idk-i.is-on>*{color:var(--rail-on-ink)}
+.idk-bar .idk-i>:focus-visible{outline:2px solid var(--rail-strong);outline-offset:2px}
+.idk-bar .idk-i.open>*{background:var(--rail-hover);color:var(--rail-strong)}
+/* A folder holding the page you are on, and an open folder, show a small cream dot under the icon, as running apps do. */
+.idk-i.has-on::after,.idk-i.open::after{content:"";position:absolute;left:50%;bottom:-6px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--rail-strong);opacity:.9}
+.idk-i.has-on.is-on::after{display:none}
+.idk-av.av{--av:calc(var(--sz) * .62);box-shadow:0 0 0 1.5px var(--rail-line);font-size:calc(var(--sz) * .27)}
+/* The cream tile under the page you are on. It glides when the page changes, also from page to page (dock.js
+   remembers where it was), as the side menu's pill did. It is drawn with the dock during a page turn, not as a
+   layer of its own, so it stays between the dock's bar and the icons and is never lost under them. */
+.idk-sel{position:absolute;left:0;top:0;width:44px;height:44px;border-radius:13px;background:var(--rail-on);
+ box-shadow:0 1px 2px rgba(20,24,10,.18),inset 0 -1px 0 rgba(60,52,30,.08);opacity:0;pointer-events:none;z-index:0;
+ transition:transform .32s var(--ease-out),width .32s var(--ease-out),height .32s var(--ease-out),opacity .2s var(--ease)}
+.idk-sel.show{opacity:1}
+.idk-sel.jump{transition:none}
+.idk-bar .idk-i>.navsel,.idk-pops .navsel{display:none}
+/* Folders: the side menu's groups, in an olive menu that pops up above their icon. */
+.idk-pops{position:relative;z-index:81}
+.idk-pop{position:fixed;left:0;bottom:0;width:272px;max-width:calc(100vw - 24px);max-height:calc(100dvh - var(--dock-h) - var(--dock-gap) - 40px);
+ display:flex;flex-direction:column;border-radius:var(--r-xl);color:var(--rail-ink);
+ background:var(--rail-wash) center bottom/100% auto no-repeat,var(--rail-bg);
+ box-shadow:inset 0 0 0 1px var(--rail-line),0 1px 3px rgba(30,30,14,.18),0 22px 48px -12px rgba(30,30,14,.5);transform-origin:50% 100%}
+.idk-pop[hidden]{display:none}
+.idk-body{overflow-y:auto;overscroll-behavior:contain;padding:8px;border-radius:inherit}
+.idk-arrow{position:absolute;bottom:-5px;width:12px;height:12px;margin-left:-6px;border-radius:2px;background:var(--rail-bg);transform:rotate(45deg);box-shadow:1px 1px 0 var(--rail-line)}
+.idk-pop .navh{margin:6px 12px 6px}
+.idk-pop .navh:first-child{margin-top:4px}
+.idk-pop #adminNav,.idk-pop .idk-sec{display:flex;flex-direction:column;gap:2px}
+.idk-pop .me{border:0;padding:8px}
+.idk-pop-me{width:240px}
+.idk-morelist{display:flex;flex-direction:column;gap:2px}
+.idk-sec:not(:first-child){margin-top:4px;padding-top:4px;border-top:1px solid var(--rail-line)}
+/* The Ilmi wordmark in the dock, before your picture: cream on the olive, with the site title under it if one is set. */
+.idk-bar .idk-i.idk-brand{width:auto;height:44px;margin:0 2px}
+.has-dock .idk-bar .idk-brand>.brand{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;height:44px;
+ padding:0 10px;border-radius:13px;color:var(--rail-strong);text-decoration:none}
+.has-dock .idk-bar .idk-brand .ilmi{font-size:1.5rem}
+.has-dock .idk-bar .idk-brand small{margin:0;font-size:.625rem;line-height:1;color:var(--rail-mute);max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.has-dock .idk-bar .idk-brand>.brand:hover{color:#fff}
+.rail>.idk-i.idk-brand{display:block;width:auto;height:auto;min-width:0;flex:0 1 auto;margin-right:auto}
+.has-dock .rail>.idk-brand>.brand{display:flex;justify-content:flex-start;align-items:baseline}
+/* Search beside the wordmark, when the dock is short of room. */
+.rail>.idk-i.idk-top:not(.idk-brand){margin-left:auto;height:44px;--sz:44px}
+.rail>.idk-top>.qkb{display:grid;place-items:center;width:44px;height:44px;margin:0;padding:0;border:0;border-radius:var(--r-pill);background:none;color:var(--c-ink)}
+.rail>.idk-top>.qkb>.qkt,.rail>.idk-top>.qkb>kbd{display:none}
+.rail>.idk-top>.qkb .ic{width:22px;height:22px}
+.rail>.idk-top>.qkb:hover{background:var(--c-hover)}
+.idk-in-more{display:block;width:auto;height:auto}
+.idk-in-more>.dk{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:6px 12px;border:0;border-radius:var(--r-pill);background:none;
+ font:inherit;font-size:.875rem;font-weight:500;color:var(--rail-ink);cursor:pointer}
+.idk-in-more>.dk .dki{display:contents}.idk-in-more>.dk .ic{width:16px;height:16px}
+.idk-in-more>.dk[aria-current="page"]{background:var(--rail-on);color:var(--rail-on-ink);font-weight:600}
+.idk-in-more>.qkb{margin:0 0 4px;width:100%}
+.idk-pop .nav{min-height:40px}
+@media (max-width:959.98px){.idk-pop .nav{min-height:44px}}
+/* While typing on a phone the dock steps aside, so it never sits on top of the keyboard. */
+@media (max-width:959.98px){.typing .idock{transform:translate(-50%,calc(100% + var(--dock-gap)));opacity:0;pointer-events:none}}
+/* The tooltip (static/warm-tooltip.js), after React Bits' WarmTooltip: its own CSS, unchanged apart from names. */
+.warm-tooltip__trigger{--wt-surface:#f5f5f5;--wt-fuse-ms:400ms;--wt-ease-out:cubic-bezier(.23,1,.32,1);
+ touch-action:manipulation;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+.warm-tooltip__trigger[data-pressing]{user-select:none;-webkit-user-select:none}
+.warm-tooltip__fuse{position:absolute;left:4px;right:4px;height:2px;border-radius:1px;background:var(--wt-surface);opacity:0;transform:scaleX(0);
+ transform-origin:left center;pointer-events:none;transition:transform 125ms var(--wt-ease-out),opacity 125ms var(--wt-ease-out)}
+.warm-tooltip__fuse[data-side="top"]{top:-4px}
+.warm-tooltip__fuse[data-side="bottom"]{bottom:-4px}
+.warm-tooltip__fuse[data-fuse="arming"]{opacity:1;transform:scaleX(1);transition:transform var(--wt-fuse-ms) linear,opacity 80ms var(--wt-ease-out)}
+.warm-tooltip{--wt-surface:#f5f5f5;--wt-ink:#18181b;--wt-radius:8px;--wt-font:12.5px;--wt-origin:center bottom;
+ position:fixed;top:0;left:0;z-index:9999;display:block;pointer-events:none;font-family:var(--font)}
+.warm-tooltip__box{position:absolute;inset:0;border-radius:var(--wt-radius);background:var(--wt-surface);color:var(--wt-ink);
+ box-shadow:0 1px 2px rgba(0,0,0,.12),0 8px 24px -8px rgba(0,0,0,.45);transform-origin:var(--wt-origin)}
+.warm-tooltip__layer{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.warm-tooltip__text{display:inline-flex;align-items:center;gap:7px;font-size:var(--wt-font);font-weight:500;line-height:1.2;letter-spacing:-.01em;white-space:nowrap}
+.warm-tooltip__kbd{display:inline-flex;align-items:center;height:1.55em;padding:0 .45em;border-radius:.4em;
+ background:color-mix(in srgb,var(--wt-ink) 9%,transparent);box-shadow:inset 0 -1px 0 color-mix(in srgb,var(--wt-ink) 12%,transparent);
+ color:color-mix(in srgb,var(--wt-ink) 72%,transparent);font-family:inherit;font-size:.86em;font-weight:500;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.warm-tooltip__arrow{position:absolute;width:8px;height:8px;margin:-4px;border-radius:2px;background:var(--wt-surface);transform:rotate(45deg)}
+.warm-tooltip__arrow[data-side="top"]{bottom:1px}
+.warm-tooltip__arrow[data-side="bottom"]{top:1px}
+.warm-tooltip__arrow[data-side="left"]{right:1px}
+.warm-tooltip__arrow[data-side="right"]{left:1px}
+@media (prefers-contrast:more){.warm-tooltip__box{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--wt-ink) 40%,transparent)}}
+@media (prefers-reduced-motion:reduce){.idk-sel,.idock{transition:none}}
+@media print{.idock,.idk-pops,.warm-tooltip{display:none!important}}
+
+/* ---------- Page header: the opening of every page, the same everywhere ----------
+   Title with a one-line description under it on the left, actions on the right, figures below. Graphite type
+   straight on the page, as GitHub and Stripe open theirs; the dashboard's head (.head in template.css) matches it. ---------- */
+.band{color:var(--c-ink);padding:0;margin-bottom:24px;position:relative}
+.band-top{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;min-height:40px}
+.band h1{font-size:2rem;font-weight:600;letter-spacing:-.012em;line-height:1.2;overflow-wrap:anywhere;color:var(--c-title);margin-right:auto}
+.band .acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.band .lede{color:var(--c-mute);margin:4px 0 0;max-width:72ch}
+.figs{display:flex;flex-wrap:wrap;gap:8px 32px;margin-top:16px}
+.fig{min-width:0;display:flex;align-items:baseline;gap:8px}
+.fig b{font:600 1.5rem/1.1 var(--font-display);letter-spacing:-.01em;font-variant-numeric:lining-nums tabular-nums;color:var(--ink)}
+.fig span{font-size:.8125rem;color:var(--mute)}
+/* A figure that needs attention says so in amber words, not with a coloured dot. */
+.fig.alert span{color:var(--warn-ink)}
+.fig.quiet b{font-size:1.125rem}
+.band.slim h1{font-size:2rem}
+@media (max-width:959.98px){
+ .band{margin-bottom:16px}
+ .band h1{font-size:1.5rem}
+ .figs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 12px}
+ .fig{flex-direction:column;gap:0}
+ .fig b{font-size:1.25rem}
+ .fig span{font-size:.75rem;line-height:1.25}
+}
+@media (max-width:379px){.band h1{font-size:1.375rem}}
+
+/* ---------- Panels and sections ----------
+   Pages are flat: sections sit straight on the page, separated by space and hairlines, never a box inside a box.
+   A panel (a hairline-edged box) holds one thing you act on as a whole, such as a form or a list of accounts. */
+.panel,.card{background:var(--surface);border:0;border-radius:var(--r-lg);padding:24px;box-shadow:var(--shadow-card)}
+.mod{background:var(--surface);border-radius:var(--r-lg);padding:24px;min-width:0}
+.mod.line{border:0;background:none;border-radius:0;padding:0}
+/* Sections of a settings page are divided by a hairline. */
+.content>.mod.line+.mod.line,.content>.mod.line+.g12,.content>.g12+.mod.line,.content>.g12+.g12{border-top:1px solid var(--line);padding-top:24px}
+
+/* "How this works": one sentence stays on the page and the rest of the explanation opens under this link. */
+.how{margin:4px 0 0}
+.how>summary{display:inline-flex;align-items:center;gap:4px;font-size:.8125rem;font-weight:500;color:var(--navy-text);cursor:pointer;list-style:none;border-radius:var(--r-sm)}
+.how>summary::-webkit-details-marker{display:none}
+.how>summary::after{content:"";width:5px;height:5px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:translateY(-2px) rotate(45deg);transition:transform var(--t) var(--ease)}
+.how[open]>summary::after{transform:translateY(1px) rotate(-135deg)}
+.how>summary:hover{text-decoration:underline}
+.how>summary:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.how>div{margin-top:8px;max-width:72ch;font-size:.875rem;color:var(--ink-2);line-height:1.5}
+.how>div p{margin:0 0 8px}.how>div p:last-child{margin:0}
+@media (prefers-reduced-motion:reduce){.how>summary::after{transition:none}}
+.mod-h{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;margin-bottom:12px;min-height:32px}
+.mod-h h2{font-size:1.1875rem;font-weight:600}
+.cap{font-size:.8125rem;color:var(--mute);margin:0}
+.g12{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:24px;align-items:start}
+.g12.eq{align-items:stretch}
+.g12>*{grid-column:1/-1}
+@media (min-width:1100px){.s4{grid-column:span 4}.s5{grid-column:span 5}.s6{grid-column:span 6}.s7{grid-column:span 7}.s8{grid-column:span 8}}
+.g12+.g12,.g12+.mod,.mod+.g12,.mod+.mod{margin-top:24px}
+.g12>.mod{margin-top:0}
+/* A small segmented control, for a shared period or measure: a grey track with the chosen option as a white
+   segment with a hairline edge. */
+.seg{display:inline-flex;gap:2px;padding:3px;border:0;border-radius:var(--r-pill);background:var(--sunk)}
+.seg button{font:inherit;font-size:.8125rem;font-weight:500;border:0;border-radius:var(--r-pill);background:none;color:var(--ink-2);padding:4px 12px;min-height:28px;cursor:pointer;transition:color var(--t-fast) var(--ease)}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(60,52,30,.12),0 0 0 1px var(--line)}
+.seg button:focus-visible{outline-offset:-2px}
+/* Contextual help: a ? that opens the rules for the screen, by keyboard, touch or pointer */
+.help{position:relative;display:inline-block}
+.help summary{list-style:none;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);font-weight:600;cursor:pointer}
+.help summary::-webkit-details-marker{display:none}
+.help summary:hover{background:var(--surface-2)}
+.help[open] summary{background:var(--sunk)}
+.help .hb{position:absolute;z-index:35;top:40px;right:0;width:min(360px,calc(100vw - 32px));background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-float);padding:12px 16px;font-size:.875rem;font-weight:400;text-align:left}
+.help .hb p{margin:0 0 8px}.help .hb p:last-child{margin:0}
+.help.left .hb{right:auto;left:0}
+@media (max-width:640px){.help .hb,.help.left .hb{position:fixed;left:12px;right:12px;top:auto;width:auto;bottom:calc(var(--dock-gap,12px) + var(--dock-h,0px) + 12px);max-height:60vh;overflow-y:auto;z-index:85}}
+.panel+.panel,.card+.card{margin-top:16px}
+.panel>h2,.card>h2,.panel-h h2{margin-bottom:4px}
+.panel-h{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.panel-h p{margin:0}
+.panel .sub,.card .sub{font-size:.875rem}
+.stack>*+*{margin-top:16px}
+.cols{display:grid;gap:24px;align-items:start;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr))}
+.section-title{font-size:.875rem;font-weight:600;margin:32px 0 12px;color:var(--ink-2)}
+
+/* ---------- Buttons ----------
+   Pills, as on the start page: 34px on a computer, 44px on touch screens. One main (olive) button on a screen; the
+   rest are cream with a hairline border, or plain text. */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-size:.875rem;font-weight:500;line-height:1.2;min-height:34px;padding:4px 16px;border-radius:var(--r-pill);border:1px solid var(--line-2);background:var(--surface);color:var(--ink);cursor:pointer;text-decoration:none;white-space:nowrap;touch-action:manipulation;transition:background-color var(--t-fast) var(--ease),border-color var(--t-fast) var(--ease)}
+.btn:hover{background:var(--surface-2);border-color:color-mix(in srgb,var(--line-2) 55%,var(--mute))}
+.btn:disabled,.btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
+.btn.primary,.btn.p{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 1px 2px rgba(40,46,20,.18),inset 0 1px 0 rgba(255,255,255,.08)}
+.btn.primary:hover,.btn.p:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+.btn.quiet{background:none;border-color:transparent;color:var(--primary-ink)}
+.btn.quiet:hover{background:var(--primary-soft)}
+.btn.danger,.btn.x{background:var(--surface);color:var(--bad-ink);border-color:color-mix(in srgb,var(--bad) 45%,var(--line-2))}
+.btn.danger:hover,.btn.x:hover{background:var(--bad-soft)}
+.btn.danger.solid,.btn.x.solid{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn.sm{min-height:28px;padding:4px 12px;font-size:.8125rem}
+.btn.lg{min-height:42px;padding:8px 20px;font-size:.9375rem}
+.btn.wide{width:100%}
+@media (max-width:959.98px),(pointer:coarse){.btn{min-height:44px;padding:8px 18px;font-size:.9375rem}.btn.sm{min-height:40px;padding:8px 14px;font-size:.875rem}}
+button.link{font:inherit;background:none;border:0;padding:0;color:var(--primary-ink);cursor:pointer;text-decoration:underline;text-underline-offset:.18em}
+
+/* ---------- Forms ---------- */
+.field{display:flex;flex-direction:column;gap:4px;font-size:.8125rem;font-weight:500;color:var(--ink-2)}
+input,select,textarea{font:inherit;font-size:1rem;color:var(--ink);background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r);padding:8px 12px;min-height:44px;max-width:100%}
+/* On a computer fields match the buttons: 14px type, 32px tall. Touch screens keep 16px type, so phones do not
+   zoom in on a field, and 44px targets. */
+@media (min-width:960px) and (pointer:fine){input,select{font-size:.875rem;min-height:32px;padding:4px 12px}textarea{font-size:.875rem}}
+textarea{min-height:96px;resize:vertical;width:100%}
+input:hover,select:hover,textarea:hover{border-color:color-mix(in srgb,var(--line-2) 55%,var(--mute))}
+/* Drop-downs: our own chevron, drawn in CSS (no image, so it works under every page's security policy), set well in
+   from the edge with room for it in the padding. */
+/* The arrow is a thin chevron, as the menu's own, drawn with two gradients so it takes the theme's colour (an SVG
+   picture could not, and the settings pages allow no data: pictures). The soft stops smooth its diagonal edges. */
+select:not([multiple]){-webkit-appearance:none;appearance:none;padding-right:32px;cursor:pointer;
+ --chev:transparent calc(50% - 1.2px),var(--ink-2) calc(50% - .45px),var(--ink-2) calc(50% + .45px),transparent calc(50% + 1.2px);
+ background-image:linear-gradient(45deg,var(--chev)),linear-gradient(-45deg,var(--chev));
+ background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+select:not([multiple]):disabled{cursor:default;opacity:.6}
+select:not([multiple])[aria-expanded="true"]{border-color:var(--navy);box-shadow:0 0 0 3px rgba(77,90,44,.14)}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--focus);outline-offset:-1px;border-color:var(--focus)}
+input[type=checkbox],input[type=radio]{min-height:0;width:16px;height:16px;accent-color:var(--primary)}
+input[type=file]{padding:4px 8px}
+fieldset{border:1px solid var(--line);border-radius:var(--r-lg);margin:0 0 16px;padding:12px 16px}
+legend{font-weight:600;padding:0 8px;font-size:.875rem}
+
+/* ---------- Tables ---------- */
+.tablewrap{overflow-x:auto;border:0;border-radius:var(--r-lg);background:var(--surface);box-shadow:var(--shadow-card)}
+.mod .tablewrap,.mod .sheetwrap{border:0;border-radius:0}
+.mod fieldset{border:0;border-top:1px solid var(--line);border-radius:0;padding:12px 0 0}
+.tbl{width:100%;border-collapse:collapse;font-size:.875rem}
+.tbl th,.tbl td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl thead th{font-size:.75rem;font-weight:600;letter-spacing:.02em;color:var(--mute);background:var(--surface-2);white-space:nowrap}
+.tbl tbody tr:last-child>*{border-bottom:0}
+.tbl td.n,.tbl th.n{text-align:right;font-variant-numeric:tabular-nums}
+.tbl td form{margin:0}
+
+/* ---------- Badges, notices and empty states ---------- */
+.pill,.tg{display:inline-flex;align-items:center;gap:4px;font-size:.75rem;font-weight:500;line-height:1.4;border-radius:999px;padding:1px 8px;background:var(--sunk);color:var(--ink-2);white-space:nowrap}
+.pill.blue{background:var(--primary-soft);color:var(--primary-ink)}
+.pill.grey{background:var(--sunk);color:var(--mute)}
+.pill.amber{background:var(--warn-soft);color:var(--warn-ink)}
+.pill.red{background:var(--bad-soft);color:var(--bad-ink)}
+.pill.green,.tg.nw{background:var(--ok-soft);color:var(--ok-ink)}
+.notice,.error{display:flex;gap:8px;align-items:flex-start;border-radius:var(--r-lg);padding:12px 16px;margin:0 0 16px;border:1px solid}
+.notice{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 40%,transparent);color:var(--ok-ink)}
+.error{background:var(--bad-soft);border-color:color-mix(in srgb,var(--bad) 40%,transparent);color:var(--bad-ink)}
+/* Empty states: one plain sentence and, where there is something to do, one button. No box around them. */
+.empty{padding:32px 16px;border:0;border-radius:0;color:var(--mute);text-align:center}
+.empty b{display:block;color:var(--ink);font-weight:500;margin-bottom:4px}
+.empty .btn{margin-top:12px}
+.hdot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none;background:var(--line-2)}
+.hdot.Makkah{background:var(--makkah)}.hdot.Al-Aqsa{background:var(--aqsa)}.hdot.Madinah{background:var(--madinah)}
+
+/* Tables on narrow screens become labelled rows */
+@media (max-width:640px){
+ .tbl.stackable thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+ .tbl.stackable,.tbl.stackable tbody,.tbl.stackable tr,.tbl.stackable td{display:block;width:100%}
+ .tbl.stackable tr{padding:8px 16px;border-bottom:1px solid var(--line)}
+ .tbl.stackable tbody tr:last-child{border-bottom:0}
+ .tbl.stackable td{border:0;padding:4px 0;display:flex;gap:12px;justify-content:space-between;text-align:right}
+ .tbl.stackable td::before{content:attr(data-label);color:var(--mute);font-size:.8125rem;font-weight:500;text-align:left;flex:none}
+ .tbl.stackable td.lead{font-weight:600;font-size:1rem;text-align:left;justify-content:flex-start}
+ .tbl.stackable td.lead::before{display:none}
+ .tbl.stackable td[colspan]{justify-content:center}
+ .tbl.stackable td[colspan]::before{display:none}
+ .tbl.stackable td:empty{display:none}
+}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* The wash page turn. Changing page, inside the dashboard or between it and the admin pages, plays as a wash of
+   watercolour: wet sage paper spreads out from the dock item or link that was pressed (--vx, --vy, set by
+   static/wash.js; with none, from the foot of the page), the old page goes under its leading edge and the new page
+   is left behind it as it dries. The menu and dock stay put and the selected item's pill glides to its new place.
+   How: three layers. At the back, the wet paper (a flat sage over the paper tile). Over it the old page, masked away
+   inside the wash; over that the new page, masked in a little further back, so the wet paper shows in between. The
+   front is three pools that spread at slightly different rates, so its edge is uneven like paint and never a ring.
+   Both masks are plain gradients on one animated number (--wash): no image, no script and no layout while it plays.
+   A full page load (type "pageload": sign-in, the admin and account pages) gets a different back layer: paper with
+   a band of wet sage that travels with the front, which looks the same but costs a third animated layer. That is
+   because Chromium without a graphics card sometimes fails to draw either page picture on a full page load (it does
+   with the browser's own fade too): then what shows is paper with a wash passing over it until the new page
+   appears, where a flat back layer would fill the screen with sage. Turns inside the dashboard never fail that way,
+   so they keep the cheaper flat layer.
+   Browsers without mask-composite or view transitions change page with their plain fade or at once; reduced motion
+   changes page at once. */
+@view-transition{navigation:auto;types:pageload}
+@property --wash{syntax:"<percentage>";inherits:false;initial-value:160%}
+::view-transition{pointer-events:none}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.2s;animation-timing-function:ease}
+@supports (mask-composite:intersect){
+ ::view-transition-group(root){background:var(--paper-tex),color-mix(in srgb,var(--navy) 16%,var(--canvas))}
+ html:active-view-transition-type(pageload)::view-transition-group(root){--wet:color-mix(in srgb,var(--navy) 16%,var(--canvas));animation:wash-turn var(--t-wash) var(--ease-wash) both;
+  background:var(--paper-tex),radial-gradient(circle farthest-corner at var(--vx,50%) var(--vy,100%),transparent calc(var(--wash) - 44%),var(--wet) calc(var(--wash) - 30%),var(--wet) calc(var(--wash) + 6%),transparent calc(var(--wash) + 20%)),radial-gradient(circle farthest-corner at calc(var(--vx,50%) + 12%) calc(var(--vy,100%) - 18%),transparent calc(var(--wash) * .86 - 44%),var(--wet) calc(var(--wash) * .86 - 30%),var(--wet) calc(var(--wash) * .86 + 6%),transparent calc(var(--wash) * .86 + 20%)),radial-gradient(circle farthest-corner at calc(var(--vx,50%) - 16%) calc(var(--vy,100%) - 8%),transparent calc(var(--wash) * .74 - 44%),var(--wet) calc(var(--wash) * .74 - 30%),var(--wet) calc(var(--wash) * .74 + 6%),transparent calc(var(--wash) * .74 + 20%)),var(--canvas)}
+ ::view-transition-old(root),::view-transition-new(root){mix-blend-mode:normal;opacity:1;animation:wash-turn var(--t-wash) var(--ease-wash) both}
+ ::view-transition-old(root){mask-composite:intersect;
+  mask-image:radial-gradient(circle farthest-corner at var(--vx,50%) var(--vy,100%),transparent calc(var(--wash) - 6%),#000 calc(var(--wash) + 6%)),radial-gradient(circle farthest-corner at calc(var(--vx,50%) + 12%) calc(var(--vy,100%) - 18%),transparent calc(var(--wash) * .86 - 6%),#000 calc(var(--wash) * .86 + 6%)),radial-gradient(circle farthest-corner at calc(var(--vx,50%) - 16%) calc(var(--vy,100%) - 8%),transparent calc(var(--wash) * .74 - 6%),#000 calc(var(--wash) * .74 + 6%))}
+ ::view-transition-new(root){
+  mask-image:radial-gradient(circle farthest-corner at var(--vx,50%) var(--vy,100%),#000 calc(var(--wash) - 30%),transparent calc(var(--wash) - 8%)),radial-gradient(circle farthest-corner at calc(var(--vx,50%) + 12%) calc(var(--vy,100%) - 18%),#000 calc(var(--wash) * .86 - 30%),transparent calc(var(--wash) * .86 - 8%)),radial-gradient(circle farthest-corner at calc(var(--vx,50%) - 16%) calc(var(--vy,100%) - 8%),#000 calc(var(--wash) * .74 - 30%),transparent calc(var(--wash) * .74 - 8%))}
+}
+@keyframes wash-turn{from{--wash:-8%}to{--wash:160%}}
+.rail{view-transition-name:rail}.rail .navs{view-transition-name:navs}
+/* The dock stays put while the page changes under it: the new page's dock shows at once, and its tile glides over. */
+.idock{view-transition-name:dock}
+::view-transition-old(dock){display:none}::view-transition-new(dock){animation:none}::view-transition-group(dock){z-index:5;animation:none}
+.navi,.navsel{view-transition-name:navsel}
+.nav:has(>.navsel){position:relative;isolation:isolate;background:none;box-shadow:none}
+.navsel{position:absolute;inset:0;z-index:-1;border-radius:var(--r-pill);background:var(--rail-on);box-shadow:0 1px 2px rgba(20,24,10,.14)}
+::view-transition-group(navsel){animation-duration:.2s;animation-timing-function:var(--ease)}
+::view-transition-group(rail),::view-transition-old(rail),::view-transition-new(rail){animation-duration:.2s}
+/* The menu's background at the back, the pill over it, and the menu's words on top, so the pill never covers a label. */
+::view-transition-group(rail){z-index:2}::view-transition-group(navsel){z-index:3}::view-transition-group(navs){z-index:4}
+@media (prefers-reduced-motion:reduce){@view-transition{navigation:none}}
+
+/* ---------- Side menu groups (static/menu.js) ----------
+   User management, Live Activity, Data handling and Links fold open and shut under their header, after React Bits'
+   BranchedMenu: a trunk runs down from the header's icon with a curved branch to each row, and the page you are on
+   lights its branch in the accent colour, drawn from the header down. The rows fold with the grid-rows trick, so nothing is
+   measured; the lines fade in a little after the rows open. Without the script every group stays open. */
+.ngrp{display:flex;flex-direction:column;--bm-x:34px;--bm-line:color-mix(in srgb,var(--rail-mute) 40%,var(--rail-bg));--bm-ease:cubic-bezier(.23,1,.32,1)}
+.ngrp .nav{position:relative;z-index:1}
+.ngh .ngt{flex:1;min-width:0}
+.ngh>.ic:last-child{width:16px;height:16px;opacity:.7;transition:transform .3s var(--bm-ease),opacity .2s ease}
+.ngrp:not(.bm)>.ngh{pointer-events:none}
+.ngrp:not(.bm)>.ngh>.ic:last-child{display:none}
+.ngrp.open>.ngh{color:var(--rail-strong)}
+.ngrp.open>.ngh>.ic:last-child{transform:rotate(180deg);opacity:1}
+/* A folded group holding the page you are on shows a small white mark by its name. */
+.ngh::after{content:"";position:absolute;left:3px;top:50%;width:3px;height:16px;margin-top:-8px;border-radius:2px;background:var(--rail-on-ink);opacity:0;transition:opacity .15s ease}
+.ngrp.has-cur:not(.open)>.ngh::after{opacity:1}
+.ngrp.has-cur:not(.open)>.ngh{color:var(--rail-strong);font-weight:600}
+.ngb{display:grid;grid-template-rows:1fr}
+.ngrp.bm>.ngb{grid-template-rows:0fr}
+.ngrp.bm.open>.ngb{grid-template-rows:1fr}
+.ngrp.ready>.ngb{transition:grid-template-rows .3s var(--bm-ease)}
+.ngf{min-height:0;overflow:hidden}
+.ngi{position:relative;display:flex;flex-direction:column;gap:2px;padding:2px 0 8px}
+.ngl{position:absolute;left:0;top:0;overflow:visible;pointer-events:none;z-index:2;opacity:0;transition:opacity .2s ease}
+.ngrp.open .ngl,.ngrp:not(.bm) .ngl{opacity:1;transition:opacity .25s ease .1s}
+.ngl path{fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.ngl .b{stroke:var(--bm-line)}
+.ngl .r{stroke:var(--rail-on-ink);transition:stroke-dashoffset .4s var(--bm-ease)}
+.nav.nsub{margin-left:var(--bm-x);width:calc(100% - var(--bm-x));min-height:32px;padding:4px 8px;gap:8px;font-size:.8125rem;color:var(--rail-mute)}
+.nav.nsub:hover,.nav.nsub:focus-visible{color:var(--rail-strong)}
+.nav.nsub[aria-current="page"]{color:var(--rail-on-ink)}
+.nav.nsub .ic{width:14px;height:14px}
+@media (prefers-reduced-motion:reduce){
+ .ngrp.ready>.ngb,.ngl,.ngrp.open .ngl,.ngl .r,.ngh>.ic:last-child,.ngh::after{transition:none}
+}
+
+/* ---------- Dark mode ----------
+   Chosen per person on Account (auth.change_theme); the server puts data-theme="dark" on <html> for the signed-in
+   pages only, so the sign-in and password pages always stay light. Never follows the OS setting on its own.
+   The same token names carry dark values: neutral greys with no blue cast, a page a touch lighter than the menu,
+   and anything that floats (menus, pop-ups, dialogs) lighter again (--raised), as Atlassian lifts its dark
+   surfaces. Navy (Ilmi's olive) as a fill (primary buttons) becomes a brighter olive so it carries white text at
+   4.5:1 or more; navy as text (--navy-text) becomes a pale olive. Pastel tints are mixed with --paper, which here is the
+   page colour, so they turn into quiet dark tints. Score and level colours keep their own readable text
+   (onC/chip in page.html). */
+html[data-mode="dark"]{
+ --navy:#617038;--navy-2:#56642f;--navy-soft:#262b1b;--navy-text:#c5d197;--paper:#1e1f17;
+ --rail-bg:#14150f;--rail-ink:#dcd8c4;--rail-mute:#a29f89;--rail-line:#2a2b22;--rail-hover:rgba(255,250,235,.05);--rail-on:#2c3120;
+ --rail-strong:#f4f1e4;--rail-on-ink:#e3eabf;
+ --bg:#202119;--surface:#1e1f17;--surface-2:#24251c;--sunk:#15160f;--line:#313226;--line-2:#45473a;--raised:#2a2b21;
+ --ink:#ebe8db;--ink-2:#c9c6b5;--mute:#a3a08b;
+ --canvas:#181912;
+ --primary:#617038;--primary-hover:#6b7b3f;--primary-soft:#262b1b;--primary-ink:#c5d197;
+ --ok:#5b8a4e;--ok-soft:#1d2618;--ok-ink:#a9d09a;
+ --warn:#b0681e;--warn-soft:#2b2216;--warn-ink:#efbf86;
+ --bad:#b5463a;--bad-soft:#2e1c18;--bad-ink:#f1a596;
+ --focus:#b5c47c;
+ --sage:#7c9c60;--sage-soft:#1d2618;--sage-ink:#b3d09c;
+ --sky:#7a93a6;--sky-soft:#24251c;--sky-ink:#b2c6d4;
+ --teal:#7c9c60;--teal-soft:#24251c;--teal-ink:#b3d09c;
+ --gold:#c99a3d;--gold-soft:#2a2418;--gold-ink:#e8c983;
+ --makkah:#d3a232;--aqsa:#4b8fc6;--madinah:#3fa277;
+ --tok-g-ink:#8fd49e;--tok-b-ink:#9dbcf0;--tok-r-ink:#f2a39b;
+ --shadow:0 0 0 1px var(--line);
+ --shadow-card:0 0 0 1px var(--line),0 10px 24px -14px rgba(0,0,0,.6);
+ --shadow-float:0 0 0 1px var(--line-2),0 8px 24px rgba(0,0,0,.45);
+ --shadow-lift:0 0 0 1px var(--line-2),0 16px 40px rgba(0,0,0,.55);
+ --c-hover:rgba(255,250,235,.06);
+ --paper-tex:none;--page-wash:none;--rail-wash:none;--splat:none;
+ color-scheme:dark}
+/* A theme's own colours (html[data-logo]) are shown flat: no paper speckle, washes or watercolour menu. */
+html[data-logo]{--paper-tex:none;--page-wash:none;--rail-wash:none;--splat:none}
+html[data-mode="dark"] .seg button[aria-pressed="true"]{background:var(--surface-2);box-shadow:0 0 0 1px var(--line-2)}
+html[data-mode="dark"] ::selection{background:#56642f;color:#fff}
+html[data-mode="dark"] .badge{box-shadow:none}
+
+/* ---------- Themes (Account; themes.py works out each theme's colours) ----------
+   A theme other than Ilmi and Dark arrives as its own small stylesheet (/theme.css) that sets the tokens above
+   on :root[data-theme="..."]; data-mode="dark" brings in the dark tokens for status colours when its cards are dark.
+   The logo takes the theme's colour on its disc: the picture is used as a mask, so its white swoosh stays clear. */
+html[data-logo] .badge{position:relative;background:var(--logo-disc)}
+html[data-logo] .badge img{opacity:0}
+html[data-logo] .av{background:var(--primary-soft);color:var(--primary-ink)}
+/* Admin pages' text that sits straight on the page's background, not on a card: the page head's figures,
+   headings and notes between cards. */
+.band .fig b,.content>h2{color:var(--c-ink)}
+.band .fig span,.band .sub,.content>.sub{color:var(--c-mute)}
+html[data-logo] .badge::after{content:"";position:absolute;inset:0;margin:auto;width:85%;height:85%;background:var(--logo);
+ -webkit-mask:url(/logo.png?v=4) center/contain no-repeat;mask:url(/logo.png?v=4) center/contain no-repeat}
+/* A background photo, already cropped, adjusted and shaded by the server, fills the window behind everything.
+   On a computer the page head stays fixed while the page scrolls, so it shows the same photo fixed in place. */
+html[data-photo]{background:var(--canvas)}
+html[data-photo] body{background:transparent}
+html[data-photo] body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+ background:var(--canvas) var(--ph-url,none) var(--ph-pos,50% 50%)/cover no-repeat}
+@media (min-width:960px){
+ html[data-photo] .head{background:var(--canvas) var(--ph-url,none) var(--ph-pos,50% 50%)/cover no-repeat fixed;box-shadow:none}
+}
+/* While a theme's photo is being changed on Account (static/theme.js), the original is shown with the settings
+   applied in the browser, and the shade laid over it, so every change shows at once. */
+html[data-live] body::before{background:var(--canvas) var(--ph-src,none) var(--ph-pos,50% 50%)/cover no-repeat;
+ filter:var(--ph-filter,none);transform:scale(var(--ph-zoom,1));transform-origin:var(--ph-pos,50% 50%);inset:var(--ph-bleed,0)}
+html[data-live] body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--ph-scrim,transparent)}
+
+@media print{html[data-photo] body::before,html[data-live] body::after{display:none}}

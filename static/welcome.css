@@ -1,0 +1,460 @@
+/* Ilmi's start page (templates/welcome.html). Served after src/tokens.css in /welcome.css, so the colours, type and
+   wordmark are the dashboard's own. Paper, ink drawings that draw themselves on, olive watercolour and splashes of
+   paint; the hero plays on load (CSS only), and the rest arrives as it scrolls into view (static/welcome.js adds .in).
+   Under reduced motion tokens.css turns every animation off, and each part rests in its finished state. */
+/* The hadith and the values' names: Amiri, cut down to the letters this page uses (tools/art/fonts.py). */
+@font-face{font-family:"Amiri Text";src:url(/fonts/amiri-text.woff2) format("woff2");font-weight:400;font-display:swap;
+ unicode-range:U+0600-06FF,U+0750-077F,U+FB50-FDFF,U+FE70-FEFF}
+.wl{--olive-band:#545f37;--cream:#f2eddd;--wink:#34362a;--tint:#7f8f4e;
+ background:var(--paper-tex),var(--canvas);color:var(--ink);font:400 1.125rem/1.55 var(--font-display);overflow-x:hidden;overflow-x:clip}
+/* The washes and the olive swoosh run past the page's sides; the page never scrolls sideways for them, and a wash can
+   still bleed over the edge of the section above or below it. Clipped rather than hidden where browsers can, so the
+   page stays the one thing that scrolls and its pinned parts can stick. */
+html{overflow-x:hidden;overflow-x:clip}
+.wl main{display:block;outline:0}
+.wl h1,.wl h2,.wl h3{font-family:var(--font-display);color:var(--ink)}
+.wl p{margin:0}
+.wl a{color:inherit}
+.wl :focus-visible{outline:2px solid var(--focus);outline-offset:3px;border-radius:6px}
+
+/* Drawings: ink in currentColor, watercolour tints under it. */
+.art{display:block;height:auto;overflow:visible}
+.art .tint{fill:var(--tint)}
+.art .tint .hm{fill:var(--makkah)}.art .tint .hd{fill:var(--madinah)}.art .tint .ha{fill:var(--aqsa)}
+.art .tint .fl{fill:#e2b65a}
+
+/* Splashes of paint (static/art/splat-*.webp, tools/art/wash.py). Each lands from its centre outwards: a soft circle
+   opens while the splash swells past its size and settles, wet and dark at first, drying a shade lighter. Resting,
+   the circle is wide open, so with no animation the splash simply shows. */
+.splat{position:absolute;pointer-events:none;background:center/contain no-repeat;
+ -webkit-mask:radial-gradient(closest-side,#000 72%,transparent) center/300% 300% no-repeat;
+ mask:radial-gradient(closest-side,#000 72%,transparent) center/300% 300% no-repeat}
+@keyframes w-splash{from{opacity:0;scale:.35;filter:blur(4px);-webkit-mask-size:0% 0%;mask-size:0% 0%}
+ 35%{opacity:1;filter:blur(0)}
+ 70%{scale:1.03}
+ to{scale:1;-webkit-mask-size:300% 300%;mask-size:300% 300%}}
+
+/* ---------- Header ---------- */
+.wnav{position:relative;z-index:5;max-width:1280px;margin:0 auto;display:flex;align-items:center;gap:24px;padding:22px 40px}
+.wbrand{text-decoration:none;color:var(--ink);margin-right:auto;border-radius:8px;display:flex;flex-direction:column;align-items:flex-start}
+.wbrand .ilmi{font-size:2rem}
+/* The site title, when an admin has set one, under the wordmark as in the dashboard's menu. */
+.wbrand small{font:500 .8125rem/1.25 var(--font);color:var(--ink-2);margin-top:7px;max-width:30ch}
+.wlinks{display:flex;gap:32px}
+.wlinks a{text-decoration:none;font-size:1.0625rem;color:var(--ink-2);background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;padding:2px 0;
+ transition:background-size .35s var(--ease-out),color .2s ease}
+.wlinks a:hover{color:var(--ink);background-size:100% 1px}
+
+/* ---------- Buttons: olive pills with an arrow that leans forward on hover ---------- */
+.wbtn{display:inline-flex;align-items:center;gap:12px;min-height:52px;padding:10px 28px;border-radius:999px;background:var(--navy);color:var(--cream)!important;
+ font:500 1.1875rem/1 var(--font-display);text-decoration:none;white-space:nowrap;border:1px solid var(--navy);
+ box-shadow:0 1px 2px rgba(40,46,20,.2),0 10px 24px -12px rgba(40,46,20,.55);
+ transition:background-color .2s ease,transform .25s var(--ease-out),box-shadow .25s ease}
+.wbtn:hover{background:var(--navy-2);transform:translateY(-1px);box-shadow:0 2px 4px rgba(40,46,20,.2),0 14px 28px -12px rgba(40,46,20,.6)}
+.wbtn:active{transform:translateY(0) scale(.98)}
+.wbtn .arr{width:20px;height:12px;transition:transform .3s var(--ease-out)}
+.wbtn:hover .arr{transform:translateX(4px)}
+.wbtn.ghost{background:transparent;color:var(--ink)!important;border-color:color-mix(in srgb,var(--ink) 55%,transparent);box-shadow:none}
+.wbtn.ghost:hover{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.wbtn.sm{min-height:44px;padding:8px 22px;font-size:1.0625rem}
+
+/* ---------- Hero ---------- */
+.hero{position:relative;max-width:1280px;margin:0 auto;padding:8px 40px 72px;display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);align-items:center;gap:0 64px}
+.hwash{position:absolute;z-index:0;pointer-events:none;background:center/contain no-repeat}
+.hw1{width:760px;height:484px;left:47%;top:-235px;background-image:url(/art/wash-cloud.webp);opacity:.85}
+.hw2{width:600px;height:382px;right:-230px;top:10px;background-image:url(/art/wash-cloud.webp);transform:scale(-1,1) rotate(-8deg);opacity:.55}
+.hero>:not(.hwash){position:relative;z-index:1}
+.hero-art{min-height:560px;color:var(--wink)}
+.hero-art .art-sprig{position:absolute;left:-6px;top:28px;width:150px}
+.hmark{position:relative;margin:0;padding:52px 0 0 128px;font-weight:600;line-height:1}
+.hm-en{display:block;font:600 clamp(7.5rem,13.4vw,12.5rem)/.86 var(--font-hand);letter-spacing:-.025em;color:var(--ink);white-space:nowrap}
+.hm-en .l{display:inline-block}
+/* The i's dot is a drop of olive paint, as in the reference. */
+.hm-en .l4{position:relative}
+.hm-en .dot{position:absolute;left:50%;top:.09em;width:.15em;height:.15em;margin-left:-.06em;border-radius:50%;background:#7a8848;
+ box-shadow:inset -.02em -.02em .03em rgba(40,46,20,.25)}
+.hm-ar{display:block;width:max-content;margin:-.42em 0 0 1.05em;font:700 clamp(6rem,10.6vw,9.75rem)/1.25 var(--font-ar);color:var(--ink);letter-spacing:0;font-feature-settings:"rlig" 0}
+.hero-art .art-rahle{position:absolute;left:-26px;bottom:-6px;width:min(310px,46%)}
+.hero-art .hs1{width:420px;height:420px;left:-140px;bottom:-150px;background-image:url(/art/splat-b.webp);opacity:.5}
+/* Where the drop of olive lands on the i, it splashes. */
+.hm-en .dsplat{left:50%;top:.165em;width:1.5em;height:1.5em;margin:-.75em 0 0 -.75em;background-image:url(/art/splat-c.webp);opacity:.5;rotate:-20deg}
+
+.hero-text{padding:28px 0 28px 52px;border-left:0;position:relative}
+.hero-text::before{content:"";position:absolute;left:0;top:0;bottom:0;width:1px;background:color-mix(in srgb,var(--ink) 30%,transparent);transform-origin:top}
+.tagline{font:italic 500 clamp(2.75rem,4.6vw,4.25rem)/1.04 var(--font-hand);letter-spacing:-.01em;color:var(--ink);margin:0 0 24px!important;text-wrap:balance}
+.lede{font-size:1.3125rem;line-height:1.5;color:var(--ink-2);max-width:31ch;margin:0 0 36px!important}
+.cta{display:flex;flex-wrap:wrap;gap:16px}
+
+/* ---------- The olive band: a hadith on learning the Qur'an together ---------- */
+.band{position:relative;isolation:isolate;background:var(--olive-band);color:var(--cream);padding:88px 40px 92px}
+.bwash{position:absolute;z-index:-1;inset:0;background:url(/art/wash-band.webp) right center/auto 128% no-repeat;pointer-events:none}
+.bmist{position:absolute;z-index:-1;right:-30px;top:-96px;width:640px;height:299px;background:url(/art/wash-mist.webp) center/contain no-repeat;opacity:.7;pointer-events:none}
+.band-in{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:0 64px}
+.band-ar blockquote,.band-t,.band-t blockquote{margin:0}
+/* The label sits over the start of the Arabic, at the right of its column. */
+.wl .band-k{display:flex;align-items:center;justify-content:flex-end;gap:14px;margin:0 0 18px;font:600 .8125rem/1 var(--font);letter-spacing:.16em;
+ text-transform:uppercase;color:color-mix(in srgb,var(--cream) 78%,transparent)}
+.band-k::before{content:"";width:40px;height:1px;background:currentColor;opacity:.7}
+/* The Arabic, a line at a time as it is written in; the words on learning together in butter, underlined in a
+   darker wash. */
+.hq-ar{margin:0;font:400 clamp(1.75rem,2.45vw,2.375rem)/2.05 "Amiri Text",var(--font-ar);color:var(--cream);text-align:right;word-spacing:.04em}
+.hq-ar .ln{display:block}
+.band .hl{color:#ece5b4;background:linear-gradient(rgba(28,33,12,.32),rgba(28,33,12,.32)) no-repeat;background-size:100% .3em;
+ -webkit-box-decoration-break:clone;box-decoration-break:clone}
+.hq-ar .hl{background-position:100% 86%}
+.band-t .hl{background-position:0 92%}
+.band-t{position:relative;padding:12px 0 12px 52px;max-width:600px}
+.band-t::before{content:"";position:absolute;left:0;top:0;bottom:0;width:1px;background:color-mix(in srgb,var(--cream) 45%,transparent);transform-origin:top}
+.band-t .big{font:italic 500 clamp(1.5rem,2vw,1.875rem)/1.4 var(--font-hand);margin:0 0 24px!important;color:var(--cream);text-wrap:pretty}
+.band-t figcaption{display:flex;align-items:center;gap:12px;font:500 .9375rem/1.45 var(--font);color:color-mix(in srgb,var(--cream) 84%,transparent)}
+.band-t figcaption::before{content:"";flex:none;width:28px;height:1px;background:currentColor;opacity:.7}
+.band-sprig{position:absolute;z-index:-1;right:max(8px,calc(50% - 780px));bottom:-60px;width:126px;color:color-mix(in srgb,var(--cream) 70%,transparent);transform:rotate(18deg);pointer-events:none}
+.band-sprig .art .tint{fill:var(--cream);opacity:.45}
+
+/* ---------- What it does ---------- */
+.feats{max-width:1240px;margin:0 auto;padding:84px 40px 48px}
+.feats ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.feats li{padding:4px 32px 8px;text-align:center;position:relative}
+.feats li+li::before{content:"";position:absolute;left:0;top:18%;bottom:6%;width:1px;background:var(--line-2)}
+.feats .art{width:104px;margin:0 auto 14px;color:var(--wink)}
+.feats h3{font-size:1.5rem;font-weight:600;margin:0 0 8px;letter-spacing:-.005em}
+.feats p{font-size:1.0625rem;line-height:1.5;color:var(--ink-2);max-width:26ch;margin:0 auto!important}
+
+/* ---------- Inside Ilmi: a preview of the overview ---------- */
+.inside{position:relative;isolation:isolate}
+.inside .pin-view{position:relative;max-width:1280px;margin:0 auto;padding:56px 40px 112px;display:grid;grid-template-columns:minmax(0,.78fr) minmax(0,1.5fr);align-items:center;gap:0 56px}
+.iswoosh{position:absolute;z-index:-1;right:-30vw;top:14%;width:calc(56% + 30vw);height:88%;border-radius:46% 0 0 54%/58% 0 0 42%;
+ background:url(/art/wash-band.webp) left center/auto 120% no-repeat,var(--olive-band);pointer-events:none}
+.in-text h2{font:italic 500 clamp(2.5rem,4vw,3.5rem)/1.06 var(--font-hand);letter-spacing:-.01em;margin:0}
+.in-text hr{width:44px;height:1px;border:0;background:var(--ink-2);margin:28px 0}
+.in-text p{font-size:1.1875rem;color:var(--ink-2);max-width:30ch}
+
+.mock{margin:0;display:grid;grid-template-columns:184px minmax(0,1fr);min-height:420px;border-radius:20px;overflow:hidden;background:var(--surface);
+ box-shadow:0 0 0 1px rgba(60,52,30,.08),0 2px 4px rgba(50,44,24,.06),0 30px 60px -24px rgba(40,36,18,.45);font-family:var(--font)}
+.mk-rail{background:url(/art/wash-rail.webp) center bottom/100% auto no-repeat,#4b552f;color:#ece6d3;padding:22px 14px}
+.mk-rail .ilmi{font-size:1.5rem;color:#fffaf0;padding:0 10px}
+.mk-rail ul{list-style:none;margin:22px 0 0;padding:0;display:grid;gap:3px}
+.mk-rail li{font-size:.8125rem;font-weight:500;padding:7px 12px;border-radius:999px}
+.mk-rail li.on{background:#f4efe2;color:#3c4524;font-weight:600;box-shadow:0 1px 2px rgba(20,24,10,.2)}
+.mk-main{padding:26px 28px;background:var(--paper-tex),var(--canvas)}
+.mk-h{font:600 1.5rem/1.2 var(--font-display);color:var(--ink)}
+.mk-s{font:italic 500 1.0625rem var(--font-hand);color:var(--mute);margin:2px 0 18px!important}
+.mk-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.mk-stats>div,.mk-card{background:var(--surface);border-radius:14px;box-shadow:0 0 0 1px var(--line),0 6px 14px -10px rgba(60,52,30,.3);padding:12px 14px}
+.mk-stats small{display:block;font-size:.6875rem;font-weight:500;color:var(--mute);line-height:1.25;min-height:2.5em}
+.mk-stats b{display:block;font:600 2rem/1.1 var(--font-display);color:var(--ink);font-variant-numeric:lining-nums tabular-nums}
+.mk-stats i{display:flex;align-items:center;gap:6px;font-style:normal;font-size:.6875rem;color:var(--mute);margin-top:2px}
+.mk-stats i::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--line-2)}
+.mk-stats i.ok::before{background:var(--ok)}.mk-stats i.warn::before{background:var(--warn)}
+.mk-row{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:10px;margin-top:10px}
+.mk-t{font-size:.8125rem;font-weight:600;color:var(--ink);margin:0 0 10px!important}
+.mk-houses{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.mk-houses li{display:grid;grid-template-columns:62px minmax(0,1fr) 44px;align-items:center;gap:10px;font-size:.75rem;color:var(--ink-2)}
+.mk-houses b{font-weight:600;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums}
+.mk-houses .bar{height:8px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.mk-houses .bar i{display:block;height:100%;border-radius:inherit;transform-origin:left}
+.mk-houses .mk i{width:100%;background:var(--makkah)}.mk-houses .md i{width:95%;background:var(--madinah)}.mk-houses .ma i{width:90%;background:var(--aqsa)}
+.mk-bars{display:flex;align-items:flex-end;gap:8px;height:92px;border-bottom:1px solid var(--line-2)}
+.mk-bars i{flex:1;border-radius:4px 4px 0 0;background:#cdd1b4;transform-origin:bottom}
+.mk-bars i:nth-child(1){height:30%}.mk-bars i:nth-child(2){height:44%}.mk-bars i:nth-child(3){height:38%}.mk-bars i:nth-child(4){height:56%}
+.mk-bars i:nth-child(5){height:50%}.mk-bars i:nth-child(6){height:68%}.mk-bars i:nth-child(7){height:62%}.mk-bars i.now{height:92%;background:var(--navy)}
+
+/* ---------- What we care about: three values ---------- */
+.values{position:relative;max-width:1240px;margin:0 auto;padding:48px 40px 104px}
+.v-head{text-align:center;max-width:680px;margin:0 auto 52px}
+.v-k{font:600 .8125rem/1 var(--font);letter-spacing:.16em;text-transform:uppercase;color:var(--mute);margin:0 0 16px!important}
+.v-head h2{font:italic 500 clamp(2.75rem,4.6vw,4rem)/1.04 var(--font-hand);letter-spacing:-.01em;margin:0}
+.v-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px}
+.vcard{position:relative;background:var(--surface);border-radius:22px;padding:30px 30px 34px;
+ box-shadow:0 0 0 1px rgba(60,52,30,.07),0 2px 4px rgba(50,44,24,.05),0 26px 50px -30px rgba(40,36,18,.42)}
+.v-art{position:relative;display:block;width:120px;height:96px;margin:0 0 18px}
+.v-art .art{position:relative;width:120px;color:var(--wink)}
+.v-art .vs{width:196px;height:196px;left:-38px;top:-50px;background-image:url(/art/splat-b.webp);opacity:.5}
+.vcard:nth-child(2) .vs{background-image:url(/art/splat-c.webp);rotate:150deg;opacity:.46}
+.vcard:nth-child(3) .vs{background-image:url(/art/splat-a.webp);rotate:-40deg;opacity:.44}
+.v-ar{position:absolute;top:30px;right:30px;font:400 1.875rem/1.2 "Amiri Text",var(--font-ar);color:var(--navy-text)}
+.vcard h3{font-size:1.625rem;font-weight:600;margin:0 0 10px;letter-spacing:-.005em}
+.vcard p{font-size:1.0625rem;line-height:1.55;color:var(--ink-2)}
+
+/* ---------- Closing ---------- */
+.close{position:relative;isolation:isolate;padding:40px 40px 0;text-align:center;overflow:hidden}
+.cwash{position:absolute;z-index:-1;left:-5%;right:-5%;bottom:-40px;height:340px;background:url(/art/wash-low.webp) center bottom/100% 100% no-repeat;opacity:.75;pointer-events:none}
+.close h2{font:italic 500 clamp(2.75rem,5vw,4.25rem)/1.05 var(--font-hand);letter-spacing:-.01em;max-width:16ch;margin:0 auto 32px;text-wrap:balance}
+.close-art{position:relative;height:250px;max-width:1280px;margin:8px auto 0;color:var(--wink)}
+.close-art .art-grass{position:absolute;left:0;bottom:0;width:min(340px,40%)}
+.close-art .art-skyline{position:absolute;right:0;bottom:0;width:min(720px,70%)}
+.wfoot{position:relative;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:center;gap:8px 20px;padding:18px 40px 28px;font-size:1rem;color:var(--ink-2);
+ border-top:1px solid color-mix(in srgb,var(--ink) 14%,transparent)}
+.wfoot .ilmi{font-size:1.375rem;color:var(--ink)}
+.wfoot a{color:var(--navy-text);text-underline-offset:.2em}
+
+/* ---------- Motion ---------- */
+@keyframes w-bloom{from{opacity:0;filter:blur(14px)}}
+@keyframes w-drift{from{translate:0 0}to{translate:-22px 10px}}
+@keyframes w-rise{from{opacity:0;transform:translateY(34px);filter:blur(8px)}to{opacity:1;transform:none;filter:none}}
+@keyframes w-fade{from{opacity:0}}
+@keyframes w-write{from{clip-path:inset(-30% -4% -40% 100%)}to{clip-path:inset(-30% -4% -40% -4%)}}
+@keyframes w-draw{from{stroke-dasharray:1 1.2;stroke-dashoffset:1.1}to{stroke-dasharray:1 1.2;stroke-dashoffset:0}}
+@keyframes w-grow{from{transform:scaleY(0)}}
+@keyframes w-growx{from{transform:scaleX(0)}}
+@keyframes w-drop{0%{opacity:0;transform:translateY(-1.2em) scale(.4)}55%{opacity:1;transform:translateY(.08em) scale(1.12,.9)}75%{transform:translateY(-.03em) scale(.96,1.04)}100%{opacity:1;transform:none}}
+
+/* The hero, on load: the washes bloom, the sprig and the stand draw themselves, the letters of Ilmi rise one by one,
+   علمي is written in from the right, and a drop of olive falls onto the i. */
+.hwash{animation:w-bloom 2.2s ease .05s both,w-drift 22s ease-in-out 2.3s infinite alternate}
+.hw2{animation-delay:.3s,2.5s;animation-duration:2.4s,26s}
+.hero-art .art-sprig .ink path{animation:w-draw 1.5s cubic-bezier(.5,0,.2,1) .2s both}
+.hero-art .art-sprig .k2 path{animation-duration:1.2s;animation-delay:.75s}
+.hero-art .art-sprig .tint{animation:w-fade 1.6s ease 1.5s both}
+.hm-en .l{animation:w-rise 1s var(--ease-out) both}
+.hm-en .l1{animation-delay:.35s}.hm-en .l2{animation-delay:.45s}.hm-en .l3{animation-delay:.55s}.hm-en .l4{animation-delay:.65s}
+.hm-en .dot{animation:w-drop .75s cubic-bezier(.3,.6,.4,1) 1.75s both}
+.hm-ar{animation:w-write 1.5s cubic-bezier(.55,0,.25,1) 1.05s both}
+.hero-art .art-rahle .ink path{animation:w-draw 1.4s cubic-bezier(.5,0,.2,1) 1s both}
+.hero-art .art-rahle .k2 path{animation-delay:1.45s}
+.hero-art .art-rahle .k3 path{animation-delay:1.8s;animation-duration:1s}
+.hero-art .art-rahle .k4 path{animation-delay:1.25s;animation-duration:1.6s}
+.hero-art .art-rahle .tint{animation:w-fade 1.4s ease 2.3s both}
+.hero-text::before{animation:w-grow 1.2s var(--ease-out) .9s both}
+.tagline{animation:w-rise 1.1s var(--ease-out) 1.1s both}
+.hero-art .hs1{animation:w-splash 1.1s cubic-bezier(.16,.9,.3,1) .85s both}
+.hm-en .dsplat{animation:w-splash .75s cubic-bezier(.16,.9,.3,1) 2.15s both}
+.lede{animation:w-rise 1.1s var(--ease-out) 1.3s both}
+.cta{animation:w-rise 1.1s var(--ease-out) 1.5s both}
+.wnav{animation:w-fade 1s ease .1s both}
+
+/* The rest arrives as it comes into view (welcome.js). Without the script, .js is never set and all of it shows. */
+.js .rv:not(.band):not(.in){opacity:0;transform:translateY(36px)}
+.js .rv:not(.band){transition:opacity 1s var(--ease-out),transform 1.2s var(--ease-out)}
+.js .rv:not(.in) .ink path{stroke-dasharray:1 1.2;stroke-dashoffset:1.1}
+.js .rv:not(.in) .tint{opacity:0}
+.rv.in .ink path{animation:w-draw 1.6s cubic-bezier(.5,0,.2,1) .25s both}
+.rv.in .k2 path{animation-delay:.6s}.rv.in .k3 path{animation-delay:.9s}.rv.in .k4 path{animation-delay:.4s}
+.rv.in .tint{animation:w-fade 1.2s ease 1.2s both}
+.feats li:nth-child(2){transition-delay:.1s}.feats li:nth-child(3){transition-delay:.2s}.feats li:nth-child(4){transition-delay:.3s}
+.feats li.in:nth-child(2) .ink path{animation-delay:.35s}.feats li.in:nth-child(3) .ink path{animation-delay:.45s}.feats li.in:nth-child(4) .ink path{animation-delay:.55s}
+/* The band: the label rises, the Arabic is written in a line at a time from the right, the rule draws down, the
+   English and its source follow, and the darker wash sweeps under the words on learning together. */
+.js .band:not(.in) .band-k,.js .band:not(.in) .hq-ar .ln,.js .band:not(.in) .band-t .big,.js .band:not(.in) .band-t figcaption{opacity:0}
+.band.in .band-k{animation:w-rise 1s var(--ease-out) both}
+.band.in .hq-ar .ln{animation:w-write 1.4s cubic-bezier(.55,0,.25,1) both}
+.band.in .hq-ar .ln:nth-child(1){animation-delay:.2s}.band.in .hq-ar .ln:nth-child(2){animation-delay:.6s}
+.band.in .hq-ar .ln:nth-child(3){animation-delay:1s}.band.in .hq-ar .ln:nth-child(4){animation-delay:1.4s}
+.js .band:not(.in) .band-t::before{transform:scaleY(0)}
+.band.in .band-t::before{animation:w-grow 1.1s var(--ease-out) .3s both}
+.band.in .band-t .big{animation:w-rise 1.1s var(--ease-out) .5s both}
+.band.in .band-t figcaption{animation:w-rise 1s var(--ease-out) .8s both}
+@keyframes w-swash{from{background-size:0 .3em}}
+.band.in .hq-ar .hl{animation:w-swash 1s cubic-bezier(.5,0,.2,1) 1.9s both}
+.band.in .band-t .hl{animation:w-swash 1.1s cubic-bezier(.5,0,.2,1) 1.6s both}
+.bwash{animation:w-drift 26s ease-in-out infinite alternate}
+.bmist{animation:w-drift 20s ease-in-out -6s infinite alternate-reverse}
+.band.in .band-sprig .ink path{animation-delay:.8s;animation-duration:2s}
+/* The preview: the bars grow and the figures count up (welcome.js). */
+.js .mock:not(.in) .mk-bars i{transform:scaleY(0)}
+.mock.in .mk-bars i{animation:w-grow 1s var(--ease-out) both}
+.mock.in .mk-bars i:nth-child(1){animation-delay:.5s}.mock.in .mk-bars i:nth-child(2){animation-delay:.56s}.mock.in .mk-bars i:nth-child(3){animation-delay:.62s}
+.mock.in .mk-bars i:nth-child(4){animation-delay:.68s}.mock.in .mk-bars i:nth-child(5){animation-delay:.74s}.mock.in .mk-bars i:nth-child(6){animation-delay:.8s}
+.mock.in .mk-bars i:nth-child(7){animation-delay:.86s}.mock.in .mk-bars i:nth-child(8){animation-delay:.92s}
+.js .mock:not(.in) .mk-houses .bar i{transform:scaleX(0)}
+.mock.in .mk-houses .bar i{animation:w-growx 1.3s var(--ease-out) .5s both}
+.mock.in .mk-houses .md .bar i{animation-delay:.62s}.mock.in .mk-houses .ma .bar i{animation-delay:.74s}
+.js .mock:not(.in) .mk-rail li{opacity:0}
+.mock.in .mk-rail li{animation:w-fade .6s ease both}
+.mock.in .mk-rail li:nth-child(2){animation-delay:.08s}.mock.in .mk-rail li:nth-child(3){animation-delay:.16s}.mock.in .mk-rail li:nth-child(4){animation-delay:.24s}
+.mock.in .mk-rail li:nth-child(5){animation-delay:.32s}.mock.in .mk-rail li:nth-child(6){animation-delay:.4s}
+.iswoosh{animation:w-drift 30s ease-in-out infinite alternate}
+.close-art.in .art-skyline .ink path{animation-duration:2.4s}
+/* Values: each card rises, its splash lands, then its drawing inks itself in over it. */
+.vcard:nth-child(2){transition-delay:.12s}.vcard:nth-child(3){transition-delay:.24s}
+.vcard.in .vs{animation:w-splash 1s cubic-bezier(.16,.9,.3,1) .15s both}
+.vcard.in:nth-child(2) .vs{animation-delay:.3s}.vcard.in:nth-child(3) .vs{animation-delay:.45s}
+.vcard.in .ink path{animation-delay:.55s}.vcard.in .k2 path{animation-delay:.9s}.vcard.in .k3 path{animation-delay:1.1s}
+.vcard.in:nth-child(2) .ink path{animation-delay:.7s}.vcard.in:nth-child(2) .k2 path{animation-delay:1.05s}.vcard.in:nth-child(2) .k3 path{animation-delay:1.25s}
+.vcard.in:nth-child(3) .ink path{animation-delay:.85s}.vcard.in:nth-child(3) .k2 path{animation-delay:1.2s}
+.js .vcard:not(.in) .v-ar{opacity:0}
+.vcard.in .v-ar{animation:w-write 1.2s cubic-bezier(.55,0,.25,1) .9s both}
+.close-art{transition-delay:.15s}
+
+/* ---------- New parts: the gallery's intro, the statement, the steps, the closing's watermark ---------- */
+.wl h2 em{font-style:italic;color:var(--navy-text)}
+.band h2 em{color:inherit}
+.f-intro{text-align:center;max-width:640px;margin:0 auto 52px}
+.f-intro h2{font:italic 500 clamp(2.75rem,4.6vw,4rem)/1.04 var(--font-hand);letter-spacing:-.01em;margin:0 0 16px}
+.f-intro p:last-child{font-size:1.1875rem;color:var(--ink-2)}
+.f-n{display:block;font:600 .8125rem/1 var(--font);letter-spacing:.16em;color:var(--mute);margin:0 0 10px}
+.f-bar,.cue,.sprog{display:none}
+.idea{position:relative;isolation:isolate;overflow:hidden}
+.idea .pin-view{position:relative;max-width:1100px;margin:0 auto;padding:96px 40px}
+.idea-in{position:relative;max-width:1020px;margin:0 auto}
+.idea-t{font:500 clamp(2rem,4.1vw,3.5rem)/1.2 var(--font-hand);letter-spacing:-.01em;color:var(--ink);text-wrap:pretty}
+.idea-t em{color:var(--navy-text)}
+.i-splash{position:absolute;z-index:-1;left:50%;top:50%;width:min(900px,120vw);aspect-ratio:1;margin:calc(min(900px,120vw) / -2) 0 0 calc(min(900px,120vw) / -2);
+ background:url(/art/splat-b.webp) center/contain no-repeat;opacity:.16;pointer-events:none}
+.steps{list-style:none;margin:30px 0 0;padding:0;display:grid;gap:16px}
+.steps li{position:relative;padding:2px 0 2px 22px;transition:opacity .5s ease}
+.steps li::before{content:"";position:absolute;left:0;top:4px;bottom:4px;width:2px;border-radius:2px;background:var(--line-2);transition:background-color .5s ease}
+.steps b{display:block;font:600 1.25rem/1.3 var(--font-display);color:var(--ink)}
+.steps span{display:block;font-size:1rem;line-height:1.45;color:var(--ink-2)}
+.c-big{position:absolute;z-index:-1;left:0;top:6%;margin:0!important;display:flex;gap:.45em;white-space:nowrap;pointer-events:none;
+ font:600 clamp(8rem,19vw,17rem)/1 var(--font-hand);color:color-mix(in srgb,var(--navy) 8%,transparent)}
+.c-big [lang=ar]{font-family:var(--font-ar);font-weight:700;font-feature-settings:"rlig" 0}
+
+/* ---------- Scroll-driven motion (welcome.js marks the page .motion unless reduced motion is asked for) ----------
+   welcome.js gives each part its progress: --in (0 as its top meets the bottom of the window, 1 at the top), --t
+   (through the window), --p (through its pinned stretch), the hero --h, and the page --doc. */
+
+@property --doc{syntax:"<number>";inherits:false;initial-value:0}
+@property --h{syntax:"<number>";inherits:false;initial-value:0}
+@property --in{syntax:"<number>";inherits:false;initial-value:1}
+@property --t{syntax:"<number>";inherits:false;initial-value:.5}
+@property --p{syntax:"<number>";inherits:false;initial-value:0}
+@property --o{syntax:"<number>";inherits:false;initial-value:0}
+/* These are not inherited: welcome.js writes each one straight onto the few elements that use it, so a scroll
+   restyles those elements alone. Only the words read in one by one inherit theirs (--pw, --iw), from their sentence. */
+
+/* The menu sticks: it slips away while reading down and comes back on the way up, looking just as it does at the
+   top of the page, on the page's own paper across the full width (no pill, no frosting). A hairline of olive along
+   the top shows how far down the page is. */
+.motion .wnav{position:sticky;top:0;transition:transform .55s var(--ease-out)}
+.motion .wnav::before{content:"";position:absolute;z-index:-1;top:0;bottom:0;left:50%;width:100vw;translate:-50% 0;pointer-events:none;
+ background:var(--paper-tex),var(--canvas);opacity:0}
+.motion.scrolled .wnav::before{opacity:1}
+.motion.nav-away .wnav:not(:focus-within){transform:translateY(-110%)}
+.motion .sprog{display:block;position:fixed;z-index:10;left:0;right:0;top:0;height:2px;pointer-events:none}
+.sprog i{display:block;height:100%;background:var(--navy);transform-origin:left;transform:scaleX(var(--doc,0))}
+
+/* The hero eases back as the page moves: the drawing sinks slower than the words, both fade and soften, and the
+   olive band opens over them from a rounded card to the full width. */
+.motion .hero{z-index:0}
+.motion .hero-art{translate:0 calc(var(--h,0) * 180px);opacity:calc(1 - var(--h,0) * .85)}
+.motion .hero-text{translate:0 calc(var(--h,0) * 90px);opacity:calc(1 - var(--h,0) * 1.15);filter:blur(calc(var(--h,0) * 6px))}
+.motion .hero>.cue{position:absolute;z-index:1;left:50%;bottom:10px;translate:-50% 0;display:flex;flex-direction:column;align-items:center;gap:10px;
+ font:600 .6875rem/1 var(--font);letter-spacing:.24em;text-transform:uppercase;color:var(--mute);opacity:calc(1 - var(--h,0) * 5);
+ animation:w-fade 1s ease 2.6s both}
+.cue i{display:block;width:1px;height:46px;background:linear-gradient(var(--ink-2),var(--ink-2)) 0 -18px/1px 18px no-repeat,var(--line-2);animation:w-cue 2.2s cubic-bezier(.6,0,.3,1) 3s infinite}
+@keyframes w-cue{from{background-position:0 -18px}to{background-position:0 46px}}
+.motion .band{z-index:1;background:none}
+.motion .band::before{--in:inherit}
+.motion .band,.motion .band::before,.motion .bwash,.motion .band-in{--o:calc(1 - min(1, var(--in) * 1.4))}
+.motion .band::before{content:"";position:absolute;z-index:-2;inset:0;background:var(--olive-band)}
+.motion .band::before,.motion .bwash{clip-path:inset(0 calc(var(--o) * 6vw) round calc(var(--o) * 56px))}
+.motion .band-in{translate:0 calc(var(--o) * 70px)}
+
+/* What it does: the section holds still while its cards run in sideways, a turn of the wheel for a card's width;
+   the line at the bottom fills as they pass. */
+@media (min-height:520px){
+ .motion .feats{max-width:none;padding:0}
+ .motion .feats .pin-view{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;display:flex;align-items:center}
+ .motion .f-track{display:flex;align-items:stretch;gap:28px;width:max-content;padding:40px max(40px,calc(50vw - 560px));
+  transform:translate3d(calc(var(--p,0) * var(--dx,0) * -1px),0,0);will-change:transform}
+ .motion .f-intro{width:min(440px,82vw);margin:0;text-align:left;display:flex;flex-direction:column;justify-content:center}
+ .motion .feats ul{display:flex;gap:28px}
+ .motion .feats li{flex:none;width:min(400px,80vw);min-height:min(420px,58vh);padding:36px 34px 38px;text-align:left;display:flex;flex-direction:column;
+  background:var(--surface);border-radius:26px;box-shadow:0 0 0 1px rgba(60,52,30,.07),0 2px 4px rgba(50,44,24,.05),0 26px 50px -30px rgba(40,36,18,.42)}
+ .motion .feats li::before{display:none}
+ .motion .feats li .art{width:132px;margin:0 0 auto;padding-bottom:28px;translate:calc((var(--p,0) - .5) * -40px) 0}
+ .motion .feats li .f-n{margin-top:12px}
+ .motion .feats li h3{font-size:1.75rem}
+ .motion .feats li p{margin:0!important;max-width:30ch}
+ .motion .f-bar{display:block;position:absolute;left:50%;bottom:max(24px,5vh);width:160px;height:2px;border-radius:2px;background:var(--line-2);translate:-50% 0;overflow:hidden}
+ .f-bar i{display:block;height:100%;background:var(--navy);transform-origin:left;transform:scaleX(var(--p,0))}
+
+ /* The idea: pinned while it is read in, each word darkening from faint to ink, a wash of paint opening behind. */
+ .motion .idea{height:250vh;overflow:visible}
+ .motion .idea .pin-view{position:sticky;top:0;height:100vh;height:100svh;max-width:none;display:grid;place-items:center;overflow:hidden}
+ .motion .idea-t .w{opacity:clamp(.14, calc(var(--pw,1) * 1.3 * var(--n) - var(--i)), 1)}
+ .motion .i-splash{opacity:calc(var(--p) * .34);scale:calc(.45 + var(--p) * .75);rotate:calc(var(--p) * 40deg)}
+}
+
+/* Inside Ilmi: on larger screens the preview tips up flat as it arrives, then holds while the three steps play,
+   each lighting its part of the overview. */
+.motion .mock-3d{transform-origin:50% 100%;transform:perspective(1600px) rotateX(calc((1 - min(1, var(--in,1) * 1.3)) * 18deg)) scale(calc(.88 + .12 * min(1, var(--in,1) * 1.3)))}
+@media (min-width:960px) and (min-height:640px){
+ .motion .inside{height:330vh}
+ .motion .inside .pin-view{position:sticky;top:0;height:100vh;padding-top:84px;padding-bottom:48px}
+ .motion .inside[data-step] .steps li{opacity:.36}
+ .motion .inside[data-step="0"] .steps li:nth-child(1),.motion .inside[data-step="1"] .steps li:nth-child(2),.motion .inside[data-step="2"] .steps li:nth-child(3){opacity:1}
+ .motion .inside[data-step="0"] .steps li:nth-child(1)::before,.motion .inside[data-step="1"] .steps li:nth-child(2)::before,.motion .inside[data-step="2"] .steps li:nth-child(3)::before{background:var(--navy)}
+ .motion .mock .mk-stats>div,.motion .mock .mk-card{transition:opacity .5s ease,box-shadow .5s ease,transform .6s var(--ease-out)}
+ .motion .inside[data-step] .mk-stats>div,.motion .inside[data-step] .mk-card{opacity:.45}
+ .motion .inside[data-step="0"] .mk-stats>div:nth-child(1),.motion .inside[data-step="0"] .mk-stats>div:nth-child(3),
+ .motion .inside[data-step="1"] .mk-stats>div:nth-child(2),.motion .inside[data-step="2"] .mk-row .mk-card:first-child{opacity:1;transform:translateY(-4px);
+  box-shadow:0 0 0 2px var(--navy),0 16px 30px -16px rgba(40,46,20,.55)}
+}
+@media (min-width:960px) and (max-height:820px){.motion .inside .in-text>p{display:none}}
+
+/* Values: the three cards rise at different speeds. */
+@media (min-width:960px){
+ .motion .vcard{translate:0 calc((.5 - var(--t,.5)) * var(--k,0px))}
+ .motion .vcard:nth-child(2){--k:70px}.motion .vcard:nth-child(3){--k:140px}
+}
+
+/* The closing: its words rise into place one by one, the skyline and grass lift, and Ilmi علمي drifts across behind. */
+.motion .close h2 .w{display:inline-block;--k:clamp(0, calc((var(--iw,1) - .05) * 2.6 * (var(--n) + 2) - var(--i)), 1);
+ opacity:var(--k);translate:0 calc((1 - var(--k)) * .5em);filter:blur(calc((1 - var(--k)) * 5px))}
+.motion .c-big{translate:calc(var(--t,.5) * -38%) 0}
+.motion .close-art .art-skyline{translate:0 calc((1 - min(1, var(--in,1) * 1.8)) * 70px)}
+.motion .close-art .art-grass{translate:0 calc((1 - min(1, var(--in,1) * 1.8)) * 36px)}
+
+/* ---------- Tablets and phones ---------- */
+@media (max-width:1100px){
+ .hero{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 40px}
+ .hmark{padding-left:96px}
+ .hero-art .art-sprig{width:120px}
+ .mock{grid-template-columns:150px minmax(0,1fr)}
+ .mk-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:959.98px){
+ .motion .hero>.cue{display:none}
+ .wnav{padding:16px 20px;gap:12px}
+ .wlinks{display:none}
+ .wbrand .ilmi{font-size:1.75rem}
+ .hero{grid-template-columns:minmax(0,1fr);padding:0 20px 56px}
+ .hero-art{min-height:0;padding-bottom:150px}
+ .hero-art .art-sprig{width:96px;left:-8px;top:12px}
+ .hmark{padding:28px 0 0 74px}
+ .hm-en{font-size:clamp(5.75rem,25vw,8.5rem)}
+ .hm-ar{font-size:clamp(4.5rem,19vw,6.75rem);margin-left:.9em}
+ .hero-art .art-rahle{width:220px;left:auto;right:-6px;bottom:0}
+ .hero-text{padding:28px 0 0;margin-top:8px}
+ .hero-text::before{left:0;right:auto;top:0;bottom:auto;width:64px;height:1px;transform-origin:left;animation-name:w-growx}
+ .tagline{font-size:clamp(2.5rem,10.5vw,3.25rem)}
+ .lede{font-size:1.1875rem}
+ .hw1{width:520px;height:331px;left:auto;right:-170px;top:-90px}
+ .hw2{display:none}
+ .band{padding:64px 20px 112px}
+ .band-in{grid-template-columns:minmax(0,1fr);gap:32px}
+ .hq-ar{font-size:clamp(1.375rem,5.6vw,1.875rem);line-height:2}
+ .band-t{padding:0 0 0 24px}
+ .band-t .big{font-size:1.3125rem}
+ .hero-art .hs1{width:300px;height:300px;left:auto;right:-80px;bottom:-60px}
+ .values{padding:8px 20px 72px}
+ .v-head{margin-bottom:36px}
+ .v-list{grid-template-columns:minmax(0,1fr);gap:20px;max-width:560px;margin:0 auto}
+ .band-sprig{width:100px;right:-10px;bottom:-46px}
+ .bmist{width:420px;height:196px;right:-120px;top:-70px}
+ .feats{padding:64px 20px 24px}
+ .feats ul{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:40px}
+ .feats li{padding:0 16px}
+ .feats li:nth-child(3)::before{display:none}
+ .inside .pin-view{grid-template-columns:minmax(0,1fr);padding:48px 20px 80px;gap:36px}
+ .iswoosh{top:30%;height:70%;width:calc(80% + 30vw)}
+ .close{padding:24px 20px 0}
+ .close-art{height:170px}
+ .wfoot{padding:16px 20px 24px}
+}
+@media (max-width:599.98px){
+ .wnav .wbtn.sm{padding:8px 16px}
+ .cta .wbtn{flex:1 1 auto;justify-content:center}
+ .feats ul{grid-template-columns:minmax(0,1fr)}
+ .feats li::before{display:none}
+ .mock{grid-template-columns:minmax(0,1fr);min-height:0}
+ .mk-rail{display:none}
+ .mk-main{padding:18px 16px}
+ .mk-h{font-size:1.25rem}
+ .mk-row{grid-template-columns:minmax(0,1fr)}
+ .close-art .art-grass{width:46%}
+ .close-art .art-skyline{width:88%}
+}
+@media (prefers-reduced-motion:reduce){.js .rv:not(.in){opacity:1;transform:none}}

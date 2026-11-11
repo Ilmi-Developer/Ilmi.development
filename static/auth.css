@@ -1,0 +1,462 @@
+/* Sign-in, account and admin pages. Served after src/tokens.css in /auth.css, so the shell,
+   tokens and controls are the same as on the dashboard. */
+.content>h2{margin:32px 0 12px}
+.band .crumb{margin:0 0 2px;font-size:.8125rem;color:var(--band-mute)}
+.band .crumb a{color:var(--band-mute);text-decoration:none}
+.band .crumb a:hover{color:var(--band-ink,var(--ink));text-decoration:underline}
+.band+.tablewrap,.band+.mod{margin-top:0}
+.mod>h2{margin-bottom:8px}
+.mod form{margin:0}
+.panel form,.card form{margin:0}
+form .field{margin:0 0 16px}
+.field input,.field select{width:100%;font-weight:400}
+.formrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 12px}
+label.check{display:flex;gap:8px;align-items:center;font-weight:400;font-size:.9375rem;color:var(--ink);min-height:36px}
+label.check input{margin:0}
+.rooms{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr));gap:0 16px;max-height:280px;overflow:auto}
+.rooms label.check{align-items:flex-start;padding:8px 0}
+.rooms label.check input{margin-top:4px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.actions form{margin:0}
+.linkbox{border-color:var(--primary);background:var(--primary-soft);margin-bottom:24px}
+.linkbox input{width:100%;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.875rem}
+
+/* Accounts: one white list, a row per person; open a row to change it */
+.accounts{background:var(--surface);border:0;border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow)}
+.accounts>h2{padding:16px 24px 12px;margin:0;border-bottom:1px solid var(--line)}
+details.user{border-bottom:1px solid var(--line)}
+details.user:last-child{border-bottom:0}
+details.user summary{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:flex-start;align-items:center;cursor:pointer;list-style:none;padding:12px 24px;min-height:60px}
+details.user summary::-webkit-details-marker{display:none}
+details.user summary::after{content:"";width:6px;height:6px;border-right:1.5px solid var(--mute);border-bottom:1.5px solid var(--mute);transform:translateY(-2px) rotate(45deg);margin-left:4px;flex:none}
+details.user[open] summary::after{transform:translateY(1px) rotate(-135deg)}
+details.user summary:hover{background:var(--surface-2)}
+details.user[open] summary{background:var(--surface-2)}
+details.user .who{min-width:0;display:flex;flex-direction:column}
+details.user .who b{overflow-wrap:anywhere}
+details.user .who .sub{font-size:.875rem;overflow-wrap:anywhere}
+details.user .tags{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-left:auto}
+details.user .body{padding:4px 24px 24px;background:var(--surface-2)}
+/* The classroom ticks inside an open row: a line above, as in Invite staff, not a box inside the row's box. */
+details.user fieldset{border:0;border-top:1px solid var(--line);border-radius:0;padding:12px 0 0}
+details.user .body>p:first-child{margin-top:4px}
+details.user.off .who,details.user.off .av{opacity:.7}
+details.user .av{--av:40px}
+.invite,.mail{margin-top:24px;scroll-margin-top:24px}
+.mail form{margin-top:12px}
+.invite{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:24px 16px;background:rgba(16,24,40,.32);overflow-y:auto;margin:0}
+.invite:not(:target):not(.open){display:none}
+.invbg{position:fixed;inset:0;cursor:default}
+.invcard{position:relative;width:min(760px,100%);max-height:calc(100dvh - 48px);overflow-y:auto;box-shadow:var(--shadow-lift);border-radius:var(--r-xl);padding:24px}
+.invite:target{animation:inv-bg .15s ease both}.invite:target .invcard{animation:inv-in .2s var(--ease) both}
+@keyframes inv-bg{from{opacity:0}}
+@keyframes inv-in{from{opacity:0;transform:translateY(4px)}}
+.invh{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}.invh h2{margin:0}
+body:has(.invite:target),body:has(.invite.open){overflow:hidden}
+@media (max-width:959.98px){.accounts{margin:0 -16px;border-radius:0;border-left:0;border-right:0}details.user summary{padding:12px 16px}details.user .body{padding:4px 16px 16px}}
+.danger-zone{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+
+/* Sign-in and other single-card pages. Ilmi's paper on the left with a cream card, and on a computer an olive
+   watercolour panel on the right with the wordmark, a short saying and the skyline drawn in cream ink. Phones get
+   the card under an olive bar with the wordmark. */
+.solo{min-height:100vh;min-height:100dvh;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr auto}
+/* These pages keep their own, roomier look: rounder corners, a soft floating card, pill buttons and 16px type. */
+.solo{--r-sm:8px;--r:12px;--r-lg:22px;--shadow-card:0 0 0 1px rgba(60,52,30,.06),0 2px 4px rgba(50,44,24,.05),0 24px 48px -24px rgba(50,44,24,.32);
+ --shadow-lift:0 16px 40px rgba(50,44,24,.2);font-size:1rem}
+.solo .card{border:0;box-shadow:var(--shadow-card)}
+.solo h1{font:600 2.25rem/1.15 var(--font-display);letter-spacing:-.012em}
+.solo .btn{border-radius:var(--r-pill);font-weight:600;font-size:.9375rem;min-height:42px;padding:8px 18px;gap:6px}
+.solo .field{gap:6px;font-size:.875rem;font-weight:600}
+.solo form .field{margin:0 0 14px}
+.solo label.check{gap:10px}
+.solo input,.solo select{font-size:1rem;min-height:44px;padding:9px 12px;background:var(--surface)}
+.solo input[type=checkbox]{width:18px;height:18px;min-height:0;padding:0}
+.solo input:focus-visible,.solo select:focus-visible{outline:3px solid color-mix(in srgb,var(--focus) 55%,transparent);outline-offset:0;border-color:var(--focus)}
+.solo :focus-visible{outline-width:3px}
+.solo-band{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:64px;padding:12px 16px;
+ background:url(/art/wash-band.webp) right center/auto 220% no-repeat,#545f37;color:#f2eddd}
+.solo-band small{margin-top:6px;font-size:.75rem;line-height:1.25;color:#e3dfcc;text-align:center}
+.solo-band .ilmi{font-size:1.75rem;color:inherit;text-decoration:none;border-radius:8px}
+.solo-band .ilmi:focus-visible{outline:2px solid #f2eddd;outline-offset:4px}
+.welcome{display:none}
+.solo main{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 16px}
+.solo .card{width:100%;max-width:448px;padding:40px 40px 32px;border-radius:26px;background:var(--surface)}
+.solo .notice,.solo .error{width:100%;max-width:448px}
+.solo .mark{display:flex;flex-direction:column;align-items:flex-start;gap:10px;margin-bottom:22px}
+.solo .mark .ilmi{font-size:1.875rem;color:var(--ink)}
+.solo .mark small{display:block;color:var(--mute);font-size:.875rem}
+.solo h1{margin-bottom:6px;color:var(--ink)}
+.solo .lede{color:var(--mute);margin-bottom:24px;font-size:1rem}
+.solo .field input{min-height:52px;padding:12px 46px 12px 16px;border-radius:14px}
+.fin{position:relative;display:block}
+.fin .ic{position:absolute;right:15px;top:50%;width:20px;height:20px;margin-top:-10px;color:var(--mute);pointer-events:none}
+.solo .btn.primary{width:100%;min-height:54px;margin-top:8px;font:500 1.1875rem/1 var(--font-display);letter-spacing:.005em;
+ box-shadow:0 1px 2px rgba(40,46,20,.2),0 12px 24px -14px rgba(40,46,20,.6)}
+.solo .btn.primary:hover{transform:translateY(-1px)}
+.solo label.check.stay{margin:-2px 0 12px;color:var(--mute)}
+.solo .sub{margin:18px 0 0;color:var(--mute);font-size:.875rem;line-height:1.5}
+.solo .alt{margin:22px 0 0;padding-top:0;border-top:0;font-size:.9375rem;text-align:center}
+.solo .alt p{margin:0 0 6px}
+@media (min-width:880px){
+ .solo{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:1fr auto}
+ .solo-band{display:none}
+ .welcome{grid-column:2;grid-row:1/3;display:flex;flex-direction:column;color:#f2eddd;padding:32px 48px 0;position:relative;overflow:hidden;isolation:isolate;
+  background:url(/art/wash-panel.webp) center/cover no-repeat,#545f37}
+ .solo main{grid-column:1;grid-row:1}
+}
+.wmark{display:flex;flex-direction:column;align-items:flex-start;gap:12px;color:inherit;text-decoration:none;align-self:flex-start;border-radius:8px}
+.wmark .ilmi{font-size:2.25rem;color:#fffaf0}
+.wmark small{display:block;color:#d8d4bd;font-size:.875rem}
+.wmark:focus-visible{outline:2px solid #f2eddd;outline-offset:6px}
+.wquote{position:relative;margin:auto auto 0;max-width:480px;padding:56px 12px 8px;text-align:center}
+.wtab{display:inline-block;margin:0 0 18px;padding:6px 18px;border:1px solid rgba(242,237,221,.5);border-radius:999px;color:#f2eddd;
+ font:500 .8125rem/1 var(--font);letter-spacing:.18em;text-transform:uppercase;white-space:nowrap}
+.wquote blockquote{margin:0}
+.wquote p{font:italic 500 2.375rem/1.18 var(--font-hand);margin:0 0 18px;text-wrap:balance;color:#fffaf0}
+.wquote figcaption{color:#d8d4bd;font:400 1rem/1.4 var(--font-display)}
+.wart{display:block;width:calc(100% + 96px);margin:36px -48px 0;color:rgba(242,237,221,.82)}
+.wart .art{width:100%}
+.wart .tint{fill:#f2eddd;opacity:.5}
+.contact{display:flex;flex-direction:column;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin:0 0 16px}
+.contact b{font-size:.9375rem}
+.center{text-align:center}
+
+.solo form.center{margin-top:16px}
+.hint.after{margin:10px 0 0}
+.inline-form{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.inline-form .field{margin:0;flex:1 1 240px}
+details.confirm summary{list-style:none}
+details.confirm summary::-webkit-details-marker{display:none}
+details.confirm form{margin-top:8px;padding:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface-2);max-width:300px}
+details.confirm p{font-size:.875rem;margin:0 0 8px}
+/* In a table, a row's Remove or Turn off link stays a quiet grey word until pointed at; the confirmation it opens
+   still carries the red button. */
+td .btn.danger:not(.solid){border-color:transparent;background:none;color:var(--mute)}
+td .btn.danger:not(.solid):hover,td details[open]>.btn.danger{border-color:transparent;background:var(--bad-soft);color:var(--bad-ink)}
+.tvacts{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
+.tvwin{display:block}
+details.tvset form{max-width:340px}
+details.tvset fieldset{border:0;padding:0;margin:0 0 12px;display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+details.tvset legend{font-weight:700;font-size:.9375rem;padding:0;margin-bottom:2px}
+details.tvset fieldset p{grid-column:1/-1;color:var(--mute)}
+details.tvset .field{margin:0}
+
+/* Opening titles (sign-in page, fresh visits only). Paper; a grey-green wash blooms, splashes of olive paint land
+   around the centre one after another and علمي is written in by hand; then the stage fades away into the sign-in
+   screen while the card settles and the welcome panel's skyline inks itself in. Pointer events pass through, so the
+   form can be used at once. Off under reduced motion. */
+.intro{position:fixed;inset:0;z-index:50;pointer-events:none;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--ink);
+ background:var(--paper-tex),var(--canvas);
+ animation:i-dissolve 1.4s cubic-bezier(.4,0,.2,1) 3s both,i-gone 0s linear 4.4s forwards}
+.intro>*{position:relative}
+.iwash{position:absolute;left:50%;top:50%;width:min(1100px,170vw);aspect-ratio:900/560;margin:0;translate:-50% -54%;
+ background:url(/art/wash-soft.webp) center/contain no-repeat;opacity:.9;animation:i-bloom 2.4s cubic-bezier(.2,.7,.2,1) .05s both}
+/* The splashes (static/art/splat-*.webp) are placed around the middle of the stage, where the word is written. Each
+   lands from its centre outwards: a soft circle opens while the splash swells past its size and settles, dark while
+   wet and a shade lighter as it dries. */
+.isplats{position:absolute;left:50%;top:50%;width:0;height:0}
+.isplat{position:absolute;background:center/contain no-repeat;
+ -webkit-mask:radial-gradient(closest-side,#000 72%,transparent) center/300% 300% no-repeat;
+ mask:radial-gradient(closest-side,#000 72%,transparent) center/300% 300% no-repeat;
+ animation:i-splash .95s cubic-bezier(.16,.9,.3,1) both}
+.isplat.s1{width:560px;height:560px;left:-440px;top:-410px;background-image:url(/art/splat-a.webp);opacity:.56;animation-delay:.1s}
+.isplat.s2{width:470px;height:470px;left:-40px;top:-150px;background-image:url(/art/splat-b.webp);opacity:.55;rotate:35deg;animation-delay:.38s}
+.isplat.s3{width:350px;height:350px;left:50px;top:-390px;background-image:url(/art/splat-c.webp);opacity:.6;rotate:-25deg;animation-delay:.64s}
+.isplat.s4{width:310px;height:310px;left:-390px;top:-20px;background-image:url(/art/splat-c.webp);opacity:.5;rotate:165deg;animation-delay:.86s}
+@keyframes i-splash{from{opacity:0;scale:.35;filter:blur(4px);-webkit-mask-size:0% 0%;mask-size:0% 0%}
+ 35%{opacity:.95;filter:blur(0)}
+ 70%{scale:1.03}
+ to{scale:1;-webkit-mask-size:300% 300%;mask-size:300% 300%}}
+@media (max-width:599.98px){.isplats{scale:.62}}
+/* The word, علمي (templates/art/intro-word.svg, made by tools/art/word.py from the wordmark's font, level as
+   everywhere), is written by hand: a pen runs through each letter in the order a calligrapher writes it, slowing
+   into turns and stopping where it doubles back, and lays down wet olive ink that dries to ink a beat behind it;
+   ي's dots are set down last. Each letter's outline clips its strokes, so the ink keeps the font's shape. The pen's
+   timings, between the pen markers, are written by word.py. When the word is dry it fades back into the paper. */
+.iword{width:min(460px,72vw);aspect-ratio:1753.7/1519.6;animation:i-out .7s cubic-bezier(.4,0,.2,1) 2.95s forwards}
+.iword-art{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.iword .wet{stroke:var(--navy)}
+.iword .dry{stroke:var(--ink)}
+/* pen: written by tools/art/word.py */
+.iword .p1{animation:i-pen .22s cubic-bezier(.333,0,.667,.778) .18s both}.iword .dry .p1{animation-delay:.32s}
+.iword .p2{animation:i-pen .16s cubic-bezier(.333,.191,.667,1) .4s both}.iword .dry .p2{animation-delay:.54s}
+.iword .p3{animation:i-pen .13s cubic-bezier(.333,0,.667,.696) .58s both}.iword .dry .p3{animation-delay:.72s}
+.iword .p4{animation:i-pen .05s cubic-bezier(.333,.339,.667,.764) .71s both}.iword .dry .p4{animation-delay:.85s}
+.iword .p5{animation:i-pen .09s cubic-bezier(.333,.298,.667,1) .76s both}.iword .dry .p5{animation-delay:.9s}
+.iword .p6{animation:i-pen .15s cubic-bezier(.333,0,.667,.703) .93s both}.iword .dry .p6{animation-delay:1.07s}
+.iword .p7{animation:i-pen .1s cubic-bezier(.333,.375,.667,.755) 1.08s both}.iword .dry .p7{animation-delay:1.22s}
+.iword .p8{animation:i-pen .09s cubic-bezier(.333,.285,.667,.698) 1.18s both}.iword .dry .p8{animation-delay:1.32s}
+.iword .p9{animation:i-pen .25s cubic-bezier(.333,.309,.667,1) 1.27s both}.iword .dry .p9{animation-delay:1.41s}
+.iword .p10{animation:i-pen .12s cubic-bezier(.333,0,.667,.711) 1.535s both}.iword .dry .p10{animation-delay:1.675s}
+.iword .p11{animation:i-pen .035s cubic-bezier(.333,.359,.667,.66) 1.655s both}.iword .dry .p11{animation-delay:1.795s}
+.iword .p12{animation:i-pen .035s cubic-bezier(.333,.361,.667,.659) 1.69s both}.iword .dry .p12{animation-delay:1.83s}
+.iword .p13{animation:i-pen .17s cubic-bezier(.333,.255,.667,1) 1.725s both}.iword .dry .p13{animation-delay:1.865s}
+.iword .p14{animation:i-pen .36s cubic-bezier(.333,0,.667,.701) 1.91s both}.iword .dry .p14{animation-delay:2.05s}
+.iword .p15{animation:i-pen .07s linear 2.35s both}.iword .dry .p15{animation-delay:2.49s}
+.iword .p16{animation:i-pen .07s linear 2.455s both}.iword .dry .p16{animation-delay:2.595s}
+.iword .wet{animation:i-fade .2s linear 2.665s forwards}
+/* /pen */
+/* As the stage clears, the sign-in card settles into place with each part of it following a beat after the last
+   one, and the welcome panel's quote and drawing drift in, so nothing simply appears. */
+.cine main>.card,.cine main>.notice,.cine main>.error{animation:i-settle 1.5s cubic-bezier(.16,1,.3,1) 3.1s both}
+.cine .card>*{animation:i-rise .9s cubic-bezier(.16,1,.3,1) both}
+.cine .card>:nth-child(1){animation-delay:3.45s}.cine .card>:nth-child(2){animation-delay:3.55s}.cine .card>:nth-child(3){animation-delay:3.65s}
+.cine .card>:nth-child(4){animation-delay:3.75s}.cine .card>:nth-child(5){animation-delay:3.85s}
+.cine .welcome>.wmark{animation:i-rise 1s cubic-bezier(.16,1,.3,1) 3.6s both}
+.cine .welcome>.wquote{animation:i-settle 1.2s cubic-bezier(.16,1,.3,1) 3.5s both}
+.cine .welcome .wart .ink path{animation:i-ink 2.2s cubic-bezier(.5,0,.2,1) 3.7s both}
+.cine .welcome .wart .k2 path{animation-delay:4.1s}.cine .welcome .wart .k3 path{animation-delay:4.4s;animation-duration:1.6s}
+.cine .welcome .wart .tint{animation:i-fade-in 1.4s ease 5s both}
+.cine .wsky{animation:i-fade-in 1.5s ease 3.8s both}
+@keyframes i-settle{from{opacity:0;transform:translateY(28px) scale(.97);filter:blur(8px)}to{opacity:1;transform:none;filter:none}}
+@keyframes i-bloom{from{opacity:0;scale:.82;filter:blur(18px)}}
+@keyframes i-ink{from{stroke-dasharray:1 1.2;stroke-dashoffset:1.1}to{stroke-dasharray:1 1.2;stroke-dashoffset:0}}
+@keyframes i-pen{from{stroke-dasharray:1 1.2;stroke-dashoffset:1.02}to{stroke-dasharray:1 1.2;stroke-dashoffset:0}}
+@keyframes i-rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+@keyframes i-out{to{opacity:0;transform:scale(.97);filter:blur(3px)}}
+@keyframes i-fade{to{opacity:0}}
+@keyframes i-fade-in{from{opacity:0}}
+@keyframes i-gone{to{visibility:hidden}}
+@keyframes i-dissolve{to{opacity:0}}
+@media (prefers-reduced-motion:reduce){.intro{display:none}}
+
+/* The welcome panel's idle life: two veils of pale mist drift slowly across the olive, never quite still. */
+.wsky{position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.welcome>:not(.wsky){position:relative}
+.wdrift{position:absolute;background:url(/art/wash-mist.webp) center/contain no-repeat;opacity:.5}
+.wdrift.d1{width:640px;height:299px;right:-160px;top:-40px;animation:w-mist 24s ease-in-out infinite alternate}
+.wdrift.d2{width:520px;height:243px;left:-180px;top:38%;opacity:.32;transform:scaleX(-1);animation:w-mist 30s ease-in-out -9s infinite alternate-reverse}
+@keyframes w-mist{from{translate:0 0}to{translate:-60px 18px}}
+@media (prefers-reduced-motion:reduce){.wdrift{animation:none}}
+/* The sign-in fields wait inside a disabled fieldset until the opening ends (static/intro.js); it adds no box of its own,
+   and the fields look ready while they wait. */
+fieldset.hold{border:0;margin:0;padding:0;min-width:0}
+fieldset.hold:disabled .btn{opacity:1;cursor:default}
+fieldset.hold:disabled input{opacity:1;-webkit-text-fill-color:currentColor}
+
+/* Import: a CSV picker that reads as a button. The file input fills the button, unseen; once a file is chosen
+   (the required input turns valid) the label says so, without a script. */
+.pickrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 0}
+.filepick{position:relative;overflow:hidden}
+.filepick input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.filepick .fp-some{display:none}
+.filepick:has(input:valid){border-color:var(--primary);color:var(--primary-ink);background:var(--primary-soft)}
+.filepick:has(input:valid) .fp-none{display:none}
+.filepick:has(input:valid) .fp-some{display:inline}
+.filepick:has(input:focus-visible){outline:3px solid var(--focus);outline-offset:2px}
+.mod h3{margin:24px 0 8px;font-size:1rem}
+.mod details.rows{margin-top:16px}
+.mod form.confirm{margin-top:24px;padding-top:16px;border-top:1px solid var(--line)}
+.mod .panel{box-shadow:none;border:1px solid var(--line);margin:16px 0 0}
+.mod .panel p{margin:0}
+/* FAQs: Help or Requests from staff, each a card with its reply form. */
+.faqs-h{display:flex;align-items:center;gap:8px;margin:24px 0 8px}
+.faqs-h:first-of-type{margin-top:8px}
+.faq+.faq{margin-top:12px}
+/* Each message is a card of its own among the page's flat sections, so it keeps its border and padding over
+   .mod.line's, and takes no divider line between it and the one before. */
+.content>.mod.line.faq{border:1px solid var(--line);border-radius:var(--r-lg);padding:16px;background:var(--surface)}
+.faq.wait{box-shadow:inset 2px 0 0 var(--warn)}
+.faqh{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;margin-bottom:8px}
+.faqh .pill{align-self:center}
+.faqh .faqt{margin-left:auto}
+.faqm{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55}
+.faqr{margin:12px 0 0;padding:8px 16px;border-radius:var(--r);background:var(--primary-soft)}
+.faqr .sub{margin:0 0 4px;font-size:.8125rem}
+.faq .faqf{margin-top:16px}
+.faq>.faqm+.faqf{padding-top:16px;border-top:1px solid var(--line)}
+.faqf textarea{margin-top:8px;font-weight:400}
+.faq .faqsend{border:0;padding:0;margin:0 0 12px;display:flex;flex-wrap:wrap;gap:8px 16px}
+.faqsend legend{font-weight:500;font-size:.8125rem;padding:0;margin-bottom:8px;width:100%}
+.faqsend label{display:inline-flex;align-items:center;gap:8px;font-size:.875rem}
+.faqsend input{min-height:0}
+.faqa{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.faq details.confirm{display:inline-block;margin-top:12px;margin-right:8px;vertical-align:top}
+.faq details.faqedit[open]{display:block}
+.faq details.faqedit form{max-width:none;padding:12px 16px}
+.faqnone{margin:0}
+
+/* Profile picture on the Account page (avatars.py, avatar.js). The picture is a button for choosing a new one: on
+   hover a camera fades in. */
+.pfp{display:flex;align-items:center;gap:16px 24px;flex-wrap:wrap}
+.pfp-pic{position:relative;border-radius:50%;cursor:pointer;flex:none}
+.pfp-pic .av{--av:80px;box-shadow:0 0 0 1px var(--line)}
+.pfp-cam{position:absolute;inset:0;border-radius:50%;display:grid;place-items:center;background:rgba(0,44,82,.5);color:#fff;opacity:0;transition:opacity var(--t-fast) ease}
+.pfp-cam svg{width:24px;height:24px}
+.pfp-pic:hover .pfp-cam,.pfp:has(#pfpfile:focus-visible) .pfp-cam{opacity:1}
+.pfp-txt{flex:1 1 280px;min-width:0}
+.pfp-txt h2{margin-bottom:4px}
+.pfp-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.pfp-acts form{margin:0;display:flex;gap:8px;flex-wrap:wrap}
+.pfp-up:has(#pfpfile:focus-visible) label.btn{outline:2px solid var(--focus);outline-offset:2px}
+.pfp.js .pfp-send{display:none}
+.pfp-msg{margin:8px 0 0;font-size:.875rem;font-weight:500;color:var(--ok-ink);min-height:0}
+.pfp-msg:empty{display:none}
+.pfp-msg.bad{color:var(--bad-ink)}
+.pfp .av.pop{animation:pfp-pop .2s ease-out both}
+@keyframes pfp-pop{from{opacity:0}}
+
+/* The cropper: a pop-up over the dimmed page, as Invite staff. The photo moves and zooms under a round frame. */
+.crop{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:24px 16px}
+.crop[hidden]{display:none}
+.cropbg{position:fixed;inset:0;background:rgba(16,24,40,.32)}
+.cropcard{position:relative;width:min(560px,100%);max-height:calc(100dvh - 48px);overflow-y:auto;border-radius:var(--r-xl);padding:24px;box-shadow:var(--shadow-lift)}
+.cropcard>h2{margin-bottom:4px}
+.cropmain{display:flex;gap:24px;align-items:center;margin:16px 0 12px;flex-wrap:wrap;justify-content:center}
+.cropstage{--s:280px;position:relative;width:var(--s);height:var(--s);border-radius:var(--r-lg);overflow:hidden;background:var(--sunk);cursor:grab;touch-action:none;flex:none;user-select:none}
+.cropstage:active{cursor:grabbing}
+.cropstage:focus-visible{outline:2px solid var(--focus);outline-offset:3px}
+.cropstage img{position:absolute;left:0;top:0;transform-origin:0 0;max-width:none;pointer-events:none;will-change:transform}
+.cropring{position:absolute;inset:0;border-radius:50%;box-shadow:0 0 0 999px rgba(15,28,45,.5);outline:2px solid rgba(255,255,255,.9);outline-offset:-2px;pointer-events:none}
+.cropside{display:flex;flex-direction:column;align-items:center;gap:12px}
+.cropprev{display:block;border-radius:50%;overflow:hidden;box-shadow:0 0 0 3px #fff,0 0 0 4px var(--line);background:var(--sunk)}
+.cropprev canvas{display:block;width:38px;height:38px}
+.cropprev.big canvas{width:80px;height:80px}
+.cropzoom{display:flex;align-items:center;gap:8px;color:var(--mute);max-width:360px;margin:0 auto 4px}
+.cropzoom svg{width:20px;height:20px;flex:none}
+.cropzoom input{flex:1;accent-color:var(--primary)}
+.cropacts{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.cropacts .sp{flex:1}
+@media (max-width:519.98px){.cropstage{--s:min(280px,calc(100vw - 80px))}.cropside{flex-direction:row}.cropcard{padding:24px 16px}}
+.crop.in .cropbg{animation:crop-bg .15s ease both}
+.crop.in .cropcard{animation:crop-in .2s var(--ease) both}
+.crop.in .cropstage img{animation:crop-img .2s .1s ease-out both}
+.crop.out .cropbg{animation:crop-bg .15s ease reverse both}
+.crop.out .cropcard{animation:crop-out .15s ease both}
+@keyframes crop-bg{from{opacity:0}}
+@keyframes crop-in{from{opacity:0;transform:translateY(4px)}}
+@keyframes crop-out{to{opacity:0}}
+@keyframes crop-img{from{opacity:0}}
+body:has(.crop:not([hidden])){overflow:hidden}
+@media (prefers-reduced-motion:reduce){.pfp-cam{transition:none}
+ .pfp .av.pop,.crop.in .cropbg,.crop.in .cropcard,.crop.in .cropstage img,.crop.out .cropbg,.crop.out .cropcard{animation:none}}
+/* FAQs in motion: the list fades in as the page opens; a card's edge darkens under the pointer. */
+@keyframes faq-in{from{opacity:0}}
+.faqs-h,.faq,.faqnone{animation:faq-in .2s ease-out backwards}
+.faq{transition:border-color var(--t-fast) ease}
+@media (hover:hover){.faq:hover{border-color:var(--line-2)}}
+@media (prefers-reduced-motion:reduce){.faqs-h,.faq,.faqnone{animation:none}.faq{transition:none}}
+/* Sign-in code boxes (static/code.js): six boxes over the real, invisible code field. Empty boxes are quiet grey
+   wells; a typed digit's navy fill springs out from the middle with the digit rising in white. A wrong code tints
+   the row red and drains it; a right one merges the fills into one pastel green wash with a tick. */
+.fin.cs-on{display:block;margin-top:8px}
+.cslots{position:relative;display:block}
+.cs-row{position:relative;display:inline-grid;grid-template-columns:repeat(6,minmax(0,54px));gap:10px;max-width:100%;vertical-align:top;
+  cursor:text;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.cs-input{position:absolute;inset:0;z-index:4;width:100%;height:100%;min-height:0!important;margin:0;padding:0!important;border:0;outline:0;
+  background:transparent;color:transparent;caret-color:transparent;font-size:16px;opacity:0;cursor:inherit;-webkit-appearance:none;appearance:none}
+.cs-slot{position:relative;aspect-ratio:1/1.18;border-radius:14px;overflow:hidden;background:var(--surface-2);
+  box-shadow:inset 0 0 0 1px var(--line-2);transition:background-color .2s ease,box-shadow .2s ease;user-select:none;-webkit-user-select:none}
+.cs-fill{position:absolute;inset:0;border-radius:inherit;background:var(--navy);transform:scale(0);transition:background-color .2s ease}
+.cs-digit{position:absolute;inset:0;z-index:2;display:grid;place-items:center;color:#fff;font-size:clamp(1.125rem,5.2vw,1.625rem);
+  font-weight:700;line-height:1;font-variant-numeric:tabular-nums;opacity:0}
+@media (hover:hover) and (pointer:fine){.cs-row[data-status=idle]:hover .cs-slot:not([data-active]){background:var(--sunk)}}
+.cs-row[data-focused] .cs-slot[data-active]{background:var(--navy-soft);box-shadow:inset 0 0 0 2px var(--navy)}
+.cs-row[data-status=error] .cs-slot{background:var(--bad-soft);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--bad) 45%,transparent)}
+.cs-row[data-status=error][data-focused] .cs-slot[data-active]{box-shadow:inset 0 0 0 2px var(--bad)}
+.cs-row[data-status=error] .cs-fill{background:var(--bad)}
+.cs-row[data-status=success] .cs-fill{opacity:0;transition:opacity .2s ease .25s}
+.cs-wash{position:absolute;inset:0;z-index:3;display:grid;place-items:center;border-radius:14px;background:#dff1e6;color:var(--ok-ink);box-shadow:inset 0 0 0 1px #b9dcc6;
+  pointer-events:none;visibility:hidden}
+.cs-check{display:grid;place-items:center;opacity:0}
+.cs-check svg{width:32px;height:32px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.cs-caret{position:absolute;z-index:3;top:25%;left:-1px;width:2px;height:50%;opacity:0;pointer-events:none;
+  transition:transform .32s cubic-bezier(.23,1,.32,1),opacity .15s ease}
+.cs-row[data-focused][data-caret] .cs-caret{opacity:1}
+.cs-line{display:block;width:100%;height:100%;border-radius:1px;background:var(--navy);animation:cs-blink 1s steps(1,end) infinite}
+.cs-row[data-status=error] .cs-line{background:var(--bad)}
+@keyframes cs-blink{0%{opacity:1}50%{opacity:0}}
+@media (max-width:399.98px){.cs-row{gap:7px}.cs-slot,.cs-wash{border-radius:11px}}
+@media (prefers-reduced-motion:reduce){
+  .cs-digit,.cs-check{transform:none!important;transition:opacity .15s ease}
+  .cs-caret{transition:opacity .15s ease}
+  .cs-line{animation:none}
+  .cs-wash{clip-path:none!important;opacity:0;transition:opacity .2s ease}
+  .cs-row[data-status=success] .cs-wash{opacity:1}
+}
+
+/* Account: Theme (themes.py, static/theme.js). Each theme is a tile with a small drawing of the menu, the page and
+   a card in its colours; the one in use has an accent ring and a tick. Under the tiles, the editor for a theme of
+   your own: four colours and a background photo, every change shown on the page at once. */
+.thx h2{margin-bottom:16px}
+.thh{font-size:.875rem;font-weight:600;color:var(--ink-2);margin:24px 0 8px}
+.thgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:12px}
+.thc{position:relative;min-width:0}
+.tht{display:flex;flex-direction:column;align-items:stretch;gap:2px;width:100%;height:100%;padding:8px 8px 8px;border:1px solid var(--line);border-radius:var(--r-lg);
+ background:var(--surface);color:var(--ink);font:inherit;text-align:left;cursor:pointer;position:relative;
+ transition:border-color var(--t-fast) ease}
+.tht:hover{border-color:var(--line-2)}
+.tht[aria-pressed="true"]{border-color:var(--navy);box-shadow:0 0 0 1px var(--navy)}
+.tht[aria-pressed="true"]::after{content:"";position:absolute;right:8px;bottom:8px;width:22px;height:22px;border-radius:50%;background:var(--navy);
+ box-shadow:0 0 0 2px var(--surface);animation:th-tick .15s ease-out}
+.tht[aria-pressed="true"]::before{content:"";position:absolute;z-index:1;right:16px;bottom:13px;width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;
+ transform:rotate(45deg);animation:th-tick .15s ease-out}
+@keyframes th-tick{from{opacity:0}}
+.thmini{display:block;width:100%;height:auto;aspect-ratio:120/76;border-radius:var(--r);margin-bottom:8px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+.thmini rect,.thmini circle{transition:fill .3s ease}
+.thn{font-size:.875rem;font-weight:600;padding:0 24px 0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ths{font-size:.75rem;color:var(--mute);padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.thtools{position:absolute;right:12px;top:12px;display:flex;gap:8px;opacity:0;transition:opacity .2s ease}
+.thc:hover .thtools,.thc:focus-within .thtools{opacity:1}
+@media (hover:none){.thtools{opacity:1}}
+.thtool{display:grid;place-items:center;width:30px;height:30px;border:0;border-radius:50%;background:var(--surface);color:var(--ink);cursor:pointer;
+ box-shadow:var(--shadow-float);text-decoration:none}
+.thtool:hover{color:var(--navy-text)}
+.thtool svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.thnew{align-items:center;justify-content:center;gap:8px;min-height:120px;border-color:var(--line);background:transparent;color:var(--ink-2)}
+.thnew .thn{padding:0}
+.thplus{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--navy-soft);color:var(--navy-text)}
+.thplus svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.thnew:hover{color:var(--navy-text);border-color:var(--navy)}
+/* The editor */
+.thedit{margin-top:24px;padding:16px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface-2)}
+.thedit:not([hidden]){animation:th-open .2s var(--ease)}
+@keyframes th-open{from{opacity:0;transform:translateY(4px)}}
+.thedh{margin-bottom:16px}
+.thedit .thname{display:block;max-width:360px}
+.thedit .thname input{width:100%;min-height:46px;font-size:1.125rem;font-weight:600;border-color:var(--line);background:var(--surface)}
+.thedit .thname input:hover{border-color:var(--line-2)}
+.thcols{display:grid;gap:16px}
+@media (min-width:760px){.thcols{grid-template-columns:minmax(0,4fr) minmax(0,6fr);align-items:start}}
+.thedit .thset{margin:0;padding:12px 16px 16px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);min-width:0}
+.thedit .thset legend{float:left;width:100%;padding:0;margin:0 0 8px;font-size:.8125rem;font-weight:600;color:var(--mute)}
+.thedit .thset legend+*{clear:both}
+/* Colours: four swatch chips, two to a row. */
+.thsws{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.thsw{display:flex;align-items:center;gap:8px;min-width:0;padding:8px;border-radius:var(--r);border:1px solid var(--line);cursor:pointer;
+ transition:border-color .2s ease,background-color .2s ease}
+.thsw:hover{border-color:var(--line-2);background:var(--surface-2)}
+.thsw:focus-within{border-color:var(--navy);box-shadow:0 0 0 1px var(--navy)}
+.thsw input{flex:none;width:34px;height:34px;min-height:0;padding:0;border:0;border-radius:50%;background:none;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+.thsw input:focus-visible{outline:0}
+.thsw input::-webkit-color-swatch-wrapper{padding:0}
+.thsw input::-webkit-color-swatch{border:0;border-radius:50%}
+.thsw input::-moz-color-swatch{border:0;border-radius:50%}
+.thswt{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.thswt span{font-size:.8125rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.thswt code{font:600 .75rem/1.3 var(--font);color:var(--mute);text-transform:uppercase;letter-spacing:.02em}
+/* The photo: a thumbnail beside its buttons, then the settings, each with its value. */
+.thphacts{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.thphacts .btn{flex:1 1 auto;justify-content:center;min-height:38px;padding:8px 12px;font-size:.875rem}
+@media (min-width:560px){.thphacts .btn{flex:0 0 auto}}
+.ththumb{flex:1 1 100%;height:84px;border-radius:var(--r);overflow:hidden;background:var(--sunk);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.ththumb img{display:block;width:100%;height:100%;object-fit:cover}
+.thsliders{display:grid;gap:0 16px;margin-top:12px;padding-top:8px;border-top:1px solid var(--line)}
+@media (min-width:560px){.thsliders{grid-template-columns:1fr 1fr}}
+.thsl{display:grid;gap:0;font-size:.8125rem;font-weight:500;color:var(--ink-2);padding:4px 0}
+.thslt{display:flex;justify-content:space-between;gap:8px}
+.thslt output{color:var(--mute);font-weight:500;font-variant-numeric:tabular-nums}
+.thsl input{width:100%;min-height:26px;padding:0;border:0;background:none;accent-color:var(--navy)}
+.threset{grid-column:1/-1;justify-self:start;margin-top:4px;padding:8px 0;border:0;background:none;font:inherit;font-size:.8125rem;font-weight:600;color:var(--navy-text);cursor:pointer;text-decoration:underline;text-underline-offset:.2em}
+.threset:hover{text-decoration-thickness:2px}
+.thmsg{margin:8px 0 0;font-size:.875rem;font-weight:500;color:var(--bad-ink)}
+.thmsg:empty{display:none}
+.thshare{display:flex;align-items:center;gap:8px;margin:16px 2px 0;font-weight:500;cursor:pointer}
+.thshare input{width:20px;height:20px;accent-color:var(--navy)}
+.thacts{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.thacts .sp{flex:1}
+.thx.busy .tht{cursor:progress}
+/* With scripts the photo uploads as soon as it is chosen. */
+.js-th .thup{display:none}
+@media (prefers-reduced-motion:reduce){.tht,.thtools,.thmini rect,.thmini circle{transition:none}
+ .tht[aria-pressed="true"]::after,.tht[aria-pressed="true"]::before,.thedit:not([hidden]){animation:none}}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Class history{% endblock %}
+{% block width %} narrow{% endblock %}
+{% block content %}
+<div class="band slim"><div class="band-top"><h1>Class history</h1></div><p class="lede">Earlier versions of each classroom from the last {{ config.RETENTION_DAYS }} days. Open one to restore a version or bring back a deleted classroom.</p></div>
+{% if classes %}
+<div class="tablewrap"><table class="tbl stackable">
+<thead><tr><th scope="col">Classroom</th><th scope="col" class="n">Versions</th><th scope="col">Last change</th><th scope="col"><span class="sr-only">Open</span></th></tr></thead>
+<tbody>
+{% for c in classes %}
+<tr><td class="lead">{{ c.name or c.id }}{% if c.deleted %} <span class="pill grey">Deleted</span>{% endif %}</td><td data-label="Versions" class="n">{{ c.count }}</td><td data-label="Last change">{{ c.last|when }}{% if c.by %} by {{ c.by }}{% endif %}</td><td><a class="btn sm" href="/admin/history/{{ c.id }}">Open<span class="sr-only"> {{ c.name or c.id }}</span></a></td></tr>
+{% endfor %}
+</tbody></table></div>
+{% else %}
+<p class="sub">No changes recorded yet.</p>
+{% endif %}
+{% endblock %}

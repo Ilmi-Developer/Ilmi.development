@@ -1,0 +1,7 @@
+__pycache__/
+.venv/
+.local-data/
+
+# The school's pupil list is personal data: it is uploaded on /admin/set-houses and lives in the database.
+/data/
+*houses*.csv

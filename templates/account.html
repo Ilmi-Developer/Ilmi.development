@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% from "_avatar.html" import avatar %}
+{% block title %}Your account{% endblock %}
+{% block body_class %}{{ "solo" if user.must_change else "app" }}{% endblock %}
+{% block width %} narrow{% endblock %}
+{% block content %}
+{% if user.must_change %}
+<div class="card">
+  {% include "_mark.html" %}
+  <h1>Choose your own password</h1>
+  <p class="lede">You signed in with the shared setup password. Choose a password only you know before continuing.</p>
+{% else %}
+<div class="band slim"><div class="band-top"><h1>Your account</h1></div><p class="lede">Signed in as {{ user.email }} ({{ "administrator" if user.role == "admin" else "HeadTeacher" if user.role == "head" else "teacher" }})</p></div>
+{# Profile picture. Without scripts the form uploads the photo as it is and the server crops it square; with
+   /avatar.js, choosing a photo opens the cropper below, which sends the picture as framed. #}
+<div class="mod line pfp" id="picture">
+  <label class="pfp-pic" for="pfpfile" title="Change your picture">{{ avatar(user.id, user.name, user.avatar_at, 96) }}<span class="pfp-cam" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h3l1.6-2.5h6.8L17 8.5h3v10H4z"/><circle cx="12" cy="13" r="3.3"/></svg></span></label>
+  <div class="pfp-txt">
+    <h2>Profile picture</h2>
+    <p class="sub">Shown by your name at the bottom of the menu and on Manage users. Without one, the first letter of your name shows.</p>
+    <div class="pfp-acts">
+      <form method="post" action="/account/avatar" enctype="multipart/form-data" class="pfp-up">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label class="btn" for="pfpfile">{{ "Change picture" if user.avatar_at else "Add a picture" }}</label>
+        <input type="file" id="pfpfile" name="photo" accept="image/jpeg,image/png,image/webp,image/gif" class="sr-only">
+        <button class="btn primary pfp-send">Upload</button>
+      </form>
+      {% if user.avatar_at %}
+      <form method="post" action="/account/avatar/remove" class="pfp-rm"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn">Remove picture</button></form>
+      {% endif %}
+    </div>
+    <p class="pfp-msg" role="status" aria-live="polite"></p>
+  </div>
+</div>
+{# Theme: the built-in themes, themes other staff have shared and this person's own (themes.py). Choosing a tile
+   posts the form; /theme.js changes the page in place instead, and opens the editor for a new or own theme with
+   every change shown on this page as it is made. Without scripts the editor opens at /account?edit=<id>. #}
+{% set choices = theme_choices(user) %}
+{% set editing = theme_editing(user) %}
+{% macro mini(t, photo=None) -%}
+<svg class="thmini" viewBox="0 0 120 76" aria-hidden="true" focusable="false">
+  <rect data-k="bg" width="120" height="76" fill="{{ t.bg }}"/>{% if photo %}<image href="{{ photo }}" width="120" height="76" preserveAspectRatio="xMidYMid slice"/>{% endif %}
+  <rect data-k="menu" width="28" height="76" fill="{{ t.menu }}"/>
+  <rect data-k="line" x="28" width=".75" height="76" fill="{{ t.line }}" opacity=".6"/>
+  <circle data-k="on" cx="9" cy="9" r="4.5" fill="{{ t.on }}"/>
+  <rect data-k="on" x="4" y="20" width="20" height="7" rx="3.5" fill="{{ t.on }}"/>
+  <rect data-k="menu_ink" x="6" y="33" width="15" height="3" rx="1.5" fill="{{ t.menu_ink }}" opacity=".7"/>
+  <rect data-k="menu_ink" x="6" y="41" width="12" height="3" rx="1.5" fill="{{ t.menu_ink }}" opacity=".7"/>
+  <rect data-k="title" x="36" y="8" width="40" height="5" rx="2.5" fill="{{ t.title }}"/>
+  <rect data-k="line" x="35.25" y="19.25" width="77.5" height="49.5" rx="6.75" fill="{{ t.line }}" opacity=".6"/>
+  <rect data-k="card" x="36" y="20" width="76" height="48" rx="6" fill="{{ t.card }}"/>
+  <rect data-k="ink" x="43" y="28" width="34" height="4" rx="2" fill="{{ t.ink }}"/>
+  <rect data-k="mute" x="43" y="36" width="52" height="3" rx="1.5" fill="{{ t.mute }}"/>
+  <rect data-k="line" x="43" y="44" width="62" height="1.5" fill="{{ t.line }}"/>
+  <rect data-k="fill" x="43" y="52" width="26" height="9" rx="4.5" fill="{{ t.fill }}"/>
+</svg>
+{%- endmacro %}
+{% macro tilebtn(t, sub="", photo=None) -%}
+<button class="tht" name="theme" value="{{ t.key }}" aria-pressed="{{ "true" if (user.theme or "light") == t.key else "false" }}" data-key="{{ t.key }}">{{ mini(t.tile, photo) }}<span class="thn">{{ t.name }}</span>{% if sub %}<span class="ths">{{ sub }}</span>{% endif %}</button>
+{%- endmacro %}
+<section class="mod line thx" id="theme" aria-labelledby="thxt">
+  <h2 id="thxt">Theme</h2>
+  <form method="post" action="/account/theme" class="thpick">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="thgrid">{% for t in choices.built %}<div class="thc">{{ tilebtn(t) }}</div>{% endfor %}</div>
+    <div class="thsec"{% if not choices.shared %} hidden{% endif %} id="thshared">
+      <h3 class="thh">Shared by staff</h3>
+      <div class="thgrid">{% for t in choices.shared %}<div class="thc">{{ tilebtn(t, "by " ~ t.owner, t.photo) }}<div class="thtools"><button class="thtool" form="thcopy" name="from" value="{{ t.key }}" title="Make a copy" aria-label="Make a copy of {{ t.name }}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button>{% if user.role == "admin" %}<button class="thtool" form="thdel" formaction="/account/themes/{{ t.id }}/delete" title="Delete" aria-label="Delete {{ t.name }}" data-del="{{ t.name }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></svg></button>{% endif %}</div></div>{% endfor %}</div>
+    </div>
+    <h3 class="thh">Your themes</h3>
+    <div class="thgrid" id="thmine">{% for t in choices.mine %}<div class="thc">{{ tilebtn(t, "Shared" if t.shared else "", t.photo) }}<div class="thtools"><a class="thtool" href="/account?edit={{ t.id }}#theme" data-edit='{{ t.editor|tojson|forceescape }}' title="Edit" aria-label="Edit {{ t.name }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></svg></a></div></div>{% endfor %}<div class="thc">{% if choices.mine|length < choices.max %}<button class="tht thnew" form="thnew"><span class="thplus" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span class="thn">New theme</span></button>{% endif %}</div></div>
+  </form>
+  <form method="post" action="/account/themes" id="thnew"><input type="hidden" name="csrf" value="{{ csrf }}"></form>
+  <form method="post" action="/account/themes" id="thcopy"><input type="hidden" name="csrf" value="{{ csrf }}"></form>
+  <form method="post" action="/account/themes/0/delete" id="thdel"><input type="hidden" name="csrf" value="{{ csrf }}"></form>
+  <form method="post" action="/account/themes/{{ editing.id if editing else 0 }}/photo" enctype="multipart/form-data" id="thphoto"><input type="hidden" name="csrf" value="{{ csrf }}"></form>
+  <form method="post" action="/account/themes/{{ editing.id if editing else 0 }}/photo/remove" id="thphotorm"><input type="hidden" name="csrf" value="{{ csrf }}"></form>
+  {% set e = editing.spec if editing else none %}
+  <form method="post" action="/account/themes/{{ editing.id if editing else 0 }}" class="thedit" id="thedit"{% if not editing %} hidden{% endif %} data-id="{{ editing.id if editing else "" }}"{% if editing and editing.photo %} data-photo="{{ editing.photo }}"{% endif %}>
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="thedh"><label class="thname"><span class="sr-only">Theme name</span><input name="name" maxlength="40" value="{{ editing.name if editing else "" }}" required autocomplete="off" placeholder="Theme name"></label></div>
+    <div class="thcols">
+      <fieldset class="thset"><legend>Colours</legend><div class="thsws">
+        {% for k, label in (("menu", "Menu"), ("accent", "Accent"), ("bg", "Background"), ("card", "Cards")) %}
+        <label class="thsw"><input type="color" name="{{ k }}" value="{{ e[k] if e else "#003b6b" }}"><span class="thswt"><span>{{ label }}</span><code>{{ e[k] if e else "" }}</code></span></label>
+        {% endfor %}
+      </div></fieldset>
+      <fieldset class="thset thph"><legend>Background photo</legend>
+        <div class="thphacts"><span class="ththumb" aria-hidden="true"{% if not (editing and editing.photo) %} hidden{% endif %}>{% if editing and editing.photo %}<img src="{{ editing.photo }}" alt="">{% endif %}</span>
+          <label class="btn" for="thfile">{{ "Change photo" if editing and editing.photo else "Add a photo" }}</label>
+          <input type="file" id="thfile" name="photo" form="thphoto" accept="image/jpeg,image/png,image/webp" class="sr-only">
+          <button class="btn primary thup" form="thphoto">Upload</button>
+          <button class="btn thrm" form="thphotorm"{% if not (editing and editing.photo) %} hidden{% endif %}>Remove photo</button>
+        </div>
+        <div class="thsliders"{% if not (editing and editing.photo) %} hidden{% endif %}>
+          {% for k, label, lo, hi, step in (("zoom", "Zoom", 1, 3, 0.05), ("x", "Left and right", 0, 100, 1), ("y", "Up and down", 0, 100, 1), ("blur", "Blur", 0, 30, 1), ("bright", "Brightness", 40, 160, 1), ("sat", "Colour", 0, 200, 1), ("shade", "Shade", 0, 90, 1)) %}
+          <label class="thsl"><span class="thslt"><span>{{ label }}</span><output></output></span><input type="range" name="p_{{ k }}" min="{{ lo }}" max="{{ hi }}" step="{{ step }}" value="{{ e.photo[k] if e else "" }}"></label>
+          {% endfor %}
+          <button type="button" class="threset" data-th="reset">Reset photo settings</button>
+        </div>
+        <p class="thmsg" role="status" aria-live="polite"></p>
+      </fieldset>
+    </div>
+    <label class="thshare"><input type="checkbox" name="shared" value="1"{% if editing and editing.shared %} checked{% endif %}><span>Share with other staff</span></label>
+    <div class="thacts"><button class="btn danger" form="thdel" formaction="/account/themes/{{ editing.id if editing else 0 }}/delete" data-del="this theme">Delete</button><span class="sp"></span><a class="btn" href="/account#theme" data-th="cancel">Cancel</a><button class="btn primary">Save</button></div>
+  </form>
+  <p class="thmsg thpmsg" role="status" aria-live="polite"></p>
+</section>
+{% if user.role == "admin" %}
+{# The site title (site_settings.py), for everyone: under Ilmi in the top left corner of every page, on the TV
+   screens and in emails. Empty, those places show just Ilmi. #}
+<section class="mod line" id="site" aria-labelledby="sitet">
+  <h2 id="sitet">Site title</h2>
+  <p class="sub">Shown to everyone under Ilmi in the top left corner of every page, on the TV screens and in emails, usually your madrasah’s name. Leave it empty to show just Ilmi.</p>
+  <form method="post" action="/account/site-title" class="inline-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="field">Title<input name="title" value="{{ title_draft if title_draft is defined else site_title() }}" maxlength="60" autocomplete="off"></label>
+    <button class="btn primary">Save title</button>
+  </form>
+</section>
+{% endif %}
+<div class="g12"><div class="mod line s7">
+  <h2>Change your password</h2>
+  <p class="sub">You'll stay signed in on this device.</p>
+{% endif %}
+  <form method="post" action="/account/password">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="email" name="email" value="{{ user.email }}" autocomplete="username" hidden>
+    <label class="field">Current password<input type="password" name="current" autocomplete="current-password" required></label>
+    <label class="field">New password<input type="password" name="password" autocomplete="new-password" minlength="12" required aria-describedby="pwhint"></label>
+    <label class="field">New password again<input type="password" name="confirm" autocomplete="new-password" minlength="12" required></label>
+    <p class="hint" id="pwhint">At least 12 characters. A few unrelated words together work well.</p>
+    <button class="btn primary">Change password</button>
+  </form>
+</div>
+{% if user.must_change %}
+<form method="post" action="/logout" class="center"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="link">Sign out</button></form>
+{% else %}
+<div class="s5">
+<div class="mod line">
+  <h2>Other devices</h2>
+  {% if others %}
+  <p>You're signed in on {{ others }} other device{{ "s" if others != 1 }}.</p>
+  <form method="post" action="/account/signout-others"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn">Sign out on other devices</button></form>
+  {% else %}
+  <p class="sub">You aren't signed in anywhere else.</p>
+  {% endif %}
+</div>
+<div class="mod line">
+  <h2>Tutorial</h2>
+  <p class="sub">A short step-by-step look at what each part of the dashboard does.</p>
+  <a class="btn" href="/#tour">Retake the tutorial</a>
+</div></div></div>
+{# The cropper for the profile picture above: a dialog over the page, kept out of the run of sections. #}
+<div class="crop" id="crop" hidden>
+  <div class="cropbg"></div>
+  <div class="mod cropcard" role="dialog" aria-modal="true" aria-labelledby="cropt">
+    <h2 id="cropt">Adjust your picture</h2>
+    <p class="sub">Drag to move it. Zoom with the slider, the mouse wheel or two fingers.</p>
+    <div class="cropmain">
+      <div class="cropstage" tabindex="0" aria-label="Picture position. Use the arrow keys to move it and plus or minus to zoom."><img alt="" draggable="false"><span class="cropring" aria-hidden="true"></span></div>
+      <div class="cropside" aria-hidden="true"><span class="sub">Preview</span><span class="cropprev big"><canvas width="160" height="160"></canvas></span><span class="cropprev"><canvas width="76" height="76"></canvas></span></div>
+    </div>
+    <label class="cropzoom"><span class="sr-only">Zoom</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11h6M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><input type="range" min="1" max="4" step="0.01" value="1"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11h6M11 8v6M16 16l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></label>
+    <div class="cropacts"><button type="button" class="btn" data-crop="reset">Reset</button><span class="sp"></span><button type="button" class="btn" data-crop="cancel">Cancel</button><button type="button" class="btn primary" data-crop="save">Save picture</button></div>
+  </div>
+</div>
+{% endif %}
+{% if not user.must_change %}<script src="/avatar.js" defer></script><script src="/theme.js" defer></script>{% endif %}
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Reset your password{% endblock %}
+{% block body_class %}solo{% endblock %}
+{% block content %}
+<div class="card">
+  {% include "_mark.html" %}
+  <h1>Reset your password</h1>
+  {% if not mail_enabled %}
+  <p class="lede">Password reset emails aren't set up yet, so an administrator needs to send you a reset link.</p>
+  {% set contact_title = "Ask an administrator for a reset link" %}
+  {% set contact_fallback = "Ask an administrator to send you a reset link from Manage users." %}
+  {% include "_contact.html" %}
+  {% elif sent %}
+  <p class="notice" role="status">If there's an account for that email, we've sent it a link to choose a new password. The link expires in 1 hour.</p>
+  <p class="sub">Nothing after a few minutes? Check your spam folder, or contact an administrator.</p>
+  {% set contact_title = "Still no email?" %}
+  {% include "_contact.html" %}
+  {% else %}
+  <p class="lede">Enter the email you sign in with and we'll email you a link to choose a new password.</p>
+  <form method="post" action="/forgot">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="field">Email<span class="fin"><input type="email" name="email" autocomplete="username" spellcheck="false" required autofocus>{{ icon("person") }}</span></label>
+    <button class="btn primary">Email me a reset link</button>
+  </form>
+  {% endif %}
+  <div class="alt"><a href="/login">Back to sign in</a></div>
+</div>
+{% endblock %}

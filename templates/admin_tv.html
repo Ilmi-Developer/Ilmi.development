@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Presenter{% endblock %}
+{% block width %} narrow{% endblock %}
+{% block content %}
+<div class="band slim"><div class="band-top"><h1>Presenter</h1><div class="acts"><a class="btn" href="/tv" target="_blank" rel="noopener">Preview the TV<span class="sr-only"> (opens in a new tab)</span></a></div></div>
+<p class="lede">Each TV shows the live house points, this month's podiums, book completions and stars of the week, with first names and surname initials only.</p>
+<details class="how"><summary>How this works</summary><div><p>Each TV runs from its own link and can't open or change anything else. Use Settings to give a TV a time of day for Qaidah slides only and a time for Memo slides only; the rest of the day it plays everything.</p></div></details></div>
+{% if link %}
+<div class="panel linkbox" role="status">
+  <p><b>Open this link on {{ link_for }}</b> and leave it open. It shows only once, so make a new one if you lose it. Anyone with the link can see the dashboard, so keep it on the TV only.</p>
+  <input readonly value="{{ link }}" aria-label="TV screen link">
+</div>
+{% endif %}
+<div class="mod line">
+  <h2>Add a TV</h2>
+  <form method="post" action="/admin/tv/new" class="inline-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="field">Name<input name="name" maxlength="80" placeholder="For example, Admin area TV…" autocomplete="off" required></label>
+    <button class="btn primary">Make a link</button>
+  </form>
+</div>
+<h2>Screens</h2>
+{% if screens %}
+<div class="tablewrap"><table class="tbl stackable">
+<thead><tr><th scope="col">TV</th><th scope="col">Made</th><th scope="col">Last showing</th><th scope="col">Plays</th><th scope="col"><span class="sr-only">Settings and turn off</span></th></tr></thead>
+<tbody>
+{% for s in screens %}
+<tr><td class="lead">{{ s.name }}</td><td data-label="Made">{{ s.created_at|when }}{% if s.created_by %} <span class="sub">by {{ s.created_by }}</span>{% endif %}</td><td data-label="Last showing">{{ s.last_seen_at|when if s.last_seen_at else "Not opened yet" }}</td>
+<td data-label="Plays">{% if s.windows %}{% for k, label in (("qaidah", "Qaidah"), ("memo", "Memo")) if k in s.windows %}<span class="sub tvwin">{{ label }} only {{ s.windows[k][0] }} to {{ s.windows[k][1] }}</span>{% endfor %}<span class="sub tvwin">Everything at other times</span>{% else %}Everything{% endif %}</td>
+<td class="tvacts"><details class="confirm tvset"><summary class="btn sm">Settings<span class="sr-only"> for {{ s.name }}</span></summary>
+<form method="post" action="/admin/tv/{{ s.id }}/settings"><input type="hidden" name="csrf" value="{{ csrf }}">
+{% for k, label in (("qaidah", "Qaidah"), ("memo", "Memo")) %}<fieldset><legend>{{ label }} only</legend><p>Plays just the {{ label }} slides between these times each day.</p>
+<label class="field">From<input type="time" name="{{ k }}_from" value="{{ s.windows[k][0] if k in s.windows else '' }}"></label><label class="field">To<input type="time" name="{{ k }}_to" value="{{ s.windows[k][1] if k in s.windows else '' }}"></label></fieldset>
+{% endfor %}<p>Leave both times empty to turn a window off. Outside these times the TV plays every slide.</p><button class="btn sm primary">Save settings</button></form></details>
+<details class="confirm"><summary class="btn sm danger">Turn off link<span class="sr-only"> for {{ s.name }}</span></summary>
+<form method="post" action="/admin/tv/{{ s.id }}/off"><p>This TV stops showing the dashboard. You'll need a new link to turn it back on.</p><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn sm danger solid">Yes, turn it off</button></form></details></td></tr>
+{% endfor %}
+</tbody></table></div>
+{% else %}
+<p class="sub">No TV links yet. Add a TV above to make one.</p>
+{% endif %}
+{% endblock %}

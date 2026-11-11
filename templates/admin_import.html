@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Import{% endblock %}
+{% block width %} narrow{% endblock %}
+{% macro table(list, why) %}
+<div class="tablewrap"><table class="tbl stackable">
+<thead><tr><th scope="col">Row</th><th scope="col">Date</th><th scope="col">Student</th><th scope="col">{{ "Level" if active == "qaidah" else "Target" }}</th><th scope="col">Class</th>{% if why %}<th scope="col">Why</th>{% endif %}</tr></thead>
+<tbody>
+{% for r in list %}
+<tr><td class="n">{{ r.n }}</td><td data-label="Date">{{ r.day }}</td><td class="lead">{{ r.name }}{% if r.sid %} <span class="sub">{{ r.sid }}</span>{% endif %}</td><td data-label="{{ 'Level' if active == 'qaidah' else 'Target' }}">{{ r.label }}</td><td data-label="Class">{{ r.cls or "–" }}</td>
+{% if why %}<td data-label="Why">{% if r.status == "repeat" %}The same {{ "level" if active == "qaidah" else "target" }} is higher up the sheet{% else %}{{ r.note }}{% endif %}</td>{% endif %}</tr>
+{% endfor %}
+</tbody></table></div>
+{% endmacro %}
+{% macro upload(kind, label) %}
+<form method="post" action="/admin/import-{{ kind }}-passes" enctype="multipart/form-data" class="pickrow">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label class="btn filepick"><input type="file" name="csv" accept=".csv,text/csv" required aria-label="{{ label }} CSV file"><span class="fp-none">Choose CSV file</span><span class="fp-some" aria-hidden="true">CSV file chosen</span></label>
+  <button class="btn primary">Check this CSV</button>
+  <a class="btn" href="/admin/import-template/{{ kind }}.csv" download>Download template</a>
+</form>
+{% endmacro %}
+{% block content %}
+<div class="band slim"><div class="band-top"><h1>Import</h1><div class="acts"><a class="btn" href="/admin/clear-test-data/backup.json">Download a backup</a></div></div></div>
+<div class="mod line">
+  <h2>New students</h2>
+  <p class="sub">Upload a CSV of students. New students are added to their class and students already on the site are updated, never added twice.</p>
+  <div class="pickrow"><a class="btn primary" href="/#upload-students">Upload students</a><a class="btn" href="/admin/import-template/students.csv" download>Download template</a></div>
+</div>
+{% for kind, k in kinds.items() %}
+<div class="mod line" id="{{ kind }}">
+<h2>{{ k.title }}</h2>
+{% if kind == "memo" %}
+<p class="sub">Replaces all memo passes on the site with the ones in a CSV. You'll see a check before anything changes.</p>
+<details class="how"><summary>How this works</summary><div><p>The CSV needs Date, Student ID and Target columns. Download the template, fill it in and upload it.</p></div></details>
+{% else %}
+<p class="sub">Replaces all Qaidah level passes on the site with the ones in a CSV. You'll see a check before anything changes.</p>
+<details class="how"><summary>How this works</summary><div><p>The CSV needs Date, Student ID and Level columns (Score is optional). Download the template, fill it in and upload it.</p></div></details>
+{% endif %}
+{% if active == kind %}
+{% if done is defined %}
+<div class="panel" role="status"><p><b>Imported the CSV into {{ done }} {{ "class" if done == 1 else "classes" }}.</b> Open dashboards need a reload to show it. Importing another CSV clears first again, so any pass recorded after now would be lost.</p></div>
+{% endif %}
+{% if error %}<div class="panel" role="alert"><p>{{ error }}</p></div>{% endif %}
+{% endif %}
+{{ upload(kind, k.title) }}
+{% if active == kind and sheet %}
+<div class="panel" role="alert"><p><b>This clears first:</b> {% if kind == "memo" %}{{ removed.passes }} {{ "pass" if removed.passes == 1 else "passes" }}, {{ removed.fails }} {{ "fail" if removed.fails == 1 else "fails" }} and {{ removed.tests }} Memo level {{ "test" if removed.tests == 1 else "tests" }}{% else %}{{ removed.tests }} Quran level {{ "test" if removed.tests == 1 else "tests" }}{% endif %} already on the site, from {{ removed.students }} {{ "student" if removed.students == 1 else "students" }}.</p></div>
+<p class="sub">{{ total }} rows on the sheet: {{ counts.add }} passes and {{ counts.fail }} {{ "fail" if counts.fail == 1 else "fails" }} to add for {{ students }} {{ "student" if students == 1 else "students" }},
+{{ counts.repeat }} repeated on the sheet, {{ counts.missing + counts.choose + counts.bad }} that {{ "doesn't" if counts.missing + counts.choose + counts.bad == 1 else "don't" }} match.</p>
+{% if problems %}<h3>Don't match ({{ problems|length }})</h3>{{ table(problems, 1) }}{% endif %}
+{% if noted %}<h3>Added, worth a look ({{ noted|length }})</h3>{{ table(noted, 1) }}{% endif %}
+{% if skipped %}<h3>Left out ({{ skipped|length }})</h3>{{ table(skipped, 1) }}{% endif %}
+{% if adding %}<details class="rows"><summary>Every row to add ({{ adding|length }})</summary>{{ table(adding, 0) }}</details>{% endif %}
+{% if adding or choices or removed.students %}
+<form method="post" action="/admin/import-{{ kind }}-passes" class="inline-form confirm">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <textarea name="sheet" hidden>{{ sheet }}</textarea>
+  {% for key, c in choices %}
+  <label class="field">{{ c.name }} on the sheet is<select name="pick-{{ key }}"><option value="">Neither, leave their rows out</option>
+  {% for v, label in c.options %}<option value="{{ v }}"{% if c.pick == v %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+  {% endfor %}
+  <label class="field">Type IMPORT to confirm<input name="confirm" autocomplete="off" required></label>
+  <button class="btn danger solid">Clear and import {{ adding|length }} {{ "row" if adding|length == 1 else "rows" }}</button>
+</form>
+{% else %}
+<p class="sub">Nothing to add.</p>
+{% endif %}
+{% endif %}
+</div>
+{% endfor %}
+{% endblock %}
