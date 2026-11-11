@@ -64,7 +64,7 @@
 {# A hadith on learning the Qur’an together (Ṣaḥīḥ Muslim 2699), in Arabic and in English. The Arabic is set in an
    Amiri subset holding only the letters this page uses (amiri-text.woff2, made by tools/art/fonts.py). #}
 <section class="band rv" id="hadith" data-scrub aria-labelledby="band-h">
-  <span class="bwash" aria-hidden="true"></span><span class="bmist" aria-hidden="true"></span>
+  <span class="bback" aria-hidden="true"><span class="bwash"></span></span><span class="bmist" aria-hidden="true"></span>
   <div class="band-in">
     <div class="band-ar">
       <h2 class="band-k" id="band-h">Hadith</h2>
@@ -122,33 +122,59 @@
     </ol>
   </div>
   <div class="mock-3d">
-  <figure class="mock rv" role="img" aria-label="A preview of Ilmi’s school overview with made-up figures: lessons scored today, memo targets met, classes and pupils, the house race and passes per week.">
-    <div class="mk-rail" aria-hidden="true">
-      <span class="ilmi"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span>
-      <ul><li class="on">Overview</li><li>Record</li><li>Classes</li><li>House points</li><li>Rankings</li><li>Presenter</li></ul>
-    </div>
+  {# The overview as it looks today: the greeting on paper, its three cards and the dock of icons (static/dock.js),
+     with made-up figures and names. Each step lights its own part (welcome.css). #}
+  <figure class="mock rv" role="img" aria-label="A preview of Ilmi’s school overview with made-up figures: pupils who need attention in Quran, memorisation and behaviour, the Quran trackers, the house points race and the leading classes, above the dock of icons.">
     <div class="mk-main" aria-hidden="true">
-      <p class="mk-h">Assalāmu ʿalaykum, Ustādha Maryam!</p>
-      <p class="mk-s">School overview</p>
-      <div class="mk-stats">
-        <div><small>Qur’an lessons today</small><b data-n="64">64</b><i class="ok">Scored</i></div>
-        <div><small>Memo targets met</small><b data-n="38">38</b><i class="warn">6 still to test</i></div>
-        <div><small>Classes</small><b data-n="12">12</b><i>All recorded</i></div>
-        <div><small>Pupils</small><b data-n="186">186</b><i>Total</i></div>
+      <span class="mk-wash"></span>
+      <div class="mk-head">
+        <div><p class="mk-h">Assalāmu ʿalaykum, Ustādha Maryam!</p><p class="mk-s">School overview</p></div>
+        {% include "art/sprig.svg" %}
+        <span class="mk-fig"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 4v16h16"/><path d="M8.5 16v-4M12.5 16V8M16.5 16v-6"/></svg></span>
       </div>
-      <div class="mk-row">
-        <div class="mk-card">
-          <p class="mk-t">House race</p>
-          <ol class="mk-houses">
-            <li class="mk"><span>Makkah</span><span class="bar"><i></i></span><b>1,240</b></li>
-            <li class="md"><span>Madinah</span><span class="bar"><i></i></span><b>1,185</b></li>
-            <li class="ma"><span>Al-Aqsa</span><span class="bar"><i></i></span><b>1,120</b></li>
-          </ol>
+      <div class="mk-card mk-na">
+        <p class="mk-t">Needs attention</p>
+        <div class="mk-groups">
+          <div class="mk-g"><small>Quran this month</small><div><span><b data-n="3">3</b><em>Struggling</em></span><span><b data-n="41">41</b><em>Excelling</em></span></div></div>
+          <div class="mk-g"><small>Memorisation</small><div><span><b data-n="6">6</b><em>Overdue</em></span><span><b data-n="38">38</b><em>Advancing</em></span></div></div>
+          <div class="mk-g"><small>Behaviour</small><div><span><b data-n="2">2</b><em>Warnings</em></span><span><b data-n="1">1</b><em>Missed breaks</em></span></div></div>
         </div>
-        <div class="mk-card">
-          <p class="mk-t">Passes per week</p>
-          <div class="mk-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="now"></i></div>
+      </div>
+      <div class="mk-card mk-trk"><p class="mk-t">Quran trackers</p><i>12 of 12 scored</i><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6"/></svg></div>
+      <div class="mk-card mk-rk">
+        <div class="mk-rkh"><p class="mk-t">Rankings</p><span class="mk-seg"><span class="on">This month</span><span>All time</span></span></div>
+        <div class="mk-cols">
+          <div>
+            <small>House points</small>
+            <ol class="mk-houses">
+              <li class="mk"><span>Makkah <u>Leading</u></span><span class="bar"><i></i></span><b>1,240</b></li>
+              <li class="md"><span>Madinah</span><span class="bar"><i></i></span><b>1,185</b></li>
+              <li class="ma"><span>Al-Aqsa</span><span class="bar"><i></i></span><b>1,120</b></li>
+            </ol>
+          </div>
+          <div class="mk-cls">
+            <small>Classes</small>
+            <ol class="mk-top">
+              <li><span>1</span>Yr5B Ustādha Zainab<b>4.6</b></li>
+              <li><span>2</span>Yr3A Ustādha Maryam<b>4.2</b></li>
+              <li><span>3</span>Yr6A Ustādh Hamza<b>3.9</b></li>
+            </ol>
+          </div>
         </div>
+      </div>
+      <div class="mk-dock">
+        <span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg></span>
+        <span class="on"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg></span>
+        <span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg></span>
+        <span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg></span>
+        <span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.5 13.5A8.5 8.5 0 1 1 10.5 3.5v10z"/><path d="M14 3.2A8.5 8.5 0 0 1 20.8 10H14z"/></svg></span>
+        <span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5a2.5 2.5 0 0 0 2.5 4"/><path d="M17 6h2.5a2.5 2.5 0 0 1-2.5 4"/></svg></span>
+        <i class="x"></i>
+        <span class="x"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 9.5 12 4l9 5.5"/><path d="M4.5 20h15"/><path d="M6 10.5V17M10 10.5V17M14 10.5V17M18 10.5V17"/><path d="M4 17.5h16"/></svg></span>
+        <span class="x"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.1 1.1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1.1-1.1"/></svg></span>
+        <i></i>
+        <span class="ilmi x"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span>
+        <span><span class="mk-av">M</span></span>
       </div>
     </div>
   </figure>

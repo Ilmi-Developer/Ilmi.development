@@ -73,7 +73,7 @@ html{overflow-x:hidden;overflow-x:clip}
 .hm-en .l4{position:relative}
 .hm-en .dot{position:absolute;left:50%;top:.09em;width:.15em;height:.15em;margin-left:-.06em;border-radius:50%;background:#7a8848;
  box-shadow:inset -.02em -.02em .03em rgba(40,46,20,.25)}
-.hm-ar{display:block;width:max-content;margin:-.42em 0 0 1.05em;font:700 clamp(6rem,10.6vw,9.75rem)/1.25 var(--font-ar);color:var(--ink);letter-spacing:0;font-feature-settings:"rlig" 0}
+.hm-ar{display:block;width:max-content;margin:-.3em 0 0 1.05em;font:700 clamp(6rem,10.6vw,9.75rem)/1.25 var(--font-ar);color:var(--ink);letter-spacing:0;font-feature-settings:"rlig" 0}
 .hero-art .art-rahle{position:absolute;left:-26px;bottom:-6px;width:min(310px,46%)}
 .hero-art .hs1{width:420px;height:420px;left:-140px;bottom:-150px;background-image:url(/art/splat-b.webp);opacity:.5}
 /* Where the drop of olive lands on the i, it splashes. */
@@ -87,7 +87,10 @@ html{overflow-x:hidden;overflow-x:clip}
 
 /* ---------- The olive band: a hadith on learning the Qur'an together ---------- */
 .band{position:relative;isolation:isolate;background:var(--olive-band);color:var(--cream);padding:88px 40px 92px}
-.bwash{position:absolute;z-index:-1;inset:0;background:url(/art/wash-band.webp) right center/auto 128% no-repeat;pointer-events:none}
+/* The band's backdrop is an element of its own (.bback) holding the darker wash, so the scroll can open the two as
+   one (see Scroll-driven motion); without motion the band carries the olive itself and the backdrop only the wash. */
+.bback{position:absolute;z-index:-1;inset:0;pointer-events:none}
+.bwash{position:absolute;inset:0;background:url(/art/wash-band.webp) right center/auto 128% no-repeat}
 .bmist{position:absolute;z-index:-1;right:-30px;top:-96px;width:640px;height:299px;background:url(/art/wash-mist.webp) center/contain no-repeat;opacity:.7;pointer-events:none}
 .band-in{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:0 64px}
 .band-ar blockquote,.band-t,.band-t blockquote{margin:0}
@@ -129,35 +132,63 @@ html{overflow-x:hidden;overflow-x:clip}
 .in-text hr{width:44px;height:1px;border:0;background:var(--ink-2);margin:28px 0}
 .in-text p{font-size:1.1875rem;color:var(--ink-2);max-width:30ch}
 
-.mock{margin:0;display:grid;grid-template-columns:184px minmax(0,1fr);min-height:420px;border-radius:20px;overflow:hidden;background:var(--surface);
+/* The preview is the overview as it is after signing in: the greeting on paper under a wash, with the sprig and the
+   figures button; Needs attention, Quran trackers and Rankings as cards; and the dock of icons floating at the foot
+   (src/tokens.css ".idock"), all at a little over half size. */
+.mock{margin:0;position:relative;border-radius:20px;overflow:hidden;background:var(--paper-tex),var(--canvas);
  box-shadow:0 0 0 1px rgba(60,52,30,.08),0 2px 4px rgba(50,44,24,.06),0 30px 60px -24px rgba(40,36,18,.45);font-family:var(--font)}
-.mk-rail{background:url(/art/wash-rail.webp) center bottom/100% auto no-repeat,#4b552f;color:#ece6d3;padding:22px 14px}
-.mk-rail .ilmi{font-size:1.5rem;color:#fffaf0;padding:0 10px}
-.mk-rail ul{list-style:none;margin:22px 0 0;padding:0;display:grid;gap:3px}
-.mk-rail li{font-size:.8125rem;font-weight:500;padding:7px 12px;border-radius:999px}
-.mk-rail li.on{background:#f4efe2;color:#3c4524;font-weight:600;box-shadow:0 1px 2px rgba(20,24,10,.2)}
-.mk-main{padding:26px 28px;background:var(--paper-tex),var(--canvas)}
+.mk-main{position:relative;padding:24px 26px 72px}
+.mk-wash{position:absolute;right:-30px;top:-84px;width:360px;height:229px;background:url(/art/wash-cloud.webp) center/contain no-repeat;opacity:.8;pointer-events:none}
+.mk-head{position:relative;display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.mk-head>div{margin-right:auto}
+.mk-head .art{flex:none;width:30px;margin:-8px 2px 0 0;color:var(--wink)}
+.mk-fig{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--surface);color:var(--ink-2);box-shadow:0 0 0 1px var(--line),0 2px 5px -2px rgba(60,52,30,.3)}
+.mock svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.mk-fig svg{width:14px;height:14px}
 .mk-h{font:600 1.5rem/1.2 var(--font-display);color:var(--ink)}
-.mk-s{font:italic 500 1.0625rem var(--font-hand);color:var(--mute);margin:2px 0 18px!important}
-.mk-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.mk-stats>div,.mk-card{background:var(--surface);border-radius:14px;box-shadow:0 0 0 1px var(--line),0 6px 14px -10px rgba(60,52,30,.3);padding:12px 14px}
-.mk-stats small{display:block;font-size:.6875rem;font-weight:500;color:var(--mute);line-height:1.25;min-height:2.5em}
-.mk-stats b{display:block;font:600 2rem/1.1 var(--font-display);color:var(--ink);font-variant-numeric:lining-nums tabular-nums}
-.mk-stats i{display:flex;align-items:center;gap:6px;font-style:normal;font-size:.6875rem;color:var(--mute);margin-top:2px}
-.mk-stats i::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--line-2)}
-.mk-stats i.ok::before{background:var(--ok)}.mk-stats i.warn::before{background:var(--warn)}
-.mk-row{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:10px;margin-top:10px}
-.mk-t{font-size:.8125rem;font-weight:600;color:var(--ink);margin:0 0 10px!important}
-.mk-houses{list-style:none;margin:0;padding:0;display:grid;gap:10px}
-.mk-houses li{display:grid;grid-template-columns:62px minmax(0,1fr) 44px;align-items:center;gap:10px;font-size:.75rem;color:var(--ink-2)}
-.mk-houses b{font-weight:600;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums}
-.mk-houses .bar{height:8px;border-radius:99px;background:var(--sunk);overflow:hidden}
-.mk-houses .bar i{display:block;height:100%;border-radius:inherit;transform-origin:left}
-.mk-houses .mk i{width:100%;background:var(--makkah)}.mk-houses .md i{width:95%;background:var(--madinah)}.mk-houses .ma i{width:90%;background:var(--aqsa)}
-.mk-bars{display:flex;align-items:flex-end;gap:8px;height:92px;border-bottom:1px solid var(--line-2)}
-.mk-bars i{flex:1;border-radius:4px 4px 0 0;background:#cdd1b4;transform-origin:bottom}
-.mk-bars i:nth-child(1){height:30%}.mk-bars i:nth-child(2){height:44%}.mk-bars i:nth-child(3){height:38%}.mk-bars i:nth-child(4){height:56%}
-.mk-bars i:nth-child(5){height:50%}.mk-bars i:nth-child(6){height:68%}.mk-bars i:nth-child(7){height:62%}.mk-bars i.now{height:92%;background:var(--navy)}
+.mk-s{font:italic 500 1.0625rem var(--font-hand);color:var(--mute);margin-top:2px!important}
+.mk-card{position:relative;background:var(--surface);border-radius:14px;box-shadow:0 0 0 1px var(--line),0 6px 14px -10px rgba(60,52,30,.3);padding:12px 16px}
+.mk-card+.mk-card{margin-top:10px}
+.mk-t{font:600 .9375rem/1.2 var(--font-display);color:var(--ink)}
+.mk-groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 14px;margin:6px -8px -4px}
+.mk-g{position:relative;padding:6px 8px;border-radius:10px}
+.mk-g+.mk-g::before{content:"";position:absolute;left:-7px;top:8px;bottom:8px;width:1px;background:var(--line)}
+.mk-g small{display:block;font-size:.625rem;line-height:1.3;color:var(--mute)}
+.mk-g>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:3px}
+.mk-g b{display:block;font:600 1.5rem/1.1 var(--font-display);color:var(--ink-2);font-variant-numeric:lining-nums tabular-nums}
+.mk-g em{display:block;font-style:normal;font-size:.6875rem;line-height:1.3;color:var(--ink);white-space:nowrap}
+.mk-trk{display:flex;align-items:center;gap:10px;padding-block:10px;white-space:nowrap}
+.mk-trk i{display:flex;align-items:center;gap:6px;margin-left:auto;font-style:normal;font-size:.6875rem;color:var(--mute)}
+.mk-trk i::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.mk-trk svg{flex:none;width:12px;height:12px;stroke-width:2;color:var(--mute)}
+.mk-rkh{display:flex;align-items:center;gap:12px}
+.mk-seg{display:inline-flex;padding:2px;border-radius:99px;background:var(--sunk);font-size:.625rem;line-height:1.2;color:var(--mute)}
+.mk-seg span{padding:3px 9px;border-radius:99px}
+.mk-seg .on{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(60,52,30,.18)}
+.mk-cols{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:0 28px;margin-top:8px}
+.mk-cols small{display:block;font:600 .6875rem/1.3 var(--font-display);color:var(--ink-2);margin-bottom:6px}
+.mk-houses,.mk-top{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.mk-houses li{display:grid;grid-template-columns:102px minmax(0,1fr) 36px;align-items:center;gap:10px;font-size:.75rem;line-height:1.35;color:var(--ink-2)}
+.mk-houses li>span:first-child{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.mk-houses li>span:first-child::before{content:"";flex:none;width:6px;height:6px;border-radius:50%;background:var(--hc)}
+.mk-houses u{text-decoration:none;font-size:.5625rem;font-weight:500;padding:1px 6px;border-radius:99px;background:var(--gold-soft,#f3e7c6);color:var(--gold-ink,#7a5a10)}
+.mk-houses b{font:600 .8125rem/1.2 var(--font-display);color:var(--ink);text-align:right;font-variant-numeric:lining-nums tabular-nums}
+.mk-houses .bar{height:6px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.mk-houses .bar i{display:block;height:100%;border-radius:inherit;background:var(--hc);transform-origin:left}
+.mk-houses .mk{--hc:var(--makkah)}.mk-houses .md{--hc:var(--madinah)}.mk-houses .ma{--hc:var(--aqsa)}
+.mk-houses .mk i{width:100%}.mk-houses .md i{width:95%}.mk-houses .ma i{width:90%}
+.mk-top li{display:grid;grid-template-columns:14px minmax(0,1fr) auto;align-items:center;gap:6px;font-size:.75rem;line-height:1.35;color:var(--ink-2);white-space:nowrap}
+.mk-top span{font:600 .6875rem/1 var(--font-display);color:var(--mute)}
+.mk-top b{font:600 .8125rem/1.2 var(--font-display);color:var(--ink);font-variant-numeric:lining-nums tabular-nums}
+.mk-dock{position:absolute;left:50%;bottom:14px;translate:-50% 0;display:flex;align-items:center;gap:4px;height:38px;padding:5px;border-radius:14px;
+ background:url(/art/wash-rail.webp) center 70%/cover no-repeat,#4b552f;color:#ece6d3;
+ box-shadow:inset 0 0 0 1px rgba(255,250,235,.14),inset 0 1px 0 rgba(255,250,235,.12),0 1px 2px rgba(30,30,14,.16),0 10px 22px -8px rgba(30,30,14,.45)}
+.mk-dock>span{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:8px}
+.mk-dock svg{width:14px;height:14px}
+.mk-dock>.on{background:#f4efe2;color:#3c4524;box-shadow:0 1px 2px rgba(20,24,10,.18),inset 0 -1px 0 rgba(60,52,30,.08)}
+.mk-dock>i{flex:none;width:1px;height:18px;margin:0 1px;background:rgba(255,250,235,.14)}
+.mk-dock>.ilmi{display:inline-flex;width:auto;padding:0 6px;font-size:.9375rem;color:#fffaf0}
+.mk-av{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#e9e3cf;color:#3c4524;font:600 .5625rem/1 var(--font);box-shadow:0 0 0 1.5px rgba(255,250,235,.14)}
 
 /* ---------- What we care about: three values ---------- */
 .values{position:relative;max-width:1240px;margin:0 auto;padding:48px 40px 104px}
@@ -250,19 +281,12 @@ html{overflow-x:hidden;overflow-x:clip}
 .bwash{animation:w-drift 26s ease-in-out infinite alternate}
 .bmist{animation:w-drift 20s ease-in-out -6s infinite alternate-reverse}
 .band.in .band-sprig .ink path{animation-delay:.8s;animation-duration:2s}
-/* The preview: the bars grow and the figures count up (welcome.js). */
-.js .mock:not(.in) .mk-bars i{transform:scaleY(0)}
-.mock.in .mk-bars i{animation:w-grow 1s var(--ease-out) both}
-.mock.in .mk-bars i:nth-child(1){animation-delay:.5s}.mock.in .mk-bars i:nth-child(2){animation-delay:.56s}.mock.in .mk-bars i:nth-child(3){animation-delay:.62s}
-.mock.in .mk-bars i:nth-child(4){animation-delay:.68s}.mock.in .mk-bars i:nth-child(5){animation-delay:.74s}.mock.in .mk-bars i:nth-child(6){animation-delay:.8s}
-.mock.in .mk-bars i:nth-child(7){animation-delay:.86s}.mock.in .mk-bars i:nth-child(8){animation-delay:.92s}
+/* The preview: the house bars grow, the dock rises into place and the figures count up (welcome.js). */
 .js .mock:not(.in) .mk-houses .bar i{transform:scaleX(0)}
 .mock.in .mk-houses .bar i{animation:w-growx 1.3s var(--ease-out) .5s both}
 .mock.in .mk-houses .md .bar i{animation-delay:.62s}.mock.in .mk-houses .ma .bar i{animation-delay:.74s}
-.js .mock:not(.in) .mk-rail li{opacity:0}
-.mock.in .mk-rail li{animation:w-fade .6s ease both}
-.mock.in .mk-rail li:nth-child(2){animation-delay:.08s}.mock.in .mk-rail li:nth-child(3){animation-delay:.16s}.mock.in .mk-rail li:nth-child(4){animation-delay:.24s}
-.mock.in .mk-rail li:nth-child(5){animation-delay:.32s}.mock.in .mk-rail li:nth-child(6){animation-delay:.4s}
+.js .mock:not(.in) .mk-dock{opacity:0}
+.mock.in .mk-dock{animation:w-rise 1s var(--ease-out) .55s both}
 .iswoosh{animation:w-drift 30s ease-in-out infinite alternate}
 .close-art.in .art-skyline .ink path{animation-duration:2.4s}
 /* Values: each card rises, its splash lands, then its drawing inks itself in over it. */
@@ -334,11 +358,13 @@ html{overflow-x:hidden;overflow-x:clip}
  animation:w-fade 1s ease 2.6s both}
 .cue i{display:block;width:1px;height:46px;background:linear-gradient(var(--ink-2),var(--ink-2)) 0 -18px/1px 18px no-repeat,var(--line-2);animation:w-cue 2.2s cubic-bezier(.6,0,.3,1) 3s infinite}
 @keyframes w-cue{from{background-position:0 -18px}to{background-position:0 46px}}
+/* The olive and its wash open together: one clip on the backdrop, which welcome.js gives its progress directly (a
+   pseudo-element inheriting it was left behind in Safari, so the card never reached the full width). The wash is a
+   little larger than the backdrop, so its slow drift never shows an edge inside the clip. */
 .motion .band{z-index:1;background:none}
-.motion .band::before{--in:inherit}
-.motion .band,.motion .band::before,.motion .bwash,.motion .band-in{--o:calc(1 - min(1, var(--in) * 1.4))}
-.motion .band::before{content:"";position:absolute;z-index:-2;inset:0;background:var(--olive-band)}
-.motion .band::before,.motion .bwash{clip-path:inset(0 calc(var(--o) * 6vw) round calc(var(--o) * 56px))}
+.motion .bback,.motion .band-in{--o:calc(1 - min(1, var(--in) * 1.4))}
+.motion .bback{background:var(--olive-band);clip-path:inset(0 calc(var(--o) * 6vw) round calc(var(--o) * 56px))}
+.motion .bwash{inset:-12px -24px 0 0}
 .motion .band-in{translate:0 calc(var(--o) * 70px)}
 
 /* What it does: the section holds still while its cards run in sideways, a turn of the wheel for a card's width;
@@ -376,11 +402,12 @@ html{overflow-x:hidden;overflow-x:clip}
  .motion .inside[data-step] .steps li{opacity:.36}
  .motion .inside[data-step="0"] .steps li:nth-child(1),.motion .inside[data-step="1"] .steps li:nth-child(2),.motion .inside[data-step="2"] .steps li:nth-child(3){opacity:1}
  .motion .inside[data-step="0"] .steps li:nth-child(1)::before,.motion .inside[data-step="1"] .steps li:nth-child(2)::before,.motion .inside[data-step="2"] .steps li:nth-child(3)::before{background:var(--navy)}
- .motion .mock .mk-stats>div,.motion .mock .mk-card{transition:opacity .5s ease,box-shadow .5s ease,transform .6s var(--ease-out)}
- .motion .inside[data-step] .mk-stats>div,.motion .inside[data-step] .mk-card{opacity:.45}
- .motion .inside[data-step="0"] .mk-stats>div:nth-child(1),.motion .inside[data-step="0"] .mk-stats>div:nth-child(3),
- .motion .inside[data-step="1"] .mk-stats>div:nth-child(2),.motion .inside[data-step="2"] .mk-row .mk-card:first-child{opacity:1;transform:translateY(-4px);
+ .motion .mock .mk-card,.motion .mock .mk-g{transition:opacity .5s ease,box-shadow .5s ease,background-color .5s ease,transform .6s var(--ease-out)}
+ .motion .inside[data-step] .mk-g,.motion .inside[data-step] .mk-trk,.motion .inside[data-step] .mk-rk{opacity:.45}
+ .motion .inside[data-step="0"] .mk-trk,.motion .inside[data-step="2"] .mk-rk{opacity:1;transform:translateY(-3px);
   box-shadow:0 0 0 2px var(--navy),0 16px 30px -16px rgba(40,46,20,.55)}
+ .motion .inside[data-step="0"] .mk-g:nth-child(1),.motion .inside[data-step="1"] .mk-g:nth-child(2){opacity:1;
+  background:color-mix(in srgb,var(--navy) 7%,transparent);box-shadow:0 0 0 2px var(--navy)}
 }
 @media (min-width:960px) and (max-height:820px){.motion .inside .in-text>p{display:none}}
 
@@ -402,8 +429,6 @@ html{overflow-x:hidden;overflow-x:clip}
  .hero{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 40px}
  .hmark{padding-left:96px}
  .hero-art .art-sprig{width:120px}
- .mock{grid-template-columns:150px minmax(0,1fr)}
- .mk-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:959.98px){
  .motion .hero>.cue{display:none}
@@ -449,11 +474,12 @@ html{overflow-x:hidden;overflow-x:clip}
  .cta .wbtn{flex:1 1 auto;justify-content:center}
  .feats ul{grid-template-columns:minmax(0,1fr)}
  .feats li::before{display:none}
- .mock{grid-template-columns:minmax(0,1fr);min-height:0}
- .mk-rail{display:none}
- .mk-main{padding:18px 16px}
+ .mk-main{padding:18px 16px 66px}
  .mk-h{font-size:1.25rem}
- .mk-row{grid-template-columns:minmax(0,1fr)}
+ .mk-head .art,.mk-cls,.mk-dock>.x{display:none}
+ .mk-groups{grid-template-columns:minmax(0,1fr)}
+ .mk-g+.mk-g::before{left:8px;right:8px;top:-1px;bottom:auto;width:auto;height:1px}
+ .mk-cols{grid-template-columns:minmax(0,1fr)}
  .close-art .art-grass{width:46%}
  .close-art .art-skyline{width:88%}
 }
