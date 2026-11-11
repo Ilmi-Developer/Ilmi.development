@@ -452,6 +452,40 @@ class DashboardTests:
 
     # --- Signing in ---
 
+    def test_admin_reset_from_railway_unlocks_once_per_value(self):
+        db = self.app.config["DB"]
+        with db.transaction() as tx:
+            for _ in range(6):
+                tx.execute("INSERT INTO attempts (kind, email, ip, at, ok) VALUES ('login', ?, '203.0.113.9', ?, 0)",
+                           (ADMIN[0], auth.now()))
+        self.assertEqual(self.client.get("/").status_code, 200)
+
+        def state():
+            with db.transaction() as tx:
+                user = tx.execute("SELECT password_hash, must_change FROM users WHERE email = ?", (ADMIN[0],)).fetchone()
+                left = tx.execute("SELECT COUNT(*) AS n FROM attempts WHERE email = ?", (ADMIN[0],)).fetchone()["n"]
+            return user["password_hash"], user["must_change"], left
+
+        before = state()
+        auth.reset_admin(db, ADMIN[0], "")  # not set: nothing happens
+        auth.reset_admin(db, ADMIN[0], "too-short")
+        auth.reset_admin(db, "nobody@example.com", "a-long-reset-password-1")
+        self.assertEqual(state(), before)
+        auth.reset_admin(db, " " + ADMIN[0].upper(), "a-long-reset-password-1")
+        hashed, must_change, left = state()
+        self.assertTrue(auth.hasher.verify(hashed, "a-long-reset-password-1"))
+        self.assertEqual((must_change, left), (1, 0))
+        self.assertEqual(self.client.get("/").status_code, 302)  # signed out everywhere
+        # The admin then chooses their own password; a restart with the same variable leaves it alone.
+        with db.transaction() as tx:
+            tx.execute("UPDATE users SET password_hash = ?, must_change = 0 WHERE email = ?",
+                       (auth.hasher.hash("their-own-password-1"), ADMIN[0]))
+        auth.reset_admin(db, ADMIN[0], "a-long-reset-password-1")
+        self.assertTrue(auth.hasher.verify(state()[0], "their-own-password-1"))
+        # A different value resets again.
+        auth.reset_admin(db, ADMIN[0], "another-reset-password-2")
+        self.assertTrue(auth.hasher.verify(state()[0], "another-reset-password-2"))
+
     def test_first_admin_must_choose_a_new_password(self):
         with self.app.config["DB"].transaction() as tx:
             tx.execute("UPDATE users SET must_change = 1")

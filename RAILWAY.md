@@ -221,6 +221,7 @@ does one whose tab has been quiet for 12 hours, or whose teacher has been taken 
 | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
 | `ADMIN_EMAIL` | The first administrator's email. Used only when there are no accounts yet. |
 | `DASHBOARD_PASSWORD` | The first administrator's setup password. Used only when there are no accounts yet; they must choose a new one at first sign-in. Delete it from Railway once they have. |
+| `ADMIN_RESET_PASSWORD` | Only for an admin who is locked out while email isn't set up. On the next start, the `ADMIN_EMAIL` account gets this password (changed at the next sign-in), is turned back on and unblocked, and is signed out everywhere. Each value is used once. Remove it once signed in. |
 | `RESEND_API_KEY` | A sending-only API key from [Resend](https://resend.com), limited to your sending domain. Optional. |
 | `LOGIN_CODES` | `off` stops emailing admins a sign-in code after their password. Optional; on by default. |
 | `MAIL_FROM` | The sender, such as `Ilmi <dashboard@example.org>` (the name before the address is what staff see as the sender). Its domain must be verified in Resend. |

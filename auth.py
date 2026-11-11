@@ -73,7 +73,7 @@ LONDON = ZoneInfo("Europe/London")
 ACTIONS = {
     "login": "Signed in", "login.failed": "Wrong password", "login.blocked": "Sign-in blocked (too many attempts)",
     "logout": "Signed out", "logout.others": "Signed out other devices", "password.changed": "Changed password",
-    "password.reset_requested": "Asked for a reset link", "password.reset": "Reset password",
+    "password.reset_requested": "Asked for a reset link", "password.reset": "Reset password", "password.reset_on_railway": "Password reset from Railway",
     "invite.accepted": "Accepted invite", "user.invited": "Invited a user", "user.updated": "Changed a user",
     "user.reset_link": "Made a reset link", "user.invite_link": "Made a new invite", "user.disabled": "Turned off a user",
     "user.enabled": "Turned on a user", "class.saved": "Saved classroom", "class.deleted": "Deleted classroom",
@@ -863,6 +863,45 @@ def bootstrap_admin(database, email, password):
         tx.insert("INSERT INTO users (email, name, role, password_hash, must_change, created_at) VALUES (?, ?, ?, ?, 1, ?)",
                   (email, "Administrator", "admin", hasher.hash(password), now()))
         print(f"Created the first admin account for {email}.", flush=True)
+
+
+def reset_admin(database, email, password):
+    """For an admin who is locked out while email isn't set up, so no reset link can reach them. With
+    ADMIN_RESET_PASSWORD set on Railway, the next start gives ADMIN_EMAIL's account that password (to be changed at
+    the next sign-in), turns it back on as an admin, clears its failed sign-ins and signs it out everywhere.
+
+    Each value is used once: a fingerprint of it is kept in site_settings, so later restarts with the same value
+    change nothing. Remove the variable from Railway once the admin is signed in."""
+    if not password:
+        return
+    email = norm_email(email)
+    if not EMAIL.fullmatch(email):
+        print("ADMIN_RESET_PASSWORD is set but ADMIN_EMAIL isn't an email address; nothing was reset.", flush=True)
+        return
+    if len(password) < PASSWORD_MIN:
+        print(f"ADMIN_RESET_PASSWORD must be at least {PASSWORD_MIN} characters; nothing was reset.", flush=True)
+        return
+    mark = hashlib.sha256(f"{email}\n{password}".encode()).hexdigest()
+    with database.transaction() as tx:
+        done = tx.execute("SELECT value FROM site_settings WHERE key = 'admin_reset'").fetchone()
+        if done and done["value"] == mark:
+            return
+        user = tx.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+        if not user:
+            print(f"ADMIN_RESET_PASSWORD is set but there is no account for {email}; nothing was reset.", flush=True)
+            return
+        t = now()
+        tx.execute("UPDATE users SET password_hash = ?, must_change = 1, disabled = 0, role = 'admin' WHERE id = ?",
+                   (hasher.hash(password), user["id"]))
+        tx.execute("DELETE FROM attempts WHERE email = ?", (email,))
+        for table in ("sessions", "trusted_devices", "login_codes"):
+            tx.execute(f"DELETE FROM {table} WHERE user_id = ?", (user["id"],))
+        tx.execute("INSERT INTO site_settings (key, value, updated_at, updated_by) VALUES ('admin_reset', ?, ?, NULL) "
+                   "ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at", (mark, t))
+        tx.execute("INSERT INTO audit_log (at, user_id, action, class_id, detail, ip) VALUES (?, ?, ?, NULL, NULL, '')",
+                   (t, user["id"], "password.reset_on_railway"))
+    print(f"Reset the password for {email} from ADMIN_RESET_PASSWORD and cleared its sign-in block. "
+          "Remove ADMIN_RESET_PASSWORD from Railway once you have signed in.", flush=True)
 
 
 def prune(database, retention_days):
