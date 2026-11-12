@@ -24,8 +24,8 @@ the owner's reference image (its design features, not its content):
   Work sits in cream cards (`#fbf8f1`) with a hairline and a warm shadow. Olive (`#4d5a2c`) is the primary action
   and the selected marks. House, token, level and score colours keep their meaning; the score scale is a
   watercolour coral to leaf green.
-- **Book type.** Titles and figures in EB Garamond, the wordmark and large italics in Cormorant, علمي in Amiri,
-  body text in Figtree (all self-hosted, SIL OFL). The wordmark is "Ilmi" with علمي beside it (`.ilmi`); the mark
+- **Soft book type.** The wordmark, titles, figures and large italics in Fraunces (soft), علمي in Amiri, body text
+  in Nunito (all self-hosted, SIL OFL). The wordmark is "Ilmi" with علمي beside it (`.ilmi`); the mark
   is the letter ʿayn (ع) on an olive disc (`tools/art/mark.js` and `mark.py`).
 
 The tokens keep their earlier names, so `--navy` is now Ilmi's olive and the notes below that say navy mean that
@@ -94,17 +94,14 @@ is picked by luminance (`onC()` in `src/page.html`).
 
 ## Type
 
-Lilita One is the default face since November 2026 (the owner's choice): text (`--font`) and titles and figures
-(`--font-display`) alike. It has one weight, so its `@font-face` answers for every weight and nothing is drawn in
-a faked bold; emphasis comes from size and colour, not weight. Its figures are not tabular. It has no ā ī ū ḥ ṣ ʿ ʾ,
-which the site shows in every greeting and in Qāʿidah and Tajwīd, so `ilmi-translit.woff2` supplies those eighteen
-letters, put together from Lilita One's own shapes by `tools/art/translit.py` and listed after it in both tokens
-(`unicode-range` limited to them). Lilita One is a reserved font name, so that changed copy has its own name, Ilmi
-Translit, and `lilita-one.woff2` is the published font, only compressed. To set titles in another face again, change
-`--font-display` alone. Cormorant (`--font-hand`) still sets the wordmark and the large italics: the overview's
-name under the greeting, the start page's tagline and the sign-in saying. علمي is Amiri, in a small subset holding
-only its four letters (`amiri-ilmi.woff2`, `unicode-range` limited to them). Figtree (text) and EB Garamond (titles),
-the faces before Lilita One, remain as what a letter falls back to when Lilita One doesn't have it. Atkinson
+Two families, chosen in November 2026 to sit between classy and cute without clashing: they share the same soft,
+rounded shapes. **Fraunces** is a book serif with a Soft axis; set all the way (rounded serifs and terminals, Wonky
+off so upright letters stay upright) it reads as classic but warm. It sets the wordmark ("Ilmi"), titles and figures
+(`--font-display`) and the large italic lines (`--font-hand`): the overview's name under the greeting, the start
+page's tagline and the sign-in saying. Its optical sizes are kept, so small titles get sturdier letters and big
+ones finer. **Nunito**, a rounded sans, sets everything you read and use (`--font`). Fraunces has no ʿ or ʾ, so its cut-down copy
+draws them with its own quotation marks. Both are cut down to the letters Ilmi shows by `tools/art/type.py`. علمي is Amiri, in a small
+subset holding only its four letters (`amiri-ilmi.woff2`, `unicode-range` limited to them). Atkinson
 Hyperlegible Next stays on the TV, which is read across a hall, and emails keep their own mail-safe faces. All faces are self-hosted in `static/fonts` under the SIL Open Font License
 (`OFL.txt`). Sentence case throughout; the small uppercase labels are the menu's section names and the Welcome tab
 on the sign-in page.
@@ -114,8 +111,8 @@ on the sign-in page.
 One shell everywhere: a 248px olive rail on screens 960px and wider, and below
 that an olive top bar with the wordmark and a floating dock at the bottom of the
 screen. The dashboard opens with a
-compact head on the paper (`.head`: the page title in EB Garamond, or on the overviews the
-greeting with the overview's name under it in Cormorant italic and an ink sprig that draws itself on; Switch
+compact head on the paper (`.head`: the page title in Fraunces, or on the overviews the
+greeting with the overview's name under it in Fraunces italic and an ink sprig that draws itself on; Switch
 class on small screens, save status, the figures button (a bar chart drawn on
 one L-shaped axis so its corner is clean; not on the Students page), then pill tabs) above
 the cream workspace card (`.ws`, 16px corners; the overview's parts are cards of their own). The selected tab is a white pill
@@ -161,7 +158,7 @@ students, passes, merits and warnings), all on one scrolling page, with the CSV
 upload under them. A card opens that class with every tab, Settings included; the rail keeps
 Classes marked while a class is open, and Switch class sits by the title.
 
-The name is Ilmi, set as a wordmark: "Ilmi" in Cormorant with علمي beside it in Amiri (`.ilmi`, the same
+The name is Ilmi, set as a wordmark: "Ilmi" in Fraunces with علمي beside it in Amiri (`.ilmi`, the same
 everywhere), and the site title under it in the menu when an admin has set one (Account, Site title;
 `site_settings.py`), or nothing, so it reads just Ilmi. The browser tab icon (`/favicon.png`) is the mark,
 a cream ʿayn on an olive disc.

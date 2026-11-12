@@ -1808,7 +1808,7 @@ html[data-mode="dark"] .sxpt{stroke:var(--surface)}
 
 /* ---------- Ilmi: paper, ink and watercolour on the dashboard ----------
    The look of the start page carried into the work: the page is paper with a grey-green cloud in its top right
-   corner (tokens.css), titles and figures are set in EB Garamond, and each part of a page is a cream card lying on
+   corner (tokens.css), titles and figures are set in Fraunces, and each part of a page is a cream card lying on
    the paper with a hairline and a soft, warm shadow. A theme's own colours (html[data-logo]) keep their flat look. */
 /* The sticky header carries the same paper and cloud, fixed to the window, so it lines up with the page behind it. */
 @media (min-width:960px){
