@@ -70,15 +70,12 @@ HOUSE_POINT_REASONS = {"bk": "tr", "lv": "tb", "hw": "tg", "ec": "tg", "cp": "tg
 # Reachable without signing in. /welcome is Ilmi's start page, where anyone signed out arrives.
 PUBLIC = {"/login", "/login/code", "/forgot", "/healthz", "/logo.png", "/auth.css", "/intro.js", "/code.js", "/favicon.png",
           "/favicon.ico", "/welcome", "/welcome.css", "/welcome.js", "/wash.js"}
-# Atkinson Hyperlegible Next stays for the TV display; the dashboard and admin pages use Lilita One for text, titles
-# and figures (with Ilmi Translit for the transliteration letters it lacks, tools/art/translit.py), Cormorant for the
-# Ilmi wordmark and large italic lines, and Amiri for Arabic: the letters of علمي for the name, and the start page's
-# hadith and values in a second subset (see DESIGN.md and tools/art/fonts.py). Figtree and EB Garamond, the faces
-# before Lilita One, are what a letter falls back to when Lilita One doesn't have it.
-FONTS = {"lilita-one.woff2", "ilmi-translit.woff2",
-         "atkinson-next-latin.woff2", "atkinson-next-latin-ext.woff2", "figtree-latin.woff2", "figtree-latin-ext.woff2",
-         "garamond-latin.woff2", "garamond-latin-ext.woff2", "cormorant-latin.woff2", "cormorant-latin-ext.woff2",
-         "cormorant-italic-latin.woff2", "cormorant-italic-latin-ext.woff2", "amiri-ilmi.woff2", "amiri-text.woff2"}
+# Atkinson Hyperlegible Next stays for the TV display; the dashboard and admin pages use Nunito for text, Fraunces
+# (soft) for the wordmark, titles, figures and large italic lines (both made by tools/art/type.py), and Amiri for Arabic:
+# the letters of علمي for the name, and the start page's hadith and values in a second subset (see DESIGN.md and
+# tools/art/fonts.py).
+FONTS = {"nunito.woff2", "fraunces.woff2", "fraunces-italic.woff2", "atkinson-next-latin.woff2",
+         "atkinson-next-latin-ext.woff2", "amiri-ilmi.woff2", "amiri-text.woff2"}
 # The watercolour washes and paper texture (static/art), public like the fonts.
 ART = {"paper.webp", "wash-band.webp", "wash-cloud.webp", "wash-low.webp", "wash-mist.webp", "wash-page.webp", "wash-panel.webp",
        "wash-rail.webp", "wash-soft.webp", "splat-a.webp", "splat-b.webp", "splat-c.webp"}

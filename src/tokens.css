@@ -1,32 +1,13 @@
 /* Ilmi: shared tokens, application shell and controls.
    Used by the dashboard (inlined by tools/build.py) and by the sign-in and admin pages (served in /auth.css).
    See DESIGN.md for the reasoning behind each value. */
-@font-face{font-family:"Figtree";src:url(/fonts/figtree-latin.woff2) format("woff2");font-weight:300 900;font-display:swap;
- unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-@font-face{font-family:"Figtree";src:url(/fonts/figtree-latin-ext.woff2) format("woff2");font-weight:300 900;font-display:swap;
- unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
-/* Lilita One, the site's default face since November 2026: everything you read and use, and the titles and figures.
-   It has one weight, so its one file answers for every weight and nothing is drawn in a faked bold. Ilmi Translit
-   holds the letters Arabic is written with in Latin script that Lilita One lacks (ā ī ū ḥ ṣ ʿ ʾ and the rest), put
-   together from Lilita One's own shapes by tools/art/translit.py; it is fetched only by a page that shows one. */
-@font-face{font-family:"Lilita One";src:url(/fonts/lilita-one.woff2) format("woff2");font-weight:100 900;font-display:swap}
-@font-face{font-family:"Ilmi Translit";src:url(/fonts/ilmi-translit.woff2) format("woff2");font-weight:100 900;font-display:swap;
- unicode-range:U+0100-0101,U+012A-012B,U+016A-016B,U+02BE-02BF,U+1E0C-1E0D,U+1E24-1E25,U+1E62-1E63,U+1E6C-1E6D,U+1E92-1E93}
-/* Ilmi's other type (see DESIGN.md): Cormorant Garamond for the wordmark and the large italic lines and Amiri for
-   علمي (a subset with just those letters). Figtree, above, and EB Garamond were the text and title faces before
-   Lilita One; they stay as the faces a letter falls back to when Lilita One doesn't have it. */
-@font-face{font-family:"EB Garamond";src:url(/fonts/garamond-latin.woff2) format("woff2");font-weight:400 800;font-display:swap;
- unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-@font-face{font-family:"EB Garamond";src:url(/fonts/garamond-latin-ext.woff2) format("woff2");font-weight:400 800;font-display:swap;
- unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
-@font-face{font-family:"Cormorant";src:url(/fonts/cormorant-latin.woff2) format("woff2");font-weight:500 700;font-display:swap;
- unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-@font-face{font-family:"Cormorant";src:url(/fonts/cormorant-latin-ext.woff2) format("woff2");font-weight:500 700;font-display:swap;
- unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
-@font-face{font-family:"Cormorant";font-style:italic;src:url(/fonts/cormorant-italic-latin.woff2) format("woff2");font-weight:500 700;font-display:swap;
- unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-@font-face{font-family:"Cormorant";font-style:italic;src:url(/fonts/cormorant-italic-latin-ext.woff2) format("woff2");font-weight:500 700;font-display:swap;
- unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+/* Ilmi's type (see DESIGN.md): two families that share soft, rounded shapes, so the classy and the friendly meet in
+   the middle. Fraunces, a book serif with its Soft axis set all the way (rounded serifs and terminals), sets the
+   wordmark, titles, figures and the large italic lines; Nunito, a rounded sans, everything you read and use. Both
+   are cut down by tools/art/type.py. Amiri sets علمي (a subset with just those letters). */
+@font-face{font-family:"Fraunces";src:url(/fonts/fraunces.woff2) format("woff2");font-weight:400 700;font-display:swap}
+@font-face{font-family:"Fraunces";font-style:italic;src:url(/fonts/fraunces-italic.woff2) format("woff2");font-weight:400 700;font-display:swap}
+@font-face{font-family:"Nunito";src:url(/fonts/nunito.woff2) format("woff2");font-weight:400 800;font-display:swap}
 @font-face{font-family:"Amiri Ilmi";src:url(/fonts/amiri-ilmi.woff2) format("woff2");font-weight:700;font-display:block;unicode-range:U+0639,U+0644-0645,U+064A}
 :root{
  /* Brand: Ilmi's olive (#4d5a2c), the colour of the start page's watercolour band. The one accent colour: the main
@@ -67,15 +48,12 @@
  --r-sm:6px;--r:10px;--r-lg:16px;--r-xl:22px;--r-pill:999px;
  /* One spacing scale on a 4px grid. */
  --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px;--s7:48px;
- /* The default face, for text and for titles and figures alike. To set titles in another face again, change
-    --font-display alone. */
- --font:"Lilita One","Ilmi Translit","Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
- --font-display:"Lilita One","Ilmi Translit","Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
- /* The wordmark and the big italic lines in Cormorant; علمي in Amiri. */
- --font-hand:"Cormorant","EB Garamond",Georgia,serif;
+ /* Nunito for text; Fraunces for titles and figures, and for the wordmark and the big italic lines. */
+ --font:"Nunito",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+ --font-display:"Fraunces","Nunito",Georgia,"Times New Roman",serif;
+ --font-hand:"Fraunces","Nunito",Georgia,serif;
  --font-ar:"Amiri Ilmi","Amiri","Noto Naskh Arabic","Geeza Pro","Times New Roman",serif;
- /* Three weights, from when the text face had them. Lilita One has one, so these now all draw alike; they still
-    apply to any letter that falls back to Figtree. */
+ /* Three weights only: regular for reading, medium for labels and buttons, semibold for titles and figures. */
  --w-regular:400;--w-medium:500;--w-semibold:600;
  /* Depth: cards lie on the paper with a hairline and a soft, warm shadow beneath; things that float (menus, pop-ups,
     dialogs, messages) lift further. */
@@ -141,7 +119,7 @@ a:hover{color:var(--primary-hover)}
 @media (min-width:960px){.rail{background:var(--rail-wash) center bottom/100% auto no-repeat,var(--rail-bg)}}
 .rail a,.rail button{color:inherit}
 .rail .brand{display:flex;flex-direction:column;align-items:flex-start;gap:0;text-decoration:none;color:var(--rail-strong);padding:18px 20px 14px;min-width:0}
-/* The Ilmi wordmark: "Ilmi" in Cormorant with علمي beside it in Amiri, as on the start page. It is the logo, so it
+/* The Ilmi wordmark: "Ilmi" in Fraunces with علمي beside it in Amiri, as on the start page. It is the logo, so it
    keeps its own faces and weights wherever it appears. */
 .ilmi{display:inline-flex;align-items:baseline;gap:.3em;line-height:1;white-space:nowrap}
 .ilmi b{font:600 1em/1 var(--font-hand);letter-spacing:-.01em}
