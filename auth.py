@@ -1013,11 +1013,17 @@ def reset_admin(router, email, password):
         print(f"ADMIN_RESET_PASSWORD must be at least {PASSWORD_MIN} characters; nothing was reset.", flush=True)
         return
     mark = hashlib.sha256(f"{email}\n{password}".encode()).hexdigest()
-    home = router.home_of(email)
-    with router.get(schools.FIRST if home is None else home).transaction() as tx:
-        done = tx.execute("SELECT value FROM site_settings WHERE key = 'admin_reset'").fetchone()
+    # The fingerprint of a value already used may be in any database: the first school's (where it was kept before
+    # there were schools) or the control database's. Seen in either, the value has been used, so nothing changes.
+    # Without this, the first start with DEVELOPER_EMAIL set moved an account that had already used its reset into the
+    # control database and reset its password again, over the one its owner had since chosen.
+    for database in (router.first, router.control):
+        with database.transaction() as tx:
+            done = tx.execute("SELECT value FROM site_settings WHERE key = 'admin_reset'").fetchone()
         if done and done["value"] == mark:
             return
+    home = router.home_of(email)
+    with router.get(schools.FIRST if home is None else home).transaction() as tx:
         user = tx.execute("SELECT id FROM users WHERE email = ? AND developer = 0", (email,)).fetchone()
         if not user:
             print(f"ADMIN_RESET_PASSWORD is set but there is no account for {email}; nothing was reset.", flush=True)
@@ -1031,9 +1037,11 @@ def reset_admin(router, email, password):
                    "ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at", (mark, t))
         tx.execute("INSERT INTO audit_log (at, user_id, action, class_id, detail, ip) VALUES (?, ?, ?, NULL, NULL, '')",
                    (t, user["id"], "password.reset_on_railway"))
-    # Failed sign-ins are counted in the control database, for every school.
+    # Failed sign-ins are counted in the control database, for every school; the value's fingerprint is kept there too.
     with router.control.transaction() as tx:
         tx.execute("DELETE FROM attempts WHERE email = ?", (email,))
+        tx.execute("INSERT INTO site_settings (key, value, updated_at, updated_by) VALUES ('admin_reset', ?, ?, NULL) "
+                   "ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at", (mark, t))
     print(f"Reset the password for {email} from ADMIN_RESET_PASSWORD and cleared its sign-in block. "
           "Remove ADMIN_RESET_PASSWORD from Railway once you have signed in.", flush=True)
 
