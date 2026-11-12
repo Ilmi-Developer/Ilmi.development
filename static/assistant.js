@@ -23,7 +23,7 @@
 
   // What each tool did, for the thinking line's trace. Names only: the page never sees the tool inputs or results.
   var DID = {
-    submit_request: "Sent your request to the admins", list_my_requests: "Checked your requests",
+    submit_request: "Sent your request to the office", list_my_requests: "Checked your requests",
     search_students: "Searched for students", get_student_progress: "Looked up a student's progress",
     list_classes: "Listed the classes", list_class_students: "Looked at a class's students",
     class_summary: "Summarised passes over the period", add_student: "Prepared a new student for you to confirm",
@@ -37,7 +37,7 @@
     ["how", "/how", "Step-by-step help with the site", "How do I "],
     ["syllabus", "/syllabus", "How levels and Juz items work", "Explain how the syllabus works, from L1 to the Juz items."],
     ["islam", "/islam", "A question about Islam", "I have a question about Islam: "],
-    ["request", "/request", "Send a request to the admins", "I'd like to request "],
+    ["request", "/request", "Send a request to the office", "I'd like to request "],
     ["mine", "/my-requests", "Check your requests", "What's the status of my requests?"]
   ].concat(ADMIN ? [
     ["find", "/find", "Look up a student", "Show me the progress of "],

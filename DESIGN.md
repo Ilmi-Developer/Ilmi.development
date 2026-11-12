@@ -94,12 +94,18 @@ is picked by luminance (`onC()` in `src/page.html`).
 
 ## Type
 
-Titles and figures are EB Garamond (`--font-display`), set a size larger than the old sans titles, with lining
-tabular figures for every count. Cormorant (`--font-hand`) sets the wordmark and the large italics: the overview's
+Lilita One is the default face since November 2026 (the owner's choice): text (`--font`) and titles and figures
+(`--font-display`) alike. It has one weight, so its `@font-face` answers for every weight and nothing is drawn in
+a faked bold; emphasis comes from size and colour, not weight. Its figures are not tabular. It has no ā ī ū ḥ ṣ ʿ ʾ,
+which the site shows in every greeting and in Qāʿidah and Tajwīd, so `ilmi-translit.woff2` supplies those eighteen
+letters, put together from Lilita One's own shapes by `tools/art/translit.py` and listed after it in both tokens
+(`unicode-range` limited to them). Lilita One is a reserved font name, so that changed copy has its own name, Ilmi
+Translit, and `lilita-one.woff2` is the published font, only compressed. To set titles in another face again, change
+`--font-display` alone. Cormorant (`--font-hand`) still sets the wordmark and the large italics: the overview's
 name under the greeting, the start page's tagline and the sign-in saying. علمي is Amiri, in a small subset holding
-only its four letters (`amiri-ilmi.woff2`, `unicode-range` limited to them). Body text stays Figtree (`--font`),
-chosen in October 2026 as the closest free match to Journey2Jannah's sans. Atkinson Hyperlegible Next stays on the
-TV, which is read across a hall. All faces are self-hosted in `static/fonts` under the SIL Open Font License
+only its four letters (`amiri-ilmi.woff2`, `unicode-range` limited to them). Figtree (text) and EB Garamond (titles),
+the faces before Lilita One, remain as what a letter falls back to when Lilita One doesn't have it. Atkinson
+Hyperlegible Next stays on the TV, which is read across a hall, and emails keep their own mail-safe faces. All faces are self-hosted in `static/fonts` under the SIL Open Font License
 (`OFL.txt`). Sentence case throughout; the small uppercase labels are the menu's section names and the Welcome tab
 on the sign-in page.
 

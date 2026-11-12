@@ -10,7 +10,7 @@
   <h1>Choose your own password</h1>
   <p class="lede">You signed in with the shared setup password. Choose a password only you know before continuing.</p>
 {% else %}
-<div class="band slim"><div class="band-top"><h1>Your account</h1></div><p class="lede">Signed in as {{ user.email }} ({{ "administrator" if user.role == "admin" else "HeadTeacher" if user.role == "head" else "teacher" }})</p></div>
+<div class="band slim"><div class="band-top"><h1>Your account</h1></div><p class="lede">Signed in as {{ user.email }} ({{ role_name(user.role) }})</p></div>
 {# Profile picture. Without scripts the form uploads the photo as it is and the server crops it square; with
    /avatar.js, choosing a photo opens the cropper below, which sends the picture as framed. #}
 <div class="mod line pfp" id="picture">

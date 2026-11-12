@@ -4,8 +4,9 @@ Teachers send a message from the Help or Requests button at the bottom of their 
 FAQs page (/admin/faqs), where an admin types a reply and sends it in the app, or in the app and by email. The
 teacher sees the reply in the same pop-up, with a dot on the button until they open it.
 
-Every Sunday at 12:00 London time the weekly summary goes to HELP_SUMMARY_TO (a Railway variable; ADMIN_EMAIL if it isn't set):
-everything sent since the Sunday before, or a line saying nothing was. A thread in the web process checks once a
+Every Sunday at 12:00 London time each school's weekly summary goes out: everything sent at that school since the
+Sunday before, or a line saying nothing was. The first school's goes to HELP_SUMMARY_TO (a Railway variable;
+ADMIN_EMAIL if it isn't set); every other school's goes to its own Office accounts. A thread in the web process checks once a
 minute; help_summaries records each week's email, so it goes once even with a restart or a second process, and a
 summary missed while the site was down goes out when it comes back, if that is still the same Sunday or Monday.
 """
@@ -148,8 +149,22 @@ def admin_delete(item_id):
 
 # --- The weekly summary ---------------------------------------------------------
 
+def summary_recipients():
+    """Who gets the current school's weekly summary: the first school's goes where the Railway variables say, as
+    it did before there were other schools; another school's goes to its own Office accounts."""
+    import schools
+    if auth.db().current_id() == schools.FIRST:
+        to = current_app.config.get("HELP_SUMMARY_TO") or current_app.config.get("ADMIN_EMAIL", "")
+        if to:
+            return [to]
+    with auth.db().transaction() as tx:
+        return [r["email"] for r in tx.execute(
+            "SELECT email FROM users WHERE role = 'admin' AND disabled = 0 AND developer = 0 "
+            "AND password_hash IS NOT NULL ORDER BY id").fetchall()]
+
+
 def summary_to():
-    return current_app.config.get("HELP_SUMMARY_TO") or current_app.config.get("ADMIN_EMAIL", "")
+    return ", ".join(summary_recipients())
 
 
 def last_summary_time(now=None):
@@ -170,7 +185,8 @@ def summary_items(tx, start, end):
 def send_summary_if_due(now=None):
     """Sends this week's summary if it's due and hasn't gone yet. Returns True when one was sent. Needs an app
     context."""
-    if not current_app.config["MAILER"].enabled or not summary_to():
+    recipients = summary_recipients() if current_app.config["MAILER"].enabled else []
+    if not recipients:
         return False
     now = now if now is not None else time.time()
     due = last_summary_time(now)
@@ -188,8 +204,9 @@ def send_summary_if_due(now=None):
                              (week, int(now), len(rows))).rowcount
     if not claimed:
         return False
-    sent = emails.send("help_summary", summary_to(), **summary_context(rows, start, end))
-    if not sent:
+    context = summary_context(rows, start, end)
+    sent = [emails.send("help_summary", to, **context) for to in recipients]
+    if not any(sent):
         # Let the next check try again.
         with auth.db().transaction() as tx:
             tx.execute("DELETE FROM help_summaries WHERE week = ?", (week,))
@@ -214,15 +231,18 @@ def start_summary_thread(app):
         while True:
             time.sleep(CHECK_EVERY)
             try:
-                # The email's links need the site's address, which comes from the PUBLIC_URL Railway variable.
-                with app.test_request_context(base_url=app.config["PUBLIC_URL"] or "http://localhost"):
-                    if not app.config["MAILER"].enabled:
-                        if not warned:
-                            print("The weekly Help or Requests summary can't be emailed until RESEND_API_KEY and "
-                                  "MAIL_FROM are set.", flush=True)
-                            warned = True
-                        continue
-                    send_summary_if_due()
+                if not app.config["MAILER"].enabled:
+                    if not warned:
+                        print("The weekly Help or Requests summary can't be emailed until RESEND_API_KEY and "
+                              "MAIL_FROM are set.", flush=True)
+                        warned = True
+                    continue
+                # Each school's summary, from its own database. The email's links need the site's address, which
+                # comes from the PUBLIC_URL Railway variable.
+                for school in app.config["DB"].all():
+                    with app.test_request_context(base_url=app.config["PUBLIC_URL"] or "http://localhost"), \
+                            app.config["DB"].use(school["id"]):
+                        send_summary_if_due()
             except Exception as error:  # Keep checking: one failed check mustn't stop next week's email.
                 print(f"The Help or Requests summary check failed: {error!r}", flush=True)
     threading.Thread(target=loop, name="help-summary", daemon=True).start()

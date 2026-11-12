@@ -1,6 +1,6 @@
 Assalamu alaikum {{ name }},
 
-{% if by %}{{ by }}, an administrator, has sent you a link to choose a new password for your Ilmi account.{% else %}Someone asked to reset the password for your Ilmi account ({{ email }}).{% endif %}
+{% if by %}{{ by }}, from the office, has sent you a link to choose a new password for your Ilmi account.{% else %}Someone asked to reset the password for your Ilmi account ({{ email }}).{% endif %}
 
 Choose a new password here:
 {{ link }}

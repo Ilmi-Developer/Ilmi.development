@@ -1,8 +1,13 @@
 """Database access and schema migrations.
 
-PostgreSQL is used when DATABASE_URL is set; otherwise a SQLite file in DATA_DIR,
+PostgreSQL is used when DATABASE_URL is set; otherwise SQLite files in DATA_DIR,
 which is meant for running locally. Queries are written with `?` placeholders and
 rewritten for PostgreSQL.
+
+Every school has a database of its own (see schools.py): on PostgreSQL a schema
+of its own in the one server, on SQLite a file of its own. The first school keeps
+the tables the site had before there were schools. One more database, the control
+database, holds the list of schools and the developer's account.
 
 Each migration runs once, in order, inside a transaction, and is recorded in
 `schema_migrations`. Add new migrations to the end of MIGRATIONS; never edit one
@@ -377,17 +382,64 @@ def _m21_site_settings(db, postgres):
         updated_by {t['ref']} REFERENCES users (id) ON DELETE SET NULL)""")
 
 
+def _m22_schools(db, postgres):
+    # Many schools (see schools.py). users.developer marks the developer's stand-in in a school: the row their work
+    # there is recorded under, which nobody can sign in to, edit or see on Manage users. On the developer's own
+    # sign-in (kept in the control database), sessions.school_id is the school they have opened and sessions.view_as
+    # the role they are looking at it as ("admin", "head" or "teacher").
+    db.execute("ALTER TABLE users ADD COLUMN developer INTEGER NOT NULL DEFAULT 0")
+    db.execute("ALTER TABLE sessions ADD COLUMN school_id BIGINT")
+    db.execute("ALTER TABLE sessions ADD COLUMN view_as TEXT")
+
+
+def _c1_schools(db, postgres):
+    t = _types(postgres)
+    # The schools. A school's id names its database: the first school keeps the site's original tables, the
+    # others get a schema (PostgreSQL) or a file (SQLite) of their own, made when the school is added.
+    db.execute(f"""CREATE TABLE schools (
+        id {t['id']},
+        name TEXT NOT NULL,
+        created_at BIGINT NOT NULL)""")
+    # Which school each sign-in email belongs to (0: the developer), so one sign-in page serves every school and
+    # an email has one account across all of them.
+    db.execute("""CREATE TABLE school_emails (
+        email TEXT PRIMARY KEY,
+        school_id BIGINT NOT NULL)""")
+
+
 MIGRATIONS = [_m1_classrooms, _m2_accounts, _m3_tv_screens, _m4_tv_settings, _m5_house_points, _m6_help_requests,
               _m7_avatars, _m8_tutorial, _m9_tutorial_again, _m10_board_links, _m11_login_codes, _m12_stay_signed_in,
               _m13_presenter_shares, _m14_presenter_links, _m15_trusted_devices, _m16_head_teachers, _m17_dark_mode,
-              _m18_assistant, _m19_assistant_tokens, _m20_themes, _m21_site_settings]
+              _m18_assistant, _m19_assistant_tokens, _m20_themes, _m21_site_settings, _m22_schools]
+# Run after MIGRATIONS on the control database only, and recorded in its `control_migrations`.
+CONTROL_MIGRATIONS = [_c1_schools]
+SCHEMA = re.compile(r"[a-z_][a-z0-9_]{0,62}")
 
 
 class Database:
-    def __init__(self, database_url, data_dir, testing=False):
+    """One database: a school's, or the control database (control=True).
+
+    `schema` is the PostgreSQL schema its tables live in; None means wherever the connection puts them, which is
+    where the first school's tables have always been. `filename` is its SQLite file in DATA_DIR."""
+
+    def __init__(self, database_url, data_dir, testing=False, schema=None, filename="dashboard.sqlite3", control=False):
         self.postgres = bool(database_url)
+        self.schema, self.control = schema, control
+        if schema is not None and not SCHEMA.fullmatch(schema):
+            raise ValueError("Not a schema name.")
         if self.postgres:
-            self._connect = lambda: psycopg.connect(database_url, connect_timeout=10, row_factory=dict_row)
+            def connect():
+                db = psycopg.connect(database_url, connect_timeout=10, row_factory=dict_row)
+                if schema:
+                    try:
+                        # Part of the transaction every query then runs in. Only this schema: a table missing
+                        # here must never be found in another school's.
+                        db.execute(f'SET search_path TO "{schema}"')
+                    except BaseException:
+                        db.close()
+                        raise
+                return db
+            self._connect = connect
         else:
             data_dir = Path(data_dir).resolve()
             # Fail rather than silently save student records on Railway's temporary disk.
@@ -397,7 +449,7 @@ class Database:
                     raise RuntimeError("Set DATABASE_URL to your PostgreSQL service's DATABASE_URL "
                                        "(or attach a Railway volume at DATA_DIR).")
             data_dir.mkdir(parents=True, exist_ok=True)
-            path = data_dir / "dashboard.sqlite3"
+            path = data_dir / filename
 
             def connect():
                 db = sqlite3.connect(path, timeout=10)
@@ -438,13 +490,19 @@ class Database:
                 db.execute("SELECT pg_advisory_xact_lock(726354)")
             else:
                 db.execute("PRAGMA journal_mode=WAL")
-            db.execute("CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, applied_at BIGINT NOT NULL)")
-            done = {row["version"] for row in db.execute("SELECT version FROM schema_migrations").fetchall()}
-            for version, migration in enumerate(MIGRATIONS, 1):
-                if version not in done:
-                    migration(db.raw, self.postgres)
-                    db.execute("INSERT INTO schema_migrations VALUES (?, ?)", (version, int(time.time())))
-                    print(f"Applied database migration {version}: {migration.__name__.split('_', 2)[-1]}.", flush=True)
+            self._apply(db, "schema_migrations", MIGRATIONS, "database")
+            if self.control:
+                self._apply(db, "control_migrations", CONTROL_MIGRATIONS, "control")
+
+    def _apply(self, db, table, migrations, label):
+        db.execute(f"CREATE TABLE IF NOT EXISTS {table} (version INTEGER PRIMARY KEY, applied_at BIGINT NOT NULL)")
+        done = {row["version"] for row in db.execute(f"SELECT version FROM {table}").fetchall()}
+        where = f" ({self.schema})" if self.schema else ""
+        for version, migration in enumerate(migrations, 1):
+            if version not in done:
+                migration(db.raw, self.postgres)
+                db.execute(f"INSERT INTO {table} VALUES (?, ?)", (version, int(time.time())))
+                print(f"Applied {label} migration {version}{where}: {migration.__name__.split('_', 2)[-1]}.", flush=True)
 
 
 class _Connection:

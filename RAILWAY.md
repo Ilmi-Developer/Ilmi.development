@@ -6,18 +6,78 @@ still be used in Claude or opened locally with their original storage
 behaviour.
 
 Setup: one web service that deploys the `main` branch of this repository, and a
-**Postgres** service. Everything specific to the school (accounts, pupils, the
+**Postgres** service. Everything specific to a school (accounts, pupils, the
 site title, email addresses, keys) is kept in Railway variables or in the
 database, never in this repository.
+
+## Schools and the developer account
+
+One site serves many schools, and each school has a database of its own
+(`schools.py`, `db.py`). In the one Postgres service that is a schema per
+school: the first school keeps the tables the site always had (in `public`),
+the control database is the schema `ilmi_control`, and each school added later
+gets `ilmi_school_2`, `ilmi_school_3` and so on. A school's classes, students,
+staff accounts, settings, history, FAQs and TV links are only in its own
+schema, and a request only ever opens the schema of the school its sign-in or
+link belongs to. Run locally without `DATABASE_URL`, each is a SQLite file in
+`DATA_DIR` (`dashboard.sqlite3`, `control.sqlite3`, `school-2.sqlite3`).
+
+- Everyone signs in on the same page. The email says which school: an email
+  has one account across every school, so the same address can't be invited at
+  two schools.
+- Each school is run by its **Office** (called `admin` in the code, and
+  "Administrator" before November 2026): the person in charge of that school's
+  settings, accounts and records. Wherever this page says admin, it means a
+  school's Office.
+- The **developer** is one account, for the email in `DEVELOPER_EMAIL`, kept
+  in the control database. It belongs to no school. Nobody can be given this
+  role: it isn't a choice on Manage users and the server refuses it. Changing
+  or removing the variable turns the earlier developer account off at the next
+  start.
+- The developer signs in like an Office account (password, then the emailed
+  code) and lands on **Schools**: every school as a tile with its classes,
+  students, staff and who its Office is. **Add a school** makes an empty
+  database for it and, with a name and an email, its Office account.
+  **Manage** on a tile sets that school's Office account or renames it.
+- Setting a school's Office account: someone new gets an account at that
+  school and an invite link to choose their password (emailed when email is
+  set up, otherwise shown to copy; it expires after 72 hours). Someone who
+  already has an account at that school is given the Office role and keeps
+  their password. An email with an account at another school is refused. To
+  turn an Office account off, open the school and use **Manage users**.
+- Pressing a tile opens that school as its Office sees it. A strip above the
+  page, with its controls at the top right, switches the view between
+  **Office**, **HeadTeacher** and **Teacher** and leads back to **All
+  schools**. Everything under the strip is the page as that role sees it. In the Teacher view the
+  developer has every classroom, with a teacher's permissions. The view only
+  changes what the developer sees; it is not an account anyone else can use.
+- What the developer does inside a school is recorded in that school's own
+  Activity and Class history under their name. Their place in the school's
+  accounts is a stand-in that can't sign in and isn't listed on Manage users.
+- A school added without an Office has no accounts until one is set. Once it
+  has an Office, the Office invites its own staff from **Manage users**.
+- The first time the site starts with `DEVELOPER_EMAIL` set, an existing
+  account with that email becomes the developer account: it keeps its name,
+  password and picture, and its history at its school stays under its name.
+  If no account has that email, one is created with `DASHBOARD_PASSWORD` when
+  that is set (to be changed at the first sign-in); otherwise use
+  **Forgotten your password?** to choose a password by email.
+- Links and sign-in cookies start with their school's number (`/tv/2.…`).
+  Links and sign-ins from before there were schools have no number and belong
+  to the first school, so TVs already on the wall keep working.
+- While there is one school, the sign-in and start pages still show its title
+  under Ilmi. With several, signed-out pages show just Ilmi.
+- The first school's weekly Help or Requests summary still goes to
+  `HELP_SUMMARY_TO`; every other school's goes to its own Office accounts.
 
 ## Accounts and access
 
 - The first page is the sign-in page. Everyone signs in with their own email
   and password.
-- **Administrators** see and edit every classroom, upload CSVs, create and
-  delete classrooms, and manage accounts (**Manage users**), the **Class
-  history** and the **Activity** log.
-- **Teachers** see and edit only the classrooms an administrator has ticked
+- **The Office** sees and edits every classroom at its school, uploads CSVs,
+  creates and deletes classrooms, and manages accounts (**Manage users**), the
+  **Class history** and the **Activity** log.
+- **Teachers** see and edit only the classrooms the Office has ticked
   for them on **Manage users**. They can't upload CSVs, create classrooms or
   delete them. The server enforces this; the page only hides the buttons.
 - **HeadTeachers** see and record on every classroom, like an administrator, and
@@ -219,8 +279,9 @@ does one whose tab has been quiet for 12 hours, or whose teacher has been taken 
 | --- | --- |
 | `PORT` | `8080` |
 | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
-| `ADMIN_EMAIL` | The first administrator's email. Used only when there are no accounts yet. |
-| `DASHBOARD_PASSWORD` | The first administrator's setup password. Used only when there are no accounts yet; they must choose a new one at first sign-in. Delete it from Railway once they have. |
+| `DEVELOPER_EMAIL` | The one developer account's email: it sees every school and adds schools (see [Schools and the developer account](#schools-and-the-developer-account)). Without it there is no developer and the site runs its one school as before. |
+| `ADMIN_EMAIL` | The first school's first Office account's email. Used only when that school has no accounts yet; not needed when `DEVELOPER_EMAIL` is set. |
+| `DASHBOARD_PASSWORD` | The setup password for that first Office account, or for a new developer account. Used only when the account doesn't exist yet; they must choose a new one at first sign-in. Delete it from Railway once they have. |
 | `ADMIN_RESET_PASSWORD` | Only for an admin who is locked out while email isn't set up. On the next start, the `ADMIN_EMAIL` account gets this password (changed at the next sign-in), is turned back on and unblocked, and is signed out everywhere. Each value is used once. Remove it once signed in. |
 | `RESEND_API_KEY` | A sending-only API key from [Resend](https://resend.com), limited to your sending domain. Optional. |
 | `LOGIN_CODES` | `off` stops emailing admins a sign-in code after their password. Optional; on by default. |
@@ -274,8 +335,10 @@ on and the sending address, and links to a preview of every email.
 
 ## Records, history and backups
 
-- Each classroom is a row of `classrooms`. Accounts, sessions and the history
-  live in other tables of the same database (see `db.py`).
+- Each classroom is a row of its school's `classrooms`. Accounts, sessions and
+  the history live in other tables of the same school's database (see `db.py`).
+  Every school's schema is in the one Postgres service, so one backup covers
+  them all.
 - Database changes are numbered migrations in `db.py`, applied once each at
   startup and recorded in `schema_migrations`. They only add tables; existing
   classroom records are left as they are.

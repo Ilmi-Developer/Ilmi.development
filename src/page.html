@@ -605,7 +605,7 @@ function recPage(){var o=rStu(),s=o&&o.s,h='';
    +'<p class="cap">'+(RB?esc(fn(s))+' finished the '+esc(bkName(RB))+' today. It is logged as a pass, with no house points.':'Choose the book first.')+'</p>',0);
   refill($("recF"),'<div class="rsteps">'+h+'</div>'+rSide(o));return}
  if(RK==="h"){var lt=lvToday(s),c=!HPOFF&&RH&&hpr(RH),k=c&&htk(RH);if(HPOFF)RH="";if(RH==="lv"&&lt)RH="",c=k=null;
-  if(HPOFF)h+='<div class="rpause" role="note"><b>House points are paused</b><span>Teachers give physical house coins, students put them in the box at the office, and the admin counts them and adds each house\'s total on '+(HEAD?'Counted coins':'<a href="/admin/house-points">Counted coins</a>')+'. Nothing can be given here, so no points go in by accident.</span></div>';
+  if(HPOFF)h+='<div class="rpause" role="note"><b>House points are paused</b><span>Teachers give physical house coins, students put them in the box at the office, and the office counts them and adds each house\'s total on '+(HEAD?'Counted coins':'<a href="/admin/house-points">Counted coins</a>')+'. Nothing can be given here, so no points go in by accident.</span></div>';
   h+=rStep(3,'<p class="rl" id="rHl">What for</p><div class="rhp'+(HPOFF?' off':'')+'" role="group" aria-labelledby="rHl">'+HPR.map(function(x){var off=HPOFF||x[0]==="lv"&&lt,t=htk(x[0]);
    return '<button type="button" data-h="'+x[0]+'" aria-pressed="'+(RH===x[0])+'"'+(off?' disabled':'')+'><span class="hpn">'+esc(x[1])+(x[0]==="lv"&&off?'<small>Already given by today\'s level test</small>':'')+'</span>'+hpCoin(x[0])+'<b class="hv">'+t[3]+'<span> points</span></b></button>'}).join("")+'</div>',!!RH);
   h+=rStep(4,'<p class="rl">Give</p><div class="racts"><button type="button" class="btn primary" data-r="h"'+(c?'':' disabled')+'>'+(c?'Give '+k[3]+' house points':'Give house points')+'</button></div>'
@@ -1076,7 +1076,7 @@ function qPop(btn){qPopClose();var s=S[+btn.dataset.qi];if(!s)return;var M=QK===
  p.style.left=x+"px";p.style.top=Math.max(0,r.top-b.top+(r.height-p.offsetHeight)/2)+"px";
  /* Only the boxes the picker actually sits over step aside; the student's other days, usually the earlier ones, keep showing their scores. */
  var pl=b.left+x,pr=pl+p.offsetWidth;Array.prototype.forEach.call(B.querySelectorAll(".qcol:not(.on)>.qr:nth-child("+(+btn.dataset.qi+1)+"),.qhouses>.qn:nth-child("+(+btn.dataset.qi+1)+")"),function(e){var c=(e.firstElementChild||e).getBoundingClientRect();if(c.width&&c.right>pl-4&&c.left<pr+4)e.classList.add("qhid")});(p.querySelector('[aria-pressed="true"]')||p.firstChild).focus()}
-function qSet(i,v,next){if(QK==="m"){mSet(i,v,next);return}var s=S[i],d=QF;if(!s)return;if(s.q[d]!==undefined&&qTest(s,d)){toast(TEACHER?"That's a level test score, so only an admin can change it.":"That's a level test score. Change it on the Record page.",1);return}if(d>dk(Date.now())){toast("That class day hasn't happened yet",1);return}
+function qSet(i,v,next){if(QK==="m"){mSet(i,v,next);return}var s=S[i],d=QF;if(!s)return;if(s.q[d]!==undefined&&qTest(s,d)){toast(TEACHER?"That's a level test score, so only the office can change it.":"That's a level test score. Change it on the Record page.",1);return}if(d>dk(Date.now())){toast("That class day hasn't happened yet",1);return}
  // No message for each score (the box shows it); only refusals above get one.
  if(v==="x"||s.q[d]===v)delete s.q[d];else{s.q[d]=v;if(v<0&&s.mt&&s.mt[d])mDel(s,d)}
  save();render();qDrop("qB",i,s.q[d]===5);var n=$("qB").querySelector('.qcol.on [data-qi="'+Math.min(next?i+1:i,S.length-1)+'"]');if(n)n.focus()}
@@ -1421,7 +1421,7 @@ var TEACHER=!!(window.ME&&ME.role!=="admin"&&ME.role!=="head"),HEAD=!!(window.ME
 /* HeadTeachers record level tests and book passes, but only admins give house points (the server refuses theirs too). */
 if(HEAD)HPOFF=1;
 /* Only admins add and remove students, on the Students page; teachers and HeadTeachers can't (the server refuses it too). */
-function addBtn(){return STAFF?'<span>An administrator adds students to your class.</span>':'<button type="button" class="btn sm" data-open="U">Add students on the Students page</button>'}
+function addBtn(){return STAFF?'<span>The office adds students to your class.</span>':'<button type="button" class="btn sm" data-open="U">Add students on the Students page</button>'}
 $("qAdd").hidden=true;$("addRow").hidden=true
 var TABS=["Q","T","D","S"],CUR="Q";
 /* The selected tab is drawn by one marker (.tabi) that slides to the tab chosen, and the new page slides in from
@@ -1477,7 +1477,7 @@ function cur(b,on){if(on)b.setAttribute("aria-current","page");else b.removeAttr
 /* The overviews open with a greeting, as Journey2Jannah does, then say which overview this is. */
 function hello(){var on=PAGE==="M"||PAGE==="R",el=$("hello");el.hidden=!on;$("band").classList.toggle("greet",on);if(!on)return;
  if(PAGE==="R"){el.innerHTML='<span class="hsub">Level tests, book passes and house points</span>';return}
- var who=window.ME&&ME.name&&ME.name!=="Administrator"?" "+ME.name:"";
+ var who=window.ME&&ME.name&&ME.name!=="Administrator"&&ME.name!=="Office"&&ME.name!=="Developer"?" "+ME.name:"";
  $("ttl").textContent="Assalāmu ʿalaykum"+who+"!";
  el.innerHTML='<span class="hsub">'+(TEACHER?"Class overview":"School overview")+'</span>'}
 /* How a class is named on screen: year group and class letter, then the teacher with their title in full
@@ -1576,7 +1576,7 @@ function classRows(per){return CIDS.map(function(c){var L=ST[c].S,n=L.length,p=s
  return {name:cname(ST[c].name),open:c,v:n?Math.round((p+m)/n*10)/10:0,sub:plural(p,"pass","passes")+", "+plural(m,"merit")+", "+plural(n,"student")}})}
 function master(){if(PAGE==="L"){dirTab();return}if(PAGE==="U"){stuPage();return}if(PAGE==="H"){hpPage();return}if(PAGE==="K"){rkPage();return}var K=school(),A=K.A,all=K.all,adm=!STAFF;
  $("figs").innerHTML=CIDS.length?fig(A.length,A.length===1?"Student":"Students")+fig(CIDS.length,CIDS.length===1?"Class":"Classes")+fig(sumOf(all,mpc),"Passes this month")+fig(sumOf(all,mmc),"Merits this month")+fig(K.wr.length+K.mb.length,"With a warning",K.wr.length+K.mb.length?"alert":"")+fig(K.stale.length,"Overdue a pass",K.stale.length?"alert":""):"";
- if(!CIDS.length){$("mst").innerHTML=LOADED?'<div class="empty"><b>'+(adm?'No classrooms yet':'No classrooms have been given to you yet')+'</b>'+(adm?'Upload a CSV of your students to create them.<button type="button" class="btn sm p" data-open="L">Upload students</button>':'Ask an administrator to add you to your classrooms on Manage users.')+'</div>':skel();
+ if(!CIDS.length){$("mst").innerHTML=LOADED?'<div class="empty"><b>'+(adm?'No classrooms yet':'No classrooms have been given to you yet')+'</b>'+(adm?'Upload a CSV of your students to create them.<button type="button" class="btn sm p" data-open="L">Upload students</button>':'Ask the office to add you to your classrooms on Manage users.')+'</div>':skel();
   return}
  summary(K);if(DMODE==="ov")ovDraw(K)}
 /* Summary: one screen. Attention, this term's activity, houses and top classes, then where students are in the book. */
@@ -1718,7 +1718,7 @@ function attnHtml(K){var G=AGR,k=akOf(AKIND)?AKIND:"lo",x=akOf(k),a=K[k],size=10
   +F.slice(p*size,(p+1)*size).map(function(o){return '<tr><td class="lead"><b>'+esc(o.s.name)+'</b></td><td data-label="Class">'+opener(o.c,esc(cname(ST[o.c].name)),x[5])+'</td>'+(col?'<td data-label="'+col+'">'+val(o)+'</td>':'')+'</tr>'}).join("")+'</tbody></table></div>'
   +pagerHtml("a"+k,a.length,size,"students")}
 /* Classes: the searchable directory, ten classes a page. */
-function dirTab(){if(!CIDS.length){$("dirW").innerHTML=LOADED?'<div class="empty"><b>No classrooms yet</b>'+(STAFF?'Ask an administrator to add you to your classrooms on Manage users.':'Upload a CSV of your students below to create them.')+'</div>':skel();if(LOADED&&!STAFF)$("up").open=true;return}
+function dirTab(){if(!CIDS.length){$("dirW").innerHTML=LOADED?'<div class="empty"><b>No classrooms yet</b>'+(STAFF?'Ask the office to add you to your classrooms on Manage users.':'Upload a CSV of your students below to create them.')+'</div>':skel();if(LOADED&&!STAFF)$("up").open=true;return}
  if(!$("dirQ"))$("dirW").innerHTML='<div class="toolbar"><input type="search" id="dirQ" placeholder="Find a class or teacher…" aria-label="Find a class or teacher" autocomplete="off"><p class="cap" id="dirC"></p>'
   +'<div class="seg dirv" id="dirV" role="group" aria-label="Show classes as"><button type="button" data-dv="list" aria-pressed="'+(DV==="list")+'">List</button><button type="button" data-dv="cards" aria-pressed="'+(DV==="cards")+'">Cards</button></div></div><div id="dirT"></div>';dirTable()}
 /* Classes: a list that sorts by any column (the default), or cards. The choice is kept on this device. Figures are
@@ -1754,7 +1754,7 @@ function stuEx(){return SF.st==="ex"}
 function stuL(c){return stuEx()?ST[c].X:ST[c].S}
 function stuAll(){var A=[];CIDS.forEach(function(c){if(SC&&c!==SC)return;stuL(c).forEach(function(s){A.push({s:s,c:c})})});
  return A.sort(function(a,b){return a.s.name.trim().localeCompare(b.s.name.trim(),undefined,{sensitivity:"base"})||ST[a.c].name.localeCompare(ST[b.c].name,undefined,{numeric:true,sensitivity:"base"})})}
-function stuPage(){if(!CIDS.length){$("stuW").innerHTML=LOADED?'<div class="empty"><b>No classrooms yet</b>'+(TEACHER?'Ask an administrator to add you to your classrooms on Manage users.':'Students belong to a class, so upload a CSV on Classes to create the classrooms first.<button type="button" class="btn sm p" data-open="L">Go to Classes</button>')+'</div>':skel();return}
+function stuPage(){if(!CIDS.length){$("stuW").innerHTML=LOADED?'<div class="empty"><b>No classrooms yet</b>'+(TEACHER?'Ask the office to add you to your classrooms on Manage users.':'Students belong to a class, so upload a CSV on Classes to create the classrooms first.<button type="button" class="btn sm p" data-open="L">Go to Classes</button>')+'</div>':skel();return}
  if(SC&&!ST[SC])SC="";
  if(!$("stuQ"))$("stuW").innerHTML='<div class="toolbar stbar"><input type="search" id="stuQ" placeholder="Find a student or ID…" aria-label="Find a student, Student ID or Family ID" autocomplete="off"><div class="sfw"><button type="button" class="btn" id="stuFB" aria-expanded="false" aria-controls="stuP">'+FILTIC+'Filters<span class="sfn" id="stuFN" hidden></span></button><div class="sfpop" id="stuP" role="dialog" aria-label="Filters" hidden></div></div><p class="cap" id="stuN"></p><div class="tools"><button type="button" class="btn p" id="stuA">'+ADDIC+'Add student</button></div></div><div class="stchips" id="stuF"></div><div id="stuL"></div>';
  stuFilters();stuRows()}
@@ -1990,7 +1990,7 @@ function hpRows(){var L=hpPick(0),G={},O=[],cols=HPF.h?[]:HOUSES.slice(),fon=HPF
  $("hpH").innerHTML=hpHouses(hpPick(1));
  if(!HPF.h&&L.some(function(o){return HOUSES.indexOf(o.s.house)<0}))cols.push("-");
  hpChips();
- if(!L.length){HPX=[];$("hpL").innerHTML='<div class="empty"><b>'+(fon?'No house points match':'No house points yet')+'</b>'+(fon?'Try a longer period, or clear the search and filters.':'Teachers give physical house coins, and the admin adds each house\'s count on Counted coins.')+'</div>';return}
+ if(!L.length){HPX=[];$("hpL").innerHTML='<div class="empty"><b>'+(fon?'No house points match':'No house points yet')+'</b>'+(fon?'Try a longer period, or clear the search and filters.':'Teachers give physical house coins, and the office adds each house\'s count on Counted coins.')+'</div>';return}
  if(HB==="all"){HPX=L.slice().sort(function(a,b){return b.t-a.t});$("hpL").innerHTML=hpList(HPX,1);return}
  L.forEach(function(o){var g=hpGroup(o),x=G[g[0]];if(!x){x=G[g[0]]={k:g[0],name:g[1],o:o,L:[],h:{},st:[]};O.push(x)}x.L.push(o);
   var h=HOUSES.indexOf(o.s.house)<0?"-":o.s.house;x.h[h]=(x.h[h]||0)+o.k[3];if(o.c&&x.st.indexOf(o.s)<0)x.st.push(o.s)});

@@ -9,18 +9,21 @@
 <meta name="referrer" content="same-origin">
 <meta name="theme-color" content="{{ look.menu if look else "#f4efe4" }}">
 <title>{% block title %}{% endblock %} · Ilmi</title>
-<link rel="preload" href="/fonts/figtree-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/lilita-one.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/cormorant-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/amiri-ilmi.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="icon" type="image/png" href="/favicon.png?v=4">
 <link rel="apple-touch-icon" href="/favicon.png?v=4">
 <link rel="stylesheet" href="/auth.css">
 {# Where the wash page turn starts from; only on pages whose policy lets a script of ours run (server.py). #}
-{% if request.path in ("/login", "/login/code") or request.path.startswith("/account") or request.path.startswith("/admin/") %}<script src="/wash.js"></script>{% endif %}
+{% if request.path in ("/login", "/login/code") or request.path.startswith(("/account", "/admin/", "/schools")) %}<script src="/wash.js"></script>{% endif %}
 {% if look and look.css %}<link rel="stylesheet" href="{{ look.css }}" id="themecss">{% endif %}
+{# The developer's bar (schools.py): which school is open, the view it is seen as, and the way back to all schools. #}
+{% set dev = developer_bar() if look else none %}
+{% if dev %}<link rel="stylesheet" href="/developer.css">{% endif %}
 {% if intro %}<script src="/intro.js" defer></script>{% endif %}
 {% block head %}{% endblock %}
-{% if user and (request.path.startswith("/account") or request.path.startswith("/admin/")) %}<script src="/menu.js" defer></script>{% endif %}
+{% if user and request.path.startswith(("/account", "/admin/", "/schools")) %}<script src="/menu.js" defer></script>{% endif %}
 {# The dock, in place of the side menu, wherever the signed-in menu shows (static/dock.js). #}
 {% if look %}<script src="/warm-tooltip.js" defer></script><script src="/dock.js" defer></script>{% endif %}
 </head>
@@ -30,10 +33,29 @@
 {% set here = request.path %}
 <a class="skip" href="#main">Skip to main content</a>
 <div class="shell">
+{# The developer's bar (schools.py, static/developer.css): a strip of its own above the page, so everything under it
+   is the page as the school's staff see it. The dashboard draws the same bar (railway-storage.js). On the schools
+   page with no school open there is nothing for it to offer, so it isn't drawn. #}
+{% set on_schools = request.path.startswith("/schools") %}
+{% if dev and (dev.school or not on_schools) %}
+<div class="devbar" role="region" aria-label="Developer"><div class="devbar-in">
+  <span class="devwho">Developer</span>
+  {% if dev.school and dev.inside %}
+  <span class="devat" title="{{ dev.school }}">{{ dev.school }}</span>
+  <form method="post" action="/schools/view" class="seg devseg" role="group" aria-label="View this school as">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    {% for key, label in dev.views %}<button name="view" value="{{ key }}" aria-pressed="{{ "true" if dev.view == key else "false" }}">{{ label }}</button>{% endfor %}
+  </form>
+  {% elif dev.school %}
+  <a class="devlink devback" href="/" title="Back to {{ dev.school }}"><span class="devlink-t">Back to {{ dev.school }}</span></a>
+  {% endif %}
+  {% if not on_schools %}<a class="devlink devall" href="/schools" title="All schools">{{ icon("grid") }}<span class="devlink-t">All schools</span></a>{% endif %}
+</div></div>
+{% endif %}
 <header><div class="rail">
   <a class="brand" href="/" translate="no"><span class="ilmi"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span>{% if site_title() %}<small>{{ site_title() }}</small>{% endif %}</a>
   {# Search opens the dashboard's search (Ctrl+K does the same here, static/menu.js). #}
-  <a class="qkb" href="/#search" aria-label="Search" aria-keyshortcuts="Control+K Meta+K"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span class="qkt">Search</span><kbd aria-hidden="true">Ctrl K</kbd></a>
+  {% if user.role != "developer" %}<a class="qkb" href="/#search" aria-label="Search" aria-keyshortcuts="Control+K Meta+K"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span class="qkt">Search</span><kbd aria-hidden="true">Ctrl K</kbd></a>{% endif %}
   <input type="checkbox" id="navt" class="navt" aria-label="Show the menu">
   <div class="navw">
   <nav class="navs" aria-label="Main">
@@ -49,8 +71,14 @@
     {% macro ext(href, ic, label) -%}
     <a class="nav nsub" href="{{ href }}" target="_blank" rel="noopener noreferrer">{{ icon(ic) }}<span translate="no">{{ label }}</span><span class="ext" aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a>
     {%- endmacro %}
-    {{ nl("/", "home", "Overview") }}
     {% set all_classes = user.role in ("admin", "head") %}
+    {# The developer on their own pages (role "developer"): the schools, and the one they have open. Inside a school
+       they have the menu of the view they chose. #}
+    {% if user.role == "developer" %}
+    {{ nl("/schools", "grid", "Schools", here.startswith("/schools")) }}
+    {% if dev and dev.school %}{{ nl("/", "home", dev.school) }}{% endif %}
+    {% else %}
+    {{ nl("/", "home", "Overview") }}
     {% if all_classes %}{{ nl("/#record", "pen", "Record") }}{% endif %}
     {{ nl("/#classes", "grid", "Classes") }}
     {% if all_classes %}{{ nl("/#house-points", "pie", "House points") }}
@@ -80,6 +108,7 @@
     {% if config.ASSISTANT_ENABLED %}{{ nl("/admin/requests", "faq", "Assistant requests", here == "/admin/requests") }}{% endif %}
     {{ nl("/admin/tv", "tv", "Presenter", here == "/admin/tv") }}
     {% endif %}
+    {% endif %}
     {# Links to the school's other sites sit at the foot of the menu, just above the signed-in name. #}
     {% call grp("links", "link", "Links", "j2jb") %}
     {{ ext("https://journey2jannah.com", "book", "Journey2Jannah") }}
@@ -98,8 +127,12 @@
      the dashboard's pages, and More opens the full menu through the checkbox. #}
   <label for="navt" class="dscrim" aria-hidden="true"></label>
   <nav class="dock" aria-label="Shortcuts">
+    {% if user.role == "developer" %}
+    <a class="dk dk-home" href="/schools"><span class="dki">{{ icon("grid") }}</span><span>Schools</span></a>
+    {% else %}
     <a class="dk dk-home" href="/"><span class="dki">{{ icon("home") }}</span><span>Home</span></a>
-    {% if all_classes %}
+    {% endif %}
+    {% if user.role == "developer" %}{% elif all_classes %}
     <a class="dk dk-classes" href="/#classes"><span class="dki">{{ icon("grid") }}</span><span>Classes</span></a>
     <a class="dk dk-record" href="/#record"><span class="dki">{{ icon("pen") }}</span><span>Record</span></a>
     {% else %}

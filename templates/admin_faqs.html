@@ -6,7 +6,7 @@
   <div class="faqh" id="faq-{{ r.id }}-h"><span class="pill {{ 'blue' if r.kind == 'help' else 'amber' }}">{{ kinds[r.kind] }}</span><b>{{ r.name }}</b><span class="sub">{{ r.email }}</span><span class="sub faqt">{{ r.created_at|when }}</span></div>
   <p class="faqm">{{ r.body }}</p>
   {% if answered %}
-  <div class="faqr"><p class="sub">{{ r.replied_by_name or "An admin" }} replied {{ r.replied_at|when }}, {{ "in the app and by email" if r.emailed else "in the app" }}{{ "" if r.seen_at else " · not read yet" }}</p><p class="faqm">{{ r.reply }}</p></div>
+  <div class="faqr"><p class="sub">{{ r.replied_by_name or "The office" }} replied {{ r.replied_at|when }}, {{ "in the app and by email" if r.emailed else "in the app" }}{{ "" if r.seen_at else " · not read yet" }}</p><p class="faqm">{{ r.reply }}</p></div>
   {% endif %}
   {% if answered %}<details class="confirm faqedit"><summary class="btn sm">Change reply</summary>{% endif %}
   <form method="post" action="/admin/faqs/{{ r.id }}/reply" class="faqf">
@@ -26,7 +26,7 @@
 {% block content %}
 <div class="band slim"><div class="band-top"><h1>FAQs</h1></div>
 <p class="lede">What staff have sent from Help or Requests on their dashboard.</p>
-<details class="how"><summary>How this works</summary><div><p>Your reply shows in their app straight away, with a dot on their button until they open it, and can go by email too. Every Sunday at 12:00 a summary of the week goes to {{ summary_to or "nobody until HELP_SUMMARY_TO is set on Railway" }}{{ "" if mail_enabled else " once email is set up" }}.</p></div></details></div>
+<details class="how"><summary>How this works</summary><div><p>Your reply shows in their app straight away, with a dot on their button until they open it, and can go by email too. Every Sunday at 12:00 a summary of the week goes to {{ summary_to or "nobody until this school has an Office account" }}{{ "" if mail_enabled else " once email is set up" }}.</p></div></details></div>
 <h2 class="faqs-h">Waiting for a reply <span class="pill {{ 'amber' if waiting else 'grey' }}">{{ waiting|length }}</span></h2>
 {% for r in waiting %}{{ item(r, False) }}{% else %}<p class="sub faqnone">Nothing is waiting. New messages appear here.</p>{% endfor %}
 <h2 class="faqs-h">Answered <span class="pill grey">{{ answered|length }}</span></h2>

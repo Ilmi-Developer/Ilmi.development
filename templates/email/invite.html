@@ -4,13 +4,13 @@
 {% block kicker %}Invitation{% endblock %}
 {% block heading %}Assalamu alaikum, {{ name }}{% endblock %}
 {% block content %}
-{% call p() %}{{ by if by else "An administrator" }} has given you a staff account on Ilmi{{ " for " ~ site_title() if site_title() }}, where we record each student's Quran progress, merits and house points.{% endcall %}
+{% call p() %}{{ by if by else "The office" }} has given you a staff account on Ilmi{{ " for " ~ site_title() if site_title() }}, where we record each student's Quran progress, merits and house points.{% endcall %}
 {% call p() %}Choose your password to get started:{% endcall %}
 {{ button(link, "Choose your password") }}
 {% set rows = [("Sign-in email", email), ("Role", role_name(role))] %}
 {% if role == "teacher" and rooms %}{% set rows = rows + [("Your classrooms", rooms|join(", "))] %}{% endif %}
 {{ facts(rows) }}
-{% call p(True) %}The link works once and expires in {{ invite_hours }}. If it has expired, ask an administrator for a new invite, or use <a href="{{ forgot }}" style="color:#4a5628">Forgotten your password?</a> on the sign-in page.{% endcall %}
+{% call p(True) %}The link works once and expires in {{ invite_hours }}. If it has expired, ask the office for a new invite, or use <a href="{{ forgot }}" style="color:#4a5628">Forgotten your password?</a> on the sign-in page.{% endcall %}
 {{ fallback(link) }}
 {% endblock %}
 {% block why %}You're getting this because an administrator invited {{ email }} to the dashboard. If you weren't expecting it, you can ignore this email.<br>{% endblock %}

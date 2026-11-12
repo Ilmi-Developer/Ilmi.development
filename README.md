@@ -11,8 +11,13 @@ classrooms and students are added by uploading a CSV on the overview.
 
 **Railway deployment:** see [RAILWAY.md](RAILWAY.md) for the variables, staff
 accounts and roles, email, history and backups. Staff sign in with their own
-email and password; teachers see only their own classrooms, and administrators
-see everything.
+email and password; teachers see only their own classrooms, and the school's
+Office (the account in charge of its settings) sees everything.
+
+**Many schools:** one site serves many schools, each with a database of its
+own. The developer account (`DEVELOPER_EMAIL`) sees every school as a tile,
+adds schools and sets each one's Office account, and opens any of them as its
+Office, HeadTeacher or a Teacher would see it. See [Schools and the developer account](RAILWAY.md#schools-and-the-developer-account).
 
 ## Adding students
 
@@ -125,7 +130,9 @@ deleted: the Railway server removes its old `classes` table when it starts.
   Railway.
 - `server.py`, `test_server.py`: the Railway server and its tests.
 - `auth.py`, `templates/`, `static/auth.css`: sign-in, accounts, roles and the
-  admin pages. `db.py`: database access and migrations. `mailer.py`: sends
+  admin pages. `db.py`: database access and migrations. `schools.py`,
+  `templates/schools.html`, `static/developer.css`: the schools, each with its
+  own database, and the developer's pages. `mailer.py`: sends
   email through Resend. `emails.py`, `templates/email/`: what each email
   says (see [RAILWAY.md](RAILWAY.md#email)).
 - `tv.py`, `static/tv.html`: the TV dashboard and its screen links (see

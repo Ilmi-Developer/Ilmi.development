@@ -408,7 +408,10 @@ def current(user):
                 "menu": result["menu"]}
     theme_id = key_id(key)
     if theme_id is not None:
-        with auth.db().transaction() as tx:
+        # A person's own themes are where their account is: for the developer inside a school, not in that school.
+        home, owner = auth.own() if user is g.get("user") else (auth.db().current(), user)
+        user = dict(user, id=owner["id"])
+        with home.transaction() as tx:
             row = _row(tx, theme_id)
             if usable(row, user):
                 info = json.loads(row["derived"] or "{}")

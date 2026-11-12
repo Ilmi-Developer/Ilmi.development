@@ -29,6 +29,38 @@
 
   // The signed-in person, their account links and sign-out, in the navigation rail.
   var ME = window.ME || {};
+  // The developer's bar (schools.py, static/developer.css), the same as on the admin pages (templates/base.html): a
+  // strip of its own above the page, with the school that is open, the view it is seen as, and the way back to
+  // every school. Choosing a view posts the form; the server sends the dashboard back in that view.
+  if (ME.dev) (function () {
+    var bar = document.createElement("div"), row = document.createElement("div");
+    bar.className = "devbar"; row.className = "devbar-in";
+    bar.setAttribute("role", "region"); bar.setAttribute("aria-label", "Developer");
+    var who = document.createElement("span");
+    who.className = "devwho"; who.textContent = "Developer";
+    var at = document.createElement("span");
+    at.className = "devat"; at.textContent = at.title = ME.dev.school || "";
+    var views = document.createElement("form");
+    views.method = "post"; views.action = "/schools/view"; views.className = "seg devseg";
+    views.setAttribute("role", "group"); views.setAttribute("aria-label", "View this school as");
+    var token = document.createElement("input");
+    token.type = "hidden"; token.name = "csrf"; token.value = ME.csrf || "";
+    views.appendChild(token);
+    (ME.dev.views || []).forEach(function (v) {
+      var b = document.createElement("button");
+      b.name = "view"; b.value = v[0]; b.textContent = v[1];
+      b.setAttribute("aria-pressed", String(ME.dev.view === v[0]));
+      views.appendChild(b);
+    });
+    var all = document.createElement("a"), allText = document.createElement("span");
+    all.className = "devlink devall"; all.href = "/schools"; all.title = "All schools";
+    all.innerHTML = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>';
+    allText.className = "devlink-t"; allText.textContent = "All schools";
+    all.appendChild(allText);
+    [who, at, views, all].forEach(function (e) { row.appendChild(e); });
+    bar.appendChild(row);
+    document.querySelector(".shell").prepend(bar);
+  })();
   var ICONS = {
     users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.3-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.8a3.4 3.4 0 0 1 0 6.4"/><path d="M18 14.8c1.8.7 3 2.4 3.5 5.2"/>',
     history: '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4.5h4.5"/><path d="M12 7.5V12l3 2"/>',
@@ -113,7 +145,7 @@
   var nameLine = document.createElement("b");
   nameLine.textContent = ME.name || "";
   var roleLine = document.createElement("span");
-  roleLine.textContent = ME.role === "admin" ? "Administrator" : ME.role === "head" ? "HeadTeacher" : "Teacher";
+  roleLine.textContent = ME.role === "admin" ? "Office" : ME.role === "head" ? "HeadTeacher" : "Teacher";
   text.appendChild(nameLine); text.appendChild(roleLine);
   who.appendChild(av); who.appendChild(text);
   var row = document.createElement("div");

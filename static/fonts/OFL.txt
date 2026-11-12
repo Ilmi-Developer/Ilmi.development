@@ -1,3 +1,4 @@
+Lilita One: Copyright (c) 2011 Juan Montoreano (juan@remolacha.biz), with Reserved Font Names "Lilita One". lilita-one.woff2 is Lilita One 1.002 as published, only compressed. ilmi-translit.woff2 is a changed copy under its own name, Ilmi Translit: eighteen transliteration letters put together from Lilita One's glyphs (tools/art/translit.py).
 Figtree: Copyright 2022 The Figtree Project Authors (https://github.com/erikdkennedy/figtree)
 Copyright 2020-2024 The Atkinson Hyperlegible Next Project Authors (https://github.com/googlefonts/atkinson-hyperlegible-next) AtkinsonHyperlegibleNext-Italic[wght].ttf: Copyright 2020-2024 The Atkinson Hyperlegible Next Project Authors (https://github.com/googlefonts/atkinson-hyperlegible-next)
 Cormorant Garamond: Copyright 2015 The Cormorant Project Authors (https://github.com/CatharsisFonts/Cormorant)

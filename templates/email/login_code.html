@@ -5,9 +5,9 @@
 {% block heading %}{{ code }}{% endblock %}
 {% block content %}
 {% call p() %}Assalamu alaikum {{ name }},{% endcall %}
-{% call p() %}Type this code on the sign-in page to finish signing in to Ilmi as an administrator.{% endcall %}
+{% call p() %}Type this code on the sign-in page to finish signing in to Ilmi.{% endcall %}
 {{ facts([("Code", code), ("Asked for", at|when ~ " (UK time)")]) }}
 {% call p(True) %}It works once, in the browser where you typed your password, and expires in {{ code_minutes }} minutes. Never share it: nobody from the school will ask you for it.{% endcall %}
 {% call p(True) %}<b style="color:#44453a">Didn't just sign in?</b> Someone knows your password. Change it on the Account page straight away, or use "Forgotten your password?" on the sign-in page.{% endcall %}
 {% endblock %}
-{% block why %}You're getting this because someone signed in to the admin account {{ email }} with its password.<br>{% endblock %}
+{% block why %}You're getting this because someone signed in to the account {{ email }} with its password.<br>{% endblock %}

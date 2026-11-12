@@ -39,7 +39,12 @@ def initial(name):
 @bp.app_template_global("avatar_url")
 def url(user_id, version):
     """Where a person's picture is, or None for the letter. The version changes with the picture, so it can be cached."""
-    return f"/avatar/{user_id}?v={version}" if version else None
+    if not version:
+        return None
+    # The developer's own picture is kept with their account, not in the school they have opened.
+    if g.get("developer") and g.get("user") and user_id == g.user["id"]:
+        return f"/account/avatar/picture?v={version}"
+    return f"/avatar/{user_id}?v={version}"
 
 
 def clean(data):
@@ -111,6 +116,19 @@ def remove():
 def picture(user_id):
     with auth.db().transaction() as tx:
         row = tx.execute("SELECT image FROM avatars WHERE user_id = ?", (user_id,)).fetchone()
+    return picture_response(row)
+
+
+@bp.get("/account/avatar/picture")
+def own_picture():
+    """The signed-in person's own picture, from wherever their account is (see url)."""
+    home, owner = auth.own()
+    with home.transaction() as tx:
+        row = tx.execute("SELECT image FROM avatars WHERE user_id = ?", (owner["id"],)).fetchone()
+    return picture_response(row)
+
+
+def picture_response(row):
     if not row:
         abort(404)
     response = Response(bytes(row["image"]), mimetype="image/jpeg")
