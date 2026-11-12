@@ -1641,8 +1641,9 @@ class DashboardTests:
     def test_site_title(self):
         anonymous = self.app.test_client()
         # No title yet: every page shows just Ilmi, and no school is named anywhere.
-        pages = {"/": self.client, "/admin/users": self.client, "/account": self.client, "/welcome": anonymous,
-                 "/login": anonymous, "/forgot": anonymous, "/tv": self.client}
+        pages = {"/": self.client, "/admin/users": self.client, "/account": self.client, "/tv": self.client}
+        # The start page and the sign-in pages are Ilmi's own: they never show a school's name.
+        signed_out = ("/welcome", "/login", "/forgot")
         for path, client in pages.items():
             text = client.get(path).get_data(as_text=True)
             self.assertNotIn("Academy", text, path)
@@ -1663,7 +1664,7 @@ class DashboardTests:
         # Saved tidied up, and recorded in the activity log.
         saved = self.form(self.client, "/account", "/account/site-title", title="  Riverside \n Madrasah  ")
         self.assertEqual(saved.status_code, 200)
-        self.assertIn("Every page now shows “Riverside Madrasah”", saved.get_data(as_text=True))
+        self.assertIn("Your school’s pages now show “Riverside Madrasah”", saved.get_data(as_text=True))
         self.assertEqual(self.query("SELECT value FROM site_settings WHERE key = 'title'"), [{"value": "Riverside Madrasah"}])
         self.assertIn("site.title", [r["action"] for r in self.query("SELECT action FROM audit_log")])
         dashboard = self.client.get("/").get_data(as_text=True)
@@ -1672,13 +1673,16 @@ class DashboardTests:
         for path, client in pages.items():
             self.assertIn("Riverside Madrasah", client.get(path).get_data(as_text=True), path)
         self.assertIn("<title>Riverside Madrasah · Live</title>", self.client.get("/tv").get_data(as_text=True))
-        self.assertIn("<title>Ilmi · Riverside Madrasah</title>", anonymous.get("/welcome").get_data(as_text=True))
+        for path in signed_out:
+            self.assertNotIn("Riverside", anonymous.get(path).get_data(as_text=True), path)
+        self.assertIn("<title>Ilmi</title>", anonymous.get("/welcome").get_data(as_text=True))
         self.assertIn('value="Riverside Madrasah"', self.client.get("/account").get_data(as_text=True))
         with self.app.test_request_context():
             subject, text, html = emails.render("test", **emails.PREVIEWS["test"]())
         self.assertIn("Riverside Madrasah", text)
         self.assertIn("Riverside Madrasah", html)
         self.assertNotIn("Safar", subject + text + html)
+        self.assertNotIn("Safar", anonymous.get("/welcome").get_data(as_text=True))
         # Written as text wherever it shows.
         self.form(self.client, "/account", "/account/site-title", title="<b>Al & Noor</b>")
         dashboard = self.client.get("/").get_data(as_text=True)

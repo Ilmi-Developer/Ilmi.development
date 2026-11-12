@@ -65,8 +65,9 @@ link belongs to. Run locally without `DATABASE_URL`, each is a SQLite file in
 - Links and sign-in cookies start with their school's number (`/tv/2.…`).
   Links and sign-ins from before there were schools have no number and belong
   to the first school, so TVs already on the wall keep working.
-- While there is one school, the sign-in and start pages still show its title
-  under Ilmi. With several, signed-out pages show just Ilmi.
+- The start page and the sign-in pages are Ilmi's own: they show just Ilmi,
+  never a school's name. A school's title shows once someone from that school
+  has signed in.
 - The first school's weekly Help or Requests summary still goes to
   `HELP_SUMMARY_TO`; every other school's goes to its own Office accounts.
 

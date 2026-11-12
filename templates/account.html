@@ -107,11 +107,11 @@
   <p class="thmsg thpmsg" role="status" aria-live="polite"></p>
 </section>
 {% if user.role == "admin" %}
-{# The site title (site_settings.py), for everyone: under Ilmi in the top left corner of every page, on the TV
+{# The site title (site_settings.py), for the school: under Ilmi in the top left corner of its signed-in pages, on the TV
    screens and in emails. Empty, those places show just Ilmi. #}
 <section class="mod line" id="site" aria-labelledby="sitet">
   <h2 id="sitet">Site title</h2>
-  <p class="sub">Shown to everyone under Ilmi in the top left corner of every page, on the TV screens and in emails, usually your madrasah’s name. Leave it empty to show just Ilmi.</p>
+  <p class="sub">Shown under Ilmi in the top left corner of your school’s pages once staff have signed in, on the TV screens and in emails, usually your madrasah’s name. Ilmi’s start page and sign-in pages always show just Ilmi. Leave it empty to show just Ilmi everywhere.</p>
   <form method="post" action="/account/site-title" class="inline-form">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <label class="field">Title<input name="title" value="{{ title_draft if title_draft is defined else site_title() }}" maxlength="60" autocomplete="off"></label>

@@ -43,15 +43,12 @@ def title():
     """The current school's site title, or "" when none is set. Read once per request; a page still renders (with
     just Ilmi) when the database can't be reached, such as the error page shown then.
 
-    Signed out, a page belongs to no school and shows just Ilmi, with one exception: while the site has a single
-    school, the sign-in and start pages carry its title, as they did before there could be more."""
+    Signed out, a page belongs to no school and shows just Ilmi: the start page, the sign-in pages and the rest are
+    Ilmi's own and never carry a school's name, however many schools there are."""
     if "site_title" not in g:
         try:
             router = current_app.config["DB"]
-            database = router.current()
-            if router.current_id() == schools.CONTROL:
-                only = router.all() if not g.get("user") else []
-                database = router.get(only[0]["id"]) if len(only) == 1 else None
+            database = None if router.current_id() == schools.CONTROL else router.current()
             if database is None:
                 g.site_title = ""
             else:
@@ -86,6 +83,6 @@ def save_title():
         # The developer's list of schools shows each school by this name.
         auth.db().rename(auth.db().current_id(), text, title_too=False)
     g.site_title = text
-    notice = (f"Saved. Every page now shows “{text}” under Ilmi in the top left corner." if text
+    notice = (f"Saved. Your school’s pages now show “{text}” under Ilmi in the top left corner." if text
               else "Saved. Pages now show just Ilmi in the top left corner.")
     return auth.account_page(notice=notice)
