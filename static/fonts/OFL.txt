@@ -1,8 +1,6 @@
-Lilita One: Copyright (c) 2011 Juan Montoreano (juan@remolacha.biz), with Reserved Font Names "Lilita One". lilita-one.woff2 is Lilita One 1.002 as published, only compressed. ilmi-translit.woff2 is a changed copy under its own name, Ilmi Translit: eighteen transliteration letters put together from Lilita One's glyphs (tools/art/translit.py).
-Figtree: Copyright 2022 The Figtree Project Authors (https://github.com/erikdkennedy/figtree)
+Fraunces: Copyright 2018 The Fraunces Project Authors (https://github.com/undercasetype/Fraunces). fraunces.woff2 and fraunces-italic.woff2 are cut down by tools/art/type.py (Soft axis set to 100, Wonky off, weights 400 to 700, the letters Ilmi shows, and ʿ ʾ drawn with its quotation marks).
+Nunito: Copyright 2014 The Nunito Project Authors (https://github.com/googlefonts/nunito). nunito.woff2 is cut down by tools/art/type.py (weights 400 to 800, the letters Ilmi shows).
 Copyright 2020-2024 The Atkinson Hyperlegible Next Project Authors (https://github.com/googlefonts/atkinson-hyperlegible-next) AtkinsonHyperlegibleNext-Italic[wght].ttf: Copyright 2020-2024 The Atkinson Hyperlegible Next Project Authors (https://github.com/googlefonts/atkinson-hyperlegible-next)
-Cormorant Garamond: Copyright 2015 The Cormorant Project Authors (https://github.com/CatharsisFonts/Cormorant)
-EB Garamond: Copyright 2017 The EB Garamond Project Authors (https://github.com/octaviopardo/EBGaramond12)
 Amiri: Copyright 2010-2022 The Amiri Project Authors (https://github.com/aliftype/amiri). amiri-ilmi.woff2 holds only the letters of the word علمي.
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.

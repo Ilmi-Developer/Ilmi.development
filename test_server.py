@@ -1532,18 +1532,19 @@ class DashboardTests:
         self.assertIn("max-age", font.headers["Cache-Control"])
         self.assertEqual(anonymous.get("/fonts/../server.py").status_code, 404)
         self.assertEqual(anonymous.get("/fonts/other.woff2").status_code, 404)
-        # Lilita One is the default face, with the transliteration letters it lacks in a second small file. Its
-        # one file answers for every weight, so nothing is drawn in a faked bold.
-        for name in ("lilita-one.woff2", "ilmi-translit.woff2"):
+        # Nunito for text and Fraunces (soft) for the wordmark, titles, figures and italic lines.
+        for name in ("nunito.woff2", "fraunces.woff2", "fraunces-italic.woff2"):
             font = anonymous.get("/fonts/" + name)
             self.assertEqual((font.status_code, font.mimetype, font.data[:4]), (200, "font/woff2", b"wOF2"), name)
+        for gone in ("lilita-one.woff2", "figtree-latin.woff2", "cormorant-latin.woff2", "garamond-latin.woff2"):
+            self.assertEqual(anonymous.get("/fonts/" + gone).status_code, 404, gone)
         css = anonymous.get("/auth.css").get_data(as_text=True)
-        self.assertIn('@font-face{font-family:"Lilita One";src:url(/fonts/lilita-one.woff2) format("woff2");font-weight:100 900', css)
-        for token in ("--font:", "--font-display:"):
-            self.assertIn(token + '"Lilita One","Ilmi Translit",', css)
-        self.assertIn('<link rel="preload" href="/fonts/lilita-one.woff2"', anonymous.get("/login").get_data(as_text=True))
-        self.assertIn('<link rel="preload" href="/fonts/lilita-one.woff2"', anonymous.get("/welcome").get_data(as_text=True))
-        self.assertIn('--font:"Lilita One"', self.client.get("/").get_data(as_text=True))
+        self.assertIn('--font:"Nunito",', css)
+        self.assertIn('--font-display:"Fraunces","Nunito",', css)
+        self.assertIn('--font-hand:"Fraunces","Nunito",', css)
+        for page in ("/login", "/welcome"):
+            self.assertIn('<link rel="preload" href="/fonts/fraunces.woff2"', anonymous.get(page).get_data(as_text=True))
+        self.assertIn('--font:"Nunito"', self.client.get("/").get_data(as_text=True))
         self.assertIn("font-src 'self'", anonymous.get("/login").headers["Content-Security-Policy"])
         # The opening on the sign-in page focuses the email field from /intro.js once it ends, not with autofocus,
         # so saved-password suggestions don't cover the animation. Other pages still run no scripts.
@@ -1624,7 +1625,7 @@ class DashboardTests:
         self.assertIn("max-age", art.headers["Cache-Control"])
         self.assertEqual(anonymous.get("/art/../server.py").status_code, 404)
         self.assertEqual(anonymous.get("/art/other.webp").status_code, 404)
-        for name in ("cormorant-latin.woff2", "garamond-latin.woff2", "amiri-ilmi.woff2", "amiri-text.woff2"):
+        for name in ("fraunces.woff2", "fraunces-italic.woff2", "amiri-ilmi.woff2", "amiri-text.woff2"):
             self.assertEqual(anonymous.get("/fonts/" + name).status_code, 200)
         for name in ("splat-a.webp", "splat-b.webp", "splat-c.webp"):
             self.assertEqual(anonymous.get("/art/" + name).status_code, 200)
