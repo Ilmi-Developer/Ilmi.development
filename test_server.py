@@ -135,11 +135,11 @@ class DashboardTests:
 
     def test_profile_picture_default_is_first_initial(self):
         page = self.client.get("/account").get_data(as_text=True)
-        self.assertIn('<span class="av" aria-hidden="true">A</span>', page)
+        self.assertIn('<span class="av" aria-hidden="true">O</span>', page)
         self.assertIn("Add a picture", page)
         self.assertNotIn("Remove picture", page)
         self.assertIn("script-src 'self'", self.client.get("/account").headers["Content-Security-Policy"])
-        self.assertIn('"initial": "A", "avatar": null', self.client.get("/").get_data(as_text=True))
+        self.assertIn('"initial": "O", "avatar": null', self.client.get("/").get_data(as_text=True))
 
     def test_profile_picture_upload_is_reencoded_and_shown(self):
         from PIL import Image
@@ -168,7 +168,7 @@ class DashboardTests:
         # Removing it brings the initial back.
         self.form(self.client, "/account", "/account/avatar/remove")
         self.assertEqual(self.client.get(url).status_code, 404)
-        self.assertIn('<span class="av" aria-hidden="true">A</span>', self.client.get("/account").get_data(as_text=True))
+        self.assertIn('<span class="av" aria-hidden="true">O</span>', self.client.get("/account").get_data(as_text=True))
 
     def test_profile_picture_rejects_files_that_are_not_pictures(self):
         for data in (b"<svg xmlns='http://www.w3.org/2000/svg'/>", b"%PDF-1.4", b"", self.picture(fmt="BMP")):
@@ -454,7 +454,7 @@ class DashboardTests:
 
     def test_admin_reset_from_railway_unlocks_once_per_value(self):
         db = self.app.config["DB"]
-        with db.transaction() as tx:
+        with db.control.transaction() as tx:  # attempts are counted across every school
             for _ in range(6):
                 tx.execute("INSERT INTO attempts (kind, email, ip, at, ok) VALUES ('login', ?, '203.0.113.9', ?, 0)",
                            (ADMIN[0], auth.now()))
@@ -463,6 +463,7 @@ class DashboardTests:
         def state():
             with db.transaction() as tx:
                 user = tx.execute("SELECT password_hash, must_change FROM users WHERE email = ?", (ADMIN[0],)).fetchone()
+            with db.control.transaction() as tx:
                 left = tx.execute("SELECT COUNT(*) AS n FROM attempts WHERE email = ?", (ADMIN[0],)).fetchone()["n"]
             return user["password_hash"], user["must_change"], left
 
@@ -513,7 +514,7 @@ class DashboardTests:
         # Locked out for 15 minutes, even with the right password.
         self.assertEqual(self.sign_in("t@example.com", "teacher-password-1").last.status_code, 429)
         self.assertEqual(self.sign_in(*ADMIN).last.status_code, 302)
-        with self.app.config["DB"].transaction() as tx:
+        with self.app.config["DB"].control.transaction() as tx:  # attempts are counted across every school
             tx.execute("UPDATE attempts SET at = at - 1000")
         self.assertEqual(self.sign_in("t@example.com", "teacher-password-1").last.status_code, 302)
 
@@ -657,7 +658,7 @@ class DashboardTests:
         self.assertEqual(self.write("Yr4-B", revision=1, class_id="yr4-b", client=head).status_code, 200)
         refused = self.write(revision=1, state=given, client=head)
         self.assertEqual(refused.status_code, 403)
-        self.assertEqual(refused.get_json()["error"], "Only an admin can give house points.")
+        self.assertEqual(refused.get_json()["error"], "Only the Office can give house points.")
         self.assertEqual(self.write(revision=1, state=dict(self.state, S=[dict(student, merits=1)]), client=head).status_code, 200)
         # A class that already has an admin's coins still saves for them, as long as they add none.
         self.assertEqual(self.write(revision=2, state=given).status_code, 200)
@@ -744,7 +745,7 @@ class DashboardTests:
         self.assertEqual(book["Students"].freeze_panes, "A2")
         self.assertEqual(book["Students"].auto_filter.ref, "A1:Y2")
         self.assertEqual((students["Family ID"], students["Date of birth"].date()), ("SP940", date(2016, 5, 2)))
-        self.assertIn(["Admin@Example.com".lower(), "Administrator"], [r[1:3] for r in rows["Staff"][1:]])
+        self.assertIn(["Admin@Example.com".lower(), "Office"], [r[1:3] for r in rows["Staff"][1:]])
         self.assertEqual(self.query("SELECT action FROM audit_log WHERE action = 'export.downloaded'"),
                          [{"action": "export.downloaded"}])
 
@@ -874,7 +875,7 @@ class DashboardTests:
         self.assertIn('src="https://mysafar.example/logo.png?v=4"', html)
         self.assertIn("72 hours", html)
         # The admin who sent it is named.
-        self.assertIn("Administrator has given you a staff account on Ilmi", text)
+        self.assertIn("Office has given you a staff account on Ilmi", text)
 
     def test_changing_a_password_sends_a_notice(self):
         mailer = FakeMailer()
@@ -1254,11 +1255,17 @@ class DashboardTests:
         self.assertEqual((a["qa"], a["tb"], a["hp"], musa["qa"]), (2, [5, 6], [{"t": 6, "r": "lv"}], 5))
 
     def test_activity_is_recorded_and_pruned(self):
+        self.add_user("someone@example.com")
         self.sign_in("someone@example.com", "wrong password")
+        self.sign_in("stranger@example.com", "wrong password")
         self.write()
         page = self.client.get("/admin/activity").get_data(as_text=True)
         for text in ("Signed in", "Wrong password", "someone@example.com", "Saved classroom"):
             self.assertIn(text, page)
+        # A wrong password for an email with no account belongs to no school: it is logged in the control database.
+        self.assertNotIn("stranger@example.com", page)
+        with self.app.config["DB"].control.transaction() as tx:
+            self.assertIn("stranger@example.com", tx.execute("SELECT detail FROM audit_log WHERE action = 'login.failed'").fetchone()["detail"])
         with self.app.config["DB"].transaction() as tx:
             tx.execute("UPDATE audit_log SET at = at - ?", (15 * auth.DAY,))
             tx.execute("UPDATE classroom_history SET saved_at = saved_at - ?", (15 * auth.DAY,))
@@ -1435,7 +1442,7 @@ class DashboardTests:
         teacher = self.sign_in("t@example.com", "teacher-password-1")
         self.assertEqual(teacher.get("/presenter/yr4-b").status_code, 404)  # not one of theirs
         link = teacher.get("/presenter/yr3-a").headers["Location"]
-        self.assertRegex(link, r"^/present/[\w-]{40,}$")
+        self.assertRegex(link, r"^/present/1\.[\w-]{40,}$")  # the link starts with its school's number
         self.assertNotEqual(teacher.get("/presenter/yr3-a").headers["Location"], link)  # pressing again: a new link
         # The link needs no sign-in, like a TV screen's: the first tab to open it claims it.
         tab = self.app.test_client()
@@ -1525,6 +1532,18 @@ class DashboardTests:
         self.assertIn("max-age", font.headers["Cache-Control"])
         self.assertEqual(anonymous.get("/fonts/../server.py").status_code, 404)
         self.assertEqual(anonymous.get("/fonts/other.woff2").status_code, 404)
+        # Lilita One is the default face, with the transliteration letters it lacks in a second small file. Its
+        # one file answers for every weight, so nothing is drawn in a faked bold.
+        for name in ("lilita-one.woff2", "ilmi-translit.woff2"):
+            font = anonymous.get("/fonts/" + name)
+            self.assertEqual((font.status_code, font.mimetype, font.data[:4]), (200, "font/woff2", b"wOF2"), name)
+        css = anonymous.get("/auth.css").get_data(as_text=True)
+        self.assertIn('@font-face{font-family:"Lilita One";src:url(/fonts/lilita-one.woff2) format("woff2");font-weight:100 900', css)
+        for token in ("--font:", "--font-display:"):
+            self.assertIn(token + '"Lilita One","Ilmi Translit",', css)
+        self.assertIn('<link rel="preload" href="/fonts/lilita-one.woff2"', anonymous.get("/login").get_data(as_text=True))
+        self.assertIn('<link rel="preload" href="/fonts/lilita-one.woff2"', anonymous.get("/welcome").get_data(as_text=True))
+        self.assertIn('--font:"Lilita One"', self.client.get("/").get_data(as_text=True))
         self.assertIn("font-src 'self'", anonymous.get("/login").headers["Content-Security-Policy"])
         # The opening on the sign-in page focuses the email field from /intro.js once it ends, not with autofocus,
         # so saved-password suggestions don't cover the animation. Other pages still run no scripts.
@@ -2990,7 +3009,467 @@ class AssistantTests:
         self.assertEqual(self.client.get("/assistant.js").status_code, 200)
         self.assertEqual(self.client.get("/assistant.css").mimetype, "text/css")
 
-class SQLiteTest(AssistantTests, DashboardTests, unittest.TestCase):
+DEVELOPER = ("developer@example.com", "developer-password-1")
+
+
+class SchoolTests:
+    """Many schools, each with its own database, and the developer's account (schools.py)."""
+
+    def school_app(self, name="schools", **config):
+        """A new site with a developer account and, by default, the usual first Office account."""
+        config = dict(self.config, DATABASE_URL=self.database_url(), DATA_DIR=Path(self.temp.name) / name,
+                      DEVELOPER_EMAIL=DEVELOPER[0], **config)
+        app = create_app(config)
+        for database in app.config["DB"].databases():
+            with database.transaction() as tx:
+                tx.execute("UPDATE users SET must_change = 0")
+        with app.config["DB"].control.transaction() as tx:
+            tx.execute("UPDATE users SET password_hash = ?", (auth.hasher.hash(DEVELOPER[1]),))
+        return app
+
+    def me(self, client):
+        page = client.get("/")
+        self.assertEqual(page.status_code, 200)
+        return json.loads(re.search(r"window\.ME=(\{.*?\});", page.get_data(as_text=True)).group(1))
+
+    def open_school(self, developer, school_id):
+        opened = self.form(developer, "/schools", f"/schools/{school_id}/open")
+        self.assertEqual((opened.status_code, opened.headers["Location"]), (303, "/"))
+
+    def view_as(self, developer, view):
+        token = self.me(developer)["csrf"]
+        return developer.post("/schools/view", data={"csrf": token, "view": view})
+
+    def test_developer_sees_every_school_as_tiles_and_opens_one_as_office(self):
+        app = self.school_app()
+        developer = self.sign_in(*DEVELOPER, app=app)
+        self.assertEqual(developer.last.status_code, 302)
+        # With no school open, every page but their own leads to the schools.
+        home = developer.get("/")
+        self.assertEqual((home.status_code, home.headers["Location"]), (302, "/schools"))
+        self.assertEqual(developer.get("/api/classes", headers=self.headers).status_code, 403)
+        self.assertEqual(developer.get("/admin/users").headers["Location"], "/schools")
+        page = developer.get("/schools")
+        text = page.get_data(as_text=True)
+        self.assertEqual(page.status_code, 200)
+        self.assertIn("script-src 'self'", page.headers["Content-Security-Policy"])
+        for part in ('class="sch-grid"', "First school", "/schools/1/open", "Add a school", 'href="/developer.css"',
+                     'id="manage-1"', "Office account"):
+            self.assertIn(part, text)
+        self.assertNotIn('class="devbar"', text)  # nothing for the bar to offer until a school is open
+        self.assertEqual(developer.get("/developer.css").mimetype, "text/css")
+        for script in ("/menu.js", "/dock.js", "/warm-tooltip.js", "/avatar.js", "/theme.js"):
+            self.assertEqual(developer.get(script).status_code, 200, script)
+        # Nobody else has the schools page, whatever their role.
+        office = self.sign_in(*ADMIN, app=app)
+        self.assertEqual(office.get("/schools").status_code, 404)
+        self.assertEqual(self.form(office, "/account", "/schools/new", name="Mine").status_code, 404)
+        self.assertNotIn("devbar", office.get("/account").get_data(as_text=True))
+        self.assertNotIn('"dev"', office.get("/").get_data(as_text=True))
+        # Opening a school shows it as its Office sees it, with the bar to switch view.
+        self.assertEqual(self.write(client=office).status_code, 200)
+        self.open_school(developer, 1)
+        me = self.me(developer)
+        self.assertEqual((me["role"], me["name"]), ("admin", "Developer"))
+        self.assertEqual(me["dev"], {"school": "First school", "view": "admin",
+                                     "views": [["admin", "Office"], ["head", "HeadTeacher"], ["teacher", "Teacher"]]})
+        self.assertIn('href="/developer.css"', developer.get("/").get_data(as_text=True))
+        self.assertEqual(list(self.records(developer)), ["yr3-a"])
+        users = developer.get("/admin/users").get_data(as_text=True)
+        self.assertIn('class="devbar"', users)
+        self.assertIn('aria-pressed="true">Office</button>', users)
+        self.assertIn("All schools", users)
+        # Their stand-in in the school isn't an account: not listed, not counted, not editable.
+        self.assertNotIn(DEVELOPER[0], users)
+        stand_in = self.query_app(app, 1, "SELECT id, developer, password_hash FROM users WHERE email = ?", (DEVELOPER[0],))[0]
+        self.assertEqual((stand_in["developer"], stand_in["password_hash"]), (1, None))
+        self.assertEqual(self.form(developer, "/admin/users", f"/admin/users/{stand_in['id']}/update",
+                                   name="X", role="teacher").status_code, 404)
+        # Work in the school is recorded under the stand-in, in the school's own history.
+        self.assertEqual(self.write(revision=1, client=developer).status_code, 200)
+        saved = self.query_app(app, 1, "SELECT saved_by FROM classroom_history ORDER BY id DESC LIMIT 1")[0]["saved_by"]
+        self.assertEqual(saved, stand_in["id"])
+
+    def query_app(self, app, school_id, sql, params=()):
+        with app.config["DB"].get(school_id).transaction() as tx:
+            return [dict(row) for row in tx.execute(sql, params).fetchall()]
+
+    def test_developer_switches_view_to_headteacher_and_teacher(self):
+        app = self.school_app()
+        office = self.sign_in(*ADMIN, app=app)
+        self.assertEqual(self.write(client=office).status_code, 200)
+        self.assertEqual(self.write(name="Yr4-B", class_id="yr4-b", client=office).status_code, 200)
+        developer = self.sign_in(*DEVELOPER, app=app)
+        # No view to choose before a school is open.
+        self.assertEqual(self.form(developer, "/schools", "/schools/view", view="teacher").status_code, 400)
+        self.open_school(developer, 1)
+        self.assertEqual(self.view_as(developer, "nobody").status_code, 400)
+        switched = self.view_as(developer, "head")
+        self.assertEqual((switched.status_code, switched.headers["Location"]), (303, "/"))
+        me = self.me(developer)
+        self.assertEqual((me["role"], me["dev"]["view"]), ("head", "head"))
+        # A HeadTeacher's view: every classroom and FAQs, none of the Administration pages.
+        self.assertEqual(len(self.records(developer)), 2)
+        self.assertEqual(developer.get("/admin/faqs").status_code, 200)
+        self.assertEqual(developer.get("/admin/users").status_code, 403)
+        self.assertEqual(self.delete(1, client=developer).status_code, 403)
+        self.assertEqual(self.view_as(developer, "teacher").status_code, 303)
+        me = self.me(developer)
+        self.assertEqual((me["role"], me["dev"]["view"]), ("teacher", "teacher"))
+        # A teacher's view, of every classroom (a teacher has the ones the Office ticked): it records, and can't
+        # add students, delete a classroom or open FAQs.
+        self.assertEqual(sorted(self.records(developer)), ["yr3-a", "yr4-b"])
+        self.assertEqual(self.write(revision=1, client=developer).status_code, 200)
+        self.assertEqual(self.delete(2, client=developer).status_code, 403)
+        self.assertEqual(developer.get("/admin/faqs").status_code, 403)
+        self.assertEqual(developer.get("/presenter/yr3-a").status_code, 302)
+        self.assertFalse(self.query_app(app, 1, "SELECT 1 FROM classroom_members"))
+        # The developer's own pages stay their own in any view, and the view is kept while they are away.
+        account = developer.get("/account").get_data(as_text=True)
+        self.assertIn(f"Signed in as {DEVELOPER[0]} (Developer)", account)
+        self.assertIn("Back to First school", account)
+        self.assertNotIn('id="site"', account)
+        self.assertEqual(self.me(developer)["role"], "teacher")
+        self.assertEqual(self.view_as(developer, "admin").status_code, 303)
+        self.assertEqual(developer.get("/admin/users").status_code, 200)
+
+    def test_each_school_has_its_own_database(self):
+        mailer = FakeMailer()
+        app = self.school_app(MAILER=mailer, LOGIN_CODES=False)
+        first = self.sign_in(*ADMIN, app=app)
+        self.assertEqual(self.write(client=first).status_code, 200)
+        developer = self.sign_in(*DEVELOPER, app=app)
+        self.assertEqual(self.form(developer, "/schools", "/schools/new", name="  ").status_code, 400)
+        added = self.form(developer, "/schools", "/schools/new", name=" Riverside   Madrasah ")
+        self.assertEqual(added.status_code, 200)
+        text = added.get_data(as_text=True)
+        self.assertIn("Riverside Madrasah", text)
+        self.assertIn("/schools/2/open", text)
+        self.assertIn("It has no Office account yet", text)
+        self.assertIn('<a class="sch-set" href="#manage-2">Set the Office account</a>', text)
+        # The new school starts empty, with its name as its site title and none of the first school's records.
+        self.open_school(developer, 2)
+        self.assertEqual(self.records(developer), {})
+        self.assertEqual(self.me(developer)["site"], "Riverside Madrasah")
+        self.assertEqual(self.query_app(app, 2, "SELECT COUNT(*) AS n FROM house_points")[0]["n"], 0)
+        self.assertEqual(developer.get("/api/houses", headers=self.headers).get_json(),
+                         {"Makkah": 0, "Al-Aqsa": 0, "Madinah": 0})
+        # The developer invites the school's Office; the invite link carries the school's number.
+        invited = self.form(developer, "/admin/users", "/admin/users/invite", name="Sr Office",
+                            email="office@riverside.example", role="admin")
+        self.assertEqual(invited.status_code, 200)
+        link = mailer.link()
+        self.assertTrue(link.startswith("/invite/2."), link)
+        visitor = app.test_client()
+        self.assertEqual(self.form(visitor, link, link, password="riverside-office-pass-1",
+                                   confirm="riverside-office-pass-1").status_code, 302)
+        self.assertEqual(self.me(visitor)["role"], "admin")
+        self.assertEqual(self.records(visitor), {})
+        # An email has one account across every school; nobody can be made a developer.
+        for email in (ADMIN[0], DEVELOPER[0], "office@riverside.example"):
+            refused = self.form(visitor, "/admin/users", "/admin/users/invite", name="Again", email=email, role="teacher")
+            self.assertEqual(refused.status_code, 400, email)
+        self.assertEqual(self.form(visitor, "/admin/users", "/admin/users/invite", name="Dev",
+                                   email="dev2@example.com", role="developer").status_code, 400)
+        office_id = self.query_app(app, 2, "SELECT id FROM users WHERE email = 'office@riverside.example'")[0]["id"]
+        self.assertEqual(self.form(visitor, "/admin/users", f"/admin/users/{office_id}/update", name="Sr Office",
+                                   role="developer").status_code, 400)
+        # Each Office signs in on the same page and sees only its own school.
+        office = self.sign_in("office@riverside.example", "riverside-office-pass-1", app=app)
+        self.assertEqual(office.last.status_code, 302)
+        state = dict(self.state, S=[])
+        self.assertEqual(self.write(name="Riverside 1", class_id="yr3-a", client=office, state=state).status_code, 200)
+        self.assertEqual(json.loads(self.records(office)["yr3-a"]["json"])["name"], "Riverside 1")
+        self.assertEqual(json.loads(self.records(first)["yr3-a"]["json"])["name"], "Yr3-A")
+        users = office.get("/admin/users").get_data(as_text=True)
+        self.assertNotIn(ADMIN[0], users)
+        self.assertNotIn(DEVELOPER[0], users)
+        self.assertNotIn("devbar", users)
+        self.assertNotIn("office@riverside.example", first.get("/admin/users").get_data(as_text=True))
+        self.assertNotIn("Riverside", first.get("/admin/activity").get_data(as_text=True))
+        # A school's TV link carries its number too, and shows that school.
+        screen = self.form(office, "/admin/tv", "/admin/tv/new", name="Hall")
+        tv_link = re.search(r"(/tv/[^\"\s<]+)", screen.get_data(as_text=True).split("linkbox", 1)[1]).group(1)
+        self.assertTrue(tv_link.startswith("/tv/2."), tv_link)
+        television = app.test_client()
+        self.assertIn("Riverside Madrasah", television.get(tv_link).get_data(as_text=True))
+        self.assertEqual(television.get(tv_link + "/data").status_code, 200)
+        # The same token under another school's number is nobody's link.
+        self.assertEqual(television.get(tv_link.replace("/tv/2.", "/tv/1.")).status_code, 404)
+        self.assertEqual(television.get(tv_link.replace("/tv/2.", "/tv/9.")).status_code, 404)
+        self.assertEqual(first.get(tv_link + "/data").status_code, 200)  # signed in at another school: the link still works
+        # A sign-in belongs to its school: the same cookie under another school's number is signed out.
+        cookie = office.get_cookie("safar").value
+        self.assertTrue(cookie.startswith("2."), cookie)
+        forged = app.test_client()
+        forged.set_cookie("safar", "1." + cookie.split(".", 1)[1])
+        self.assertEqual(forged.get("/api/classes", headers=self.headers).status_code, 401)
+        forged.set_cookie("safar", "0." + cookie.split(".", 1)[1])
+        self.assertEqual(forged.get("/schools").status_code, 302)
+        # The tiles count each school's own classes, students and staff, and name its Office.
+        tiles = developer.get("/schools").get_data(as_text=True)
+        self.assertIn("Office: Sr Office", tiles)
+        self.assertIn("Open now", tiles)
+        self.assertIn("Back to Riverside Madrasah", tiles)
+        # Renaming a school changes the title its pages show.
+        renamed = self.form(developer, "/schools", "/schools/2/rename", name="Riverside Academy")
+        self.assertIn("Riverside Academy", renamed.get_data(as_text=True))
+        self.assertEqual(self.me(office)["site"], "Riverside Academy")
+        self.assertEqual(self.form(developer, "/schools", "/schools/7/rename", name="Nowhere").status_code, 404)
+        # A name that can't be used reopens that school's pop-up with what was typed.
+        refused = self.form(developer, "/schools", "/schools/2/rename", name="x" * 61)
+        self.assertEqual(refused.status_code, 400)
+        self.assertIn('class="invite open" id="manage-2"', refused.get_data(as_text=True))
+        self.assertEqual(self.form(developer, "/schools", "/schools/7/open").status_code, 404)
+        # And the Office's own title change shows on the developer's tile.
+        self.assertEqual(self.form(office, "/account", "/account/site-title", title="Riverside School").status_code, 200)
+        self.assertIn("Riverside School", developer.get("/schools").get_data(as_text=True))
+        # Signed out, a page belongs to no school once there are several: just Ilmi.
+        self.assertNotIn("Riverside", app.test_client().get("/login").get_data(as_text=True))
+        # A restart finds both schools and keeps their records apart.
+        again = create_app(dict(app.config, MAILER=mailer))
+        self.assertEqual(len(again.config["DB"].all()), 2)
+        back = self.sign_in("office@riverside.example", "riverside-office-pass-1", app=again)
+        self.assertEqual(json.loads(self.records(back)["yr3-a"]["json"])["name"], "Riverside 1")
+
+    def test_developer_adds_a_school_with_its_office_account(self):
+        mailer = FakeMailer()
+        app = self.school_app(MAILER=mailer, LOGIN_CODES=False, PUBLIC_URL="https://ilmi.example")
+        router = app.config["DB"]
+        developer = self.sign_in(*DEVELOPER, app=app)
+        new = lambda **data: self.form(developer, "/schools", "/schools/new", **data)
+        # The Office is checked before the school is made: a mistake leaves no school behind, and the form comes
+        # back open with what was typed.
+        for office_name, office_email, says in (
+                ("Sr Office", "not-an-email", "valid email address"), ("", "office@riverside.example", "valid email address"),
+                ("Sr Office", ADMIN[0], "already has an account at First school"),
+                ("Sr Office", DEVELOPER[0].upper(), "your own developer email")):
+            refused = new(name="Riverside", office_name=office_name, office_email=office_email)
+            text = html.unescape(refused.get_data(as_text=True))
+            self.assertEqual(refused.status_code, 400, office_email)
+            self.assertIn(says, text)
+            self.assertEqual(text.count(says), 1)  # said in the pop-up, not behind it as well
+            self.assertIn('class="invite open" id="new"', text)
+            self.assertIn('name="name" value="Riverside"', text)
+        self.assertEqual(len(router.all()), 1)
+        sent_before = len(mailer.sent)
+        added = new(name="Riverside", office_name="  Sr   Office ", office_email=" Office@Riverside.Example ")
+        text = html.unescape(added.get_data(as_text=True))
+        self.assertEqual(added.status_code, 200)
+        self.assertIn("Added Riverside. Sr Office has been emailed an invite at office@riverside.example to be its Office.", text)
+        self.assertIn(">Office invited: Sr Office<", text)
+        self.assertNotIn("devbar", text)  # still the schools page, with no school open
+        self.assertNotIn("linkbox", text)
+        # The invite is the school's own: its number in the link, its name in the email, the developer as sender.
+        self.assertEqual(len(mailer.sent), sent_before + 1)
+        to, _, body = mailer.sent[-1]
+        self.assertEqual(to, "office@riverside.example")
+        self.assertIn("Developer has given you a staff account on Ilmi for Riverside", body)
+        self.assertIn("Role: Office", body)
+        link = mailer.link()
+        self.assertTrue(link.startswith("/invite/2."), link)
+        # The developer's own page didn't pick up the school's title on the way.
+        self.assertNotIn("<small>Riverside</small>", added.get_data(as_text=True))
+        office = app.test_client()
+        self.assertEqual(self.form(office, link, link, password="riverside-office-pass-1",
+                                   confirm="riverside-office-pass-1").status_code, 302)
+        me = self.me(office)
+        self.assertEqual((me["role"], me["name"], me["site"]), ("admin", "Sr Office", "Riverside"))
+        self.assertEqual(office.get("/admin/users").status_code, 200)
+        self.assertEqual(office.get("/schools").status_code, 404)
+        self.assertIn("Office: Sr Office", developer.get("/schools").get_data(as_text=True))
+        # It is in that school's own records, under the developer's name, and nowhere in the first school's.
+        activity = office.get("/admin/activity").get_data(as_text=True)
+        self.assertIn("Invited a user", activity)
+        self.assertIn("Developer", activity)
+        self.assertEqual(self.query_app(app, 1, "SELECT COUNT(*) AS n FROM users WHERE email LIKE ?", ("%riverside%",))[0]["n"], 0)
+        # A school can also be added with no Office, to set later.
+        bare = new(name="Eastside")
+        self.assertIn("It has no Office account yet", html.unescape(bare.get_data(as_text=True)))
+        self.assertEqual(self.query_app(app, 3, "SELECT COUNT(*) AS n FROM users")[0]["n"], 0)
+
+    def test_developer_sets_a_schools_office_account(self):
+        app = self.school_app()  # email isn't set up here, so links are shown to pass on
+        router = app.config["DB"]
+        second = router.create("Riverside")
+        with router.get(second).transaction() as tx:
+            teacher = tx.insert("INSERT INTO users (email, name, role, password_hash, created_at) VALUES (?, ?, ?, ?, 0)",
+                                ("teacher@riverside.example", "Sr Hafsa", "teacher", auth.hasher.hash("teacher-password-1")))
+            tx.execute("INSERT INTO classrooms VALUES ('yr1', ?, 1)", (json.dumps(dict(self.state, name="Yr1")),))
+            tx.execute("INSERT INTO classroom_members VALUES ('yr1', ?)", (teacher,))
+            tx.insert("INSERT INTO users (email, name, role, password_hash, created_at, disabled) VALUES (?, ?, ?, ?, 0, 1)",
+                      ("gone@riverside.example", "Br Gone", "teacher", "x"))
+        developer = self.sign_in(*DEVELOPER, app=app)
+        office = lambda school, **data: self.form(developer, "/schools", f"/schools/{school}/office", **data)
+        page = developer.get("/schools").get_data(as_text=True)
+        self.assertIn('action="/schools/2/office"', page)
+        self.assertIn("This school has no Office account yet.", page)
+        # Someone new: an account in that school with an invite link, shown here because no email can be sent.
+        invited = office(2, office_name="Sr Khadijah", office_email="khadijah@riverside.example")
+        text = html.unescape(invited.get_data(as_text=True))
+        self.assertEqual(invited.status_code, 200)
+        self.assertIn("Sr Khadijah now has an Office account at Riverside. Send them the link below", text)
+        link = re.search(r'readonly value="https?://[^/]+(/invite/[^"]+)"', text).group(1)
+        self.assertTrue(link.startswith("/invite/2."), link)
+        self.assertIn("khadijah@riverside.example", text)
+        self.assertIn('<span class="pill grey">Invited</span>', text)
+        visitor = app.test_client()
+        self.assertEqual(self.form(visitor, link, link, password="riverside-office-pass-1",
+                                   confirm="riverside-office-pass-1").status_code, 302)
+        self.assertEqual(self.me(visitor)["role"], "admin")
+        # Setting the same person again changes nothing and makes no new link.
+        again = office(2, office_name="Sr Khadijah", office_email="khadijah@riverside.example")
+        self.assertIn("is now an Office account at Riverside", again.get_data(as_text=True))
+        self.assertNotIn("linkbox", again.get_data(as_text=True))
+        # Someone who already has an account at the school is given the Office role, and keeps their password.
+        hafsa = self.sign_in("teacher@riverside.example", "teacher-password-1", app=app)
+        self.assertEqual(self.me(hafsa)["role"], "teacher")
+        promoted = office(2, office_name="Whoever", office_email="Teacher@Riverside.Example")
+        self.assertIn("Sr Hafsa is now an Office account at Riverside. They sign in with the password they already have.",
+                      promoted.get_data(as_text=True))
+        self.assertEqual(self.me(hafsa)["role"], "admin")
+        self.assertEqual(self.query_app(app, 2, "SELECT COUNT(*) AS n FROM classroom_members")[0]["n"], 0)
+        tiles = developer.get("/schools").get_data(as_text=True)
+        self.assertIn("Office: Sr Hafsa, Sr Khadijah", tiles)
+        self.assertIn('<span class="pill">Signed in</span>', tiles)
+        # Refused: another school's account, the developer's own email, an account that is turned off, a bad email,
+        # a school that isn't there. The pop-up comes back open with what was typed.
+        for school, email, says in ((2, ADMIN[0], "already has an account at First school"),
+                                    (1, "khadijah@riverside.example", "already has an account at Riverside"),
+                                    (2, DEVELOPER[0], "your own developer email"),
+                                    (2, "gone@riverside.example", "is turned off"), (2, "nope", "valid email address")):
+            refused = office(school, office_name="Someone", office_email=email)
+            text = html.unescape(refused.get_data(as_text=True))
+            self.assertEqual(refused.status_code, 400, email)
+            self.assertIn(says, text)
+            self.assertIn(f'class="invite open" id="manage-{school}"', text)
+            self.assertIn('name="office_name" value="Someone"', text)
+        self.assertEqual(office(9, office_name="Someone", office_email="s@example.com").status_code, 404)
+        # Only the developer sets a school's Office.
+        first = self.sign_in(*ADMIN, app=app)
+        self.assertEqual(self.form(first, "/account", "/schools/2/office", office_name="Me", office_email=ADMIN[0]).status_code, 404)
+        self.assertEqual(self.form(hafsa, "/account", "/schools/2/office", office_name="X", office_email="x@example.com").status_code, 404)
+        self.assertEqual(self.query_app(app, 2, "SELECT COUNT(*) AS n FROM users WHERE role = 'admin' AND developer = 0")[0]["n"], 2)
+
+    def test_existing_account_becomes_the_developer(self):
+        # The site as it was before there were schools: one Office account, with records, a picture and history.
+        self.assertEqual(self.write().status_code, 200)
+        self.assertEqual(self.upload_picture(self.client, self.picture()).status_code, 200)
+        self.add_user("t@example.com", classes=["yr3-a"])
+        before = self.client.get_cookie("safar").value
+        app = create_app(dict(self.config, DEVELOPER_EMAIL=ADMIN[0].upper()))
+        # The same email and password now sign in the developer; the earlier sign-in has ended.
+        old = app.test_client()
+        old.set_cookie("safar", before)
+        self.assertEqual(old.get("/api/classes", headers=self.headers).status_code, 401)
+        developer = self.sign_in(*ADMIN, app=app)
+        self.assertEqual(developer.get("/").headers["Location"], "/schools")
+        self.assertTrue(developer.get_cookie("safar").value.startswith("0."))
+        account = developer.get("/account").get_data(as_text=True)
+        self.assertIn("(Developer)", account)
+        self.assertIn('src="/account/avatar/picture?v=', account)
+        self.assertEqual(developer.get("/account/avatar/picture").mimetype, "image/jpeg")
+        # Their account in the school became the stand-in, so its history stays theirs.
+        row = self.query_app(app, 1, "SELECT developer, password_hash FROM users WHERE email = ?", (ADMIN[0],))[0]
+        self.assertEqual((row["developer"], row["password_hash"]), (1, None))
+        self.open_school(developer, 1)
+        self.assertEqual(self.me(developer)["avatar"][:24], "/account/avatar/picture?")
+        self.assertEqual(list(self.records(developer)), ["yr3-a"])
+        self.assertIn("t@example.com", developer.get("/admin/users").get_data(as_text=True))
+        # The school's other accounts carry on as they were, and a second start changes nothing.
+        teacher = self.sign_in("t@example.com", "teacher-password-1", app=app)
+        self.assertEqual(list(self.records(teacher)), ["yr3-a"])
+        again = create_app(dict(self.config, DEVELOPER_EMAIL=ADMIN[0]))
+        self.assertEqual(self.sign_in(*ADMIN, app=again).get("/schools").status_code, 200)
+        with again.config["DB"].control.transaction() as tx:
+            self.assertEqual(tx.execute("SELECT COUNT(*) AS n FROM users").fetchone()["n"], 1)
+
+    def test_only_the_developer_email_is_the_developer(self):
+        app = self.school_app()
+        developer = self.sign_in(*DEVELOPER, app=app)
+        self.assertEqual(developer.get("/schools").status_code, 200)
+        config = {k: v for k, v in app.config.items() if k != "DB"}
+        # Without the variable there is no developer: the account is turned off and its sign-in ends.
+        without = create_app(dict(config, DEVELOPER_EMAIL=""))
+        stale = without.test_client()
+        stale.set_cookie("safar", developer.get_cookie("safar").value)
+        self.assertEqual(stale.get("/schools").status_code, 302)
+        self.assertEqual(self.sign_in(*DEVELOPER, app=without).last.status_code, 401)
+        self.assertEqual(self.sign_in(*ADMIN, app=without).last.status_code, 302)
+        # Another email becomes the developer; the first stays off.
+        other = create_app(dict(config, DEVELOPER_EMAIL="second@example.com", DASHBOARD_PASSWORD="second-developer-pass-1"))
+        self.assertEqual(self.sign_in(*DEVELOPER, app=other).last.status_code, 401)
+        second = self.sign_in("second@example.com", "second-developer-pass-1", app=other)
+        self.assertEqual(second.get("/schools").headers["Location"], "/account")  # chooses their own password first
+        # The variable back again turns the first account back on.
+        back = create_app(dict(config, DEVELOPER_EMAIL=DEVELOPER[0]))
+        self.assertEqual(self.sign_in(*DEVELOPER, app=back).get("/schools").status_code, 200)
+        self.assertEqual(self.sign_in("second@example.com", "second-developer-pass-1", app=back).last.status_code, 401)
+
+    def test_a_site_can_start_with_only_a_developer(self):
+        config = dict(self.config, DATABASE_URL=self.database_url(), DATA_DIR=Path(self.temp.name) / "fresh",
+                      ADMIN_EMAIL="", DEVELOPER_EMAIL=DEVELOPER[0], DASHBOARD_PASSWORD=DEVELOPER[1])
+        app = create_app(config)
+        developer = self.sign_in(*DEVELOPER, app=app)
+        self.assertEqual(developer.get("/").headers["Location"], "/account")  # the setup password is changed first
+        changed = self.form(developer, "/account", "/account/password", current=DEVELOPER[1],
+                            password="a developer passphrase", confirm="a developer passphrase")
+        self.assertEqual(changed.status_code, 200)
+        self.assertIn("Set the Office account", developer.get("/schools").get_data(as_text=True))
+        self.assertEqual(self.query_app(app, 1, "SELECT COUNT(*) AS n FROM users")[0]["n"], 0)
+
+    def test_sign_in_from_before_schools_still_works(self):
+        # A cookie from before there were schools has no school number: it is the first school's.
+        value = self.client.get_cookie("safar").value
+        self.assertTrue(value.startswith("1."))
+        old = self.app.test_client()
+        old.set_cookie("safar", value.split(".", 1)[1])
+        self.assertEqual(old.get("/api/classes", headers=self.headers).status_code, 200)
+        for bad in ("x." + value.split(".", 1)[1], "99." + value.split(".", 1)[1], "1.", ".", "1.nothing"):
+            old.set_cookie("safar", bad)
+            self.assertEqual(old.get("/api/classes", headers=self.headers).status_code, 401, bad)
+
+    def test_developer_signs_in_with_an_emailed_code(self):
+        mailer = FakeMailer()
+        app = self.school_app(MAILER=mailer)
+        client = app.test_client()
+        page = client.get("/login")
+        asked = client.post("/login", data={"csrf": csrf_of(page), "email": DEVELOPER[0], "password": DEVELOPER[1]})
+        self.assertIn("Check your email", asked.get_data(as_text=True))
+        self.assertTrue(client.get_cookie("safar-code").value.startswith("0."))
+        code = re.search(r"\b(\d{6})\b", mailer.sent[-1][2]).group(1)
+        done = client.post("/login/code", data={"csrf": csrf_of(asked), "code": code})
+        self.assertEqual(done.status_code, 302)
+        self.assertEqual(client.get("/schools").status_code, 200)
+        # "Forgotten your password?" works for the developer too: the link names the control database.
+        visitor = app.test_client()
+        self.assertEqual(self.form(visitor, "/forgot", "/forgot", email=DEVELOPER[0]).status_code, 200)
+        link = mailer.link()
+        self.assertTrue(link.startswith("/reset/0."), link)
+        self.assertEqual(self.form(visitor, link, link, password="a new developer passphrase",
+                                   confirm="a new developer passphrase").status_code, 302)
+        self.assertEqual(visitor.get("/schools").status_code, 200)
+        self.assertEqual(client.get("/schools").status_code, 302)  # the earlier sign-in ended with the old password
+        for bad in ("/reset/x.abc", "/reset/²³.abc", "/invite/99.abc", "/tv/0.abc", "/present/-1.abc"):
+            self.assertIn(app.test_client().get(bad).status_code, (404, 410), bad)
+
+    def test_weekly_summary_goes_to_each_schools_own_office(self):
+        mailer = FakeMailer()
+        app = self.school_app(MAILER=mailer, LOGIN_CODES=False, HELP_SUMMARY_TO="first@example.com")
+        router = app.config["DB"]
+        second = router.create("Riverside")
+        with router.get(second).transaction() as tx:
+            tx.execute("INSERT INTO users (email, name, role, password_hash, created_at) VALUES "
+                       "('office@riverside.example', 'Sr Office', 'admin', 'x', 0)")
+        sunday = datetime(2026, 11, 8, 12, 30, tzinfo=auth.LONDON).timestamp()
+        for school in router.all():
+            with app.test_request_context(), router.use(school["id"]):
+                self.assertTrue(helpdesk.send_summary_if_due(sunday))
+                self.assertFalse(helpdesk.send_summary_if_due(sunday))
+        self.assertEqual([to for to, _, _ in mailer.sent], ["first@example.com", "office@riverside.example"])
+
+
+class SQLiteTest(SchoolTests, AssistantTests, DashboardTests, unittest.TestCase):
     def database_url(self):
         return ""
 
@@ -3014,7 +3493,7 @@ class SQLiteTest(AssistantTests, DashboardTests, unittest.TestCase):
 
 
 @unittest.skipUnless(os.environ.get("TEST_DATABASE_URL"), "set TEST_DATABASE_URL to test PostgreSQL")
-class PostgresTest(AssistantTests, DashboardTests, unittest.TestCase):
+class PostgresTest(SchoolTests, AssistantTests, DashboardTests, unittest.TestCase):
     def database_url(self):
         url = os.environ["TEST_DATABASE_URL"]
         schema = "test_" + uuid.uuid4().hex
@@ -3022,8 +3501,11 @@ class PostgresTest(AssistantTests, DashboardTests, unittest.TestCase):
             db.execute(f'CREATE SCHEMA "{schema}"')
 
         def drop():
+            # The control database and each further school have schemas of their own, named after this one.
             with psycopg.connect(url, autocommit=True) as db:
-                db.execute(f'DROP SCHEMA "{schema}" CASCADE')
+                for (name,) in db.execute("SELECT nspname FROM pg_namespace WHERE nspname = %s OR nspname LIKE %s",
+                                          (schema, schema + r"\_%")).fetchall():
+                    db.execute(f'DROP SCHEMA "{name}" CASCADE')
         self.addCleanup(drop)
         return make_conninfo(url, options=f"-c search_path={schema}")
 

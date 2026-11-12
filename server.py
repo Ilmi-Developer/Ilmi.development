@@ -1,12 +1,16 @@
-"""Ilmi's server: staff sign-in and shared class records.
+"""Ilmi's server: staff sign-in and shared class records, for many schools.
 
 Records are kept in PostgreSQL when DATABASE_URL is set (on Railway, a reference
-to the PostgreSQL service's DATABASE_URL). Without it they are kept in a SQLite
-file in DATA_DIR, which is meant for running locally. See db.py.
+to the PostgreSQL service's DATABASE_URL). Without it they are kept in SQLite
+files in DATA_DIR, which is meant for running locally. See db.py.
 
-Each classroom is one row of the `classrooms` table. Classrooms are created from
-the dashboard (CSV upload) by an admin. Teachers see and edit only the
-classrooms an admin has assigned to them. Every save and delete is recorded in
+Every school has a database of its own, and each request works in the database
+of the school its sign-in or link belongs to (schools.py). In the code below,
+`database` is all of them: `database.transaction()` opens the current school's.
+
+Each classroom is one row of its school's `classrooms` table. Classrooms are
+created from the dashboard (CSV upload) by the school's Office (role "admin").
+Teachers see and edit only the classrooms the Office has assigned to them. Every save and delete is recorded in
 `classroom_history` and `audit_log`, which are kept for RETENTION_DAYS.
 """
 import base64
@@ -38,8 +42,9 @@ import house_extra
 import quran_coins
 import memo_import
 import helpdesk
+import schools
 import tv
-from db import DB_ERRORS, Database
+from db import DB_ERRORS
 from mailer import Mailer
 
 ROOT = Path(__file__).resolve().parent
@@ -65,15 +70,21 @@ HOUSE_POINT_REASONS = {"bk": "tr", "lv": "tb", "hw": "tg", "ec": "tg", "cp": "tg
 # Reachable without signing in. /welcome is Ilmi's start page, where anyone signed out arrives.
 PUBLIC = {"/login", "/login/code", "/forgot", "/healthz", "/logo.png", "/auth.css", "/intro.js", "/code.js", "/favicon.png",
           "/favicon.ico", "/welcome", "/welcome.css", "/welcome.js", "/wash.js"}
-# Atkinson Hyperlegible Next stays for the TV display; the dashboard and admin pages use Figtree for text, EB Garamond
-# for titles and figures, Cormorant for the Ilmi wordmark and large italic lines, and Amiri for Arabic: the letters of
-# علمي for the name, and the start page's hadith and values in a second subset (see DESIGN.md and tools/art/fonts.py).
-FONTS = {"atkinson-next-latin.woff2", "atkinson-next-latin-ext.woff2", "figtree-latin.woff2", "figtree-latin-ext.woff2",
+# Atkinson Hyperlegible Next stays for the TV display; the dashboard and admin pages use Lilita One for text, titles
+# and figures (with Ilmi Translit for the transliteration letters it lacks, tools/art/translit.py), Cormorant for the
+# Ilmi wordmark and large italic lines, and Amiri for Arabic: the letters of علمي for the name, and the start page's
+# hadith and values in a second subset (see DESIGN.md and tools/art/fonts.py). Figtree and EB Garamond, the faces
+# before Lilita One, are what a letter falls back to when Lilita One doesn't have it.
+FONTS = {"lilita-one.woff2", "ilmi-translit.woff2",
+         "atkinson-next-latin.woff2", "atkinson-next-latin-ext.woff2", "figtree-latin.woff2", "figtree-latin-ext.woff2",
          "garamond-latin.woff2", "garamond-latin-ext.woff2", "cormorant-latin.woff2", "cormorant-latin-ext.woff2",
          "cormorant-italic-latin.woff2", "cormorant-italic-latin-ext.woff2", "amiri-ilmi.woff2", "amiri-text.woff2"}
 # The watercolour washes and paper texture (static/art), public like the fonts.
 ART = {"paper.webp", "wash-band.webp", "wash-cloud.webp", "wash-low.webp", "wash-mist.webp", "wash-page.webp", "wash-panel.webp",
        "wash-rail.webp", "wash-soft.webp", "splat-a.webp", "splat-b.webp", "splat-c.webp"}
+# The scripts and styles of the signed-in pages: they need a sign-in but belong to no school, so the developer's own
+# pages can load them before any school is open.
+SHELL_FILES = {"/developer.css", "/menu.js", "/dock.js", "/warm-tooltip.js", "/avatar.js", "/theme.js"}
 # /tv/<token> is a TV screen link; tv.py checks the token.
 PUBLIC_PREFIXES = ("/invite/", "/reset/", "/tv/", "/present/", "/fonts/", "/art/")
 
@@ -272,7 +283,7 @@ ERRORS = {400: ("Something went wrong", "The request couldn't be used. Go back, 
           413: ("Too large", "That was too large to send. Files must be under 2 MB."),
           429: ("Too many requests", "Wait a few minutes, then try again."),
           500: ("Something went wrong", "The dashboard hit a problem. Try again in a minute; if it keeps happening, "
-                                        "tell an administrator.")}
+                                        "tell the office.")}
 
 
 class RailwayProxy:
@@ -317,6 +328,9 @@ def create_app(test_config=None):
         DATABASE_URL=os.environ.get("DATABASE_URL", ""),
         DATA_DIR=os.environ.get("DATA_DIR", str(ROOT / ".local-data")),
         ADMIN_EMAIL=os.environ.get("ADMIN_EMAIL", ""),
+        # The one developer account: it sees every school and can add schools (schools.py). Nobody can be given
+        # this role from the site; it belongs to this email alone. Without it there is no developer.
+        DEVELOPER_EMAIL=os.environ.get("DEVELOPER_EMAIL", "").strip(),
         DASHBOARD_PASSWORD=os.environ.get("DASHBOARD_PASSWORD", ""),
         ADMIN_RESET_PASSWORD=os.environ.get("ADMIN_RESET_PASSWORD", ""),
         COOKIE_SECURE=os.environ.get("COOKIE_SECURE", "1") != "0",
@@ -359,9 +373,12 @@ def create_app(test_config=None):
         # Railway's edge proxy sets X-Forwarded-Proto and X-Forwarded-Host to the public request,
         # and X-Real-IP to the client's address (used for sign-in limits and the activity log).
         app.wsgi_app = RailwayProxy(ProxyFix(app.wsgi_app, x_proto=1, x_host=1))
-    database = Database(app.config["DATABASE_URL"].strip(), app.config["DATA_DIR"], app.config.get("TESTING"))
+    database = schools.Schools(app.config["DATABASE_URL"].strip(), app.config["DATA_DIR"], app.config.get("TESTING"))
     database.migrate()
-    auth.bootstrap_admin(database, app.config["ADMIN_EMAIL"], app.config["DASHBOARD_PASSWORD"])
+    database.ensure_developer(app.config["DEVELOPER_EMAIL"], app.config["DASHBOARD_PASSWORD"])
+    auth.bootstrap_admin(database, app.config["ADMIN_EMAIL"], app.config["DASHBOARD_PASSWORD"],
+                         developer=app.config["DEVELOPER_EMAIL"])
+    database.index_emails(auth.norm_email(app.config["DEVELOPER_EMAIL"]))
     auth.reset_admin(database, app.config["ADMIN_EMAIL"], app.config["ADMIN_RESET_PASSWORD"])
     app.config["DB"] = database
     if not app.config.get("TESTING"):
@@ -374,6 +391,7 @@ def create_app(test_config=None):
     app.register_blueprint(avatars.bp)
     app.register_blueprint(themes.bp)
     app.register_blueprint(site_settings.bp)
+    app.register_blueprint(schools.bp)
     app.register_blueprint(tv.bp)
     app.register_blueprint(cleanup.bp)
     app.register_blueprint(set_houses.bp)
@@ -413,10 +431,18 @@ def create_app(test_config=None):
     def wants_json():
         return request.path.startswith("/api/")
 
+    @app.teardown_request
+    def leave_school(error=None):
+        # Outside a request nothing is left pointing at the last request's school.
+        database.reset()
+
     @app.before_request
     def require_login():
+        database.reset()
         if request.path == "/healthz":
             return None
+        # No school yet: auth.load_session works out which one from the sign-in cookie or the link.
+        database.set(schools.CONTROL)
         if request.method not in ("GET", "HEAD", "OPTIONS"):
             # Writes only from this site's own pages.
             origin = request.headers.get("Origin")
@@ -426,8 +452,9 @@ def create_app(test_config=None):
         auth.load_session()
         if time.time() - pruned["at"] > 3600:
             pruned["at"] = time.time()
-            auth.prune(database, app.config["RETENTION_DAYS"])
-            assistant.prune(database, app.config["ASSISTANT_LOG_DAYS"])
+            for each in database.databases():
+                auth.prune(each, app.config["RETENTION_DAYS"])
+                assistant.prune(each, app.config["ASSISTANT_LOG_DAYS"])
         public = request.path in PUBLIC or request.path.startswith(PUBLIC_PREFIXES)
         if not g.user and not public:
             if wants_json() or request.method != "GET":
@@ -439,6 +466,12 @@ def create_app(test_config=None):
             if wants_json():
                 return jsonify(error="Choose a new password before continuing."), 403
             return redirect("/account")
+        # The developer with no school open has their own pages and nothing else: every other page is a school's.
+        if g.user and g.user["role"] == "developer" and not public and not auth.developer_home(request.path) \
+                and request.path not in SHELL_FILES:
+            if wants_json() or request.method != "GET":
+                return jsonify(error="Open a school first."), 403
+            return redirect("/schools")
         if wants_json() and request.method not in ("GET", "HEAD", "OPTIONS"):
             # JSON plus this custom header require a CORS preflight cross-origin.
             # No CORS access is granted by this server.
@@ -466,7 +499,7 @@ def create_app(test_config=None):
             EMAIL_PREVIEW_CSP if request.path.startswith("/admin/email/preview/") else \
             ACCOUNT_CSP if request.path.startswith("/account") else \
             CODE_CSP if request.path in ("/login", "/login/code") else \
-            LOGIN_CSP if request.path.startswith("/admin/") or request.path == "/welcome" else PAGE_CSP
+            LOGIN_CSP if request.path.startswith(("/admin/", "/schools")) or request.path == "/welcome" else PAGE_CSP
         if app.config["COOKIE_SECURE"]:
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return response
@@ -474,7 +507,7 @@ def create_app(test_config=None):
     @app.get("/healthz")
     def health():
         try:
-            with database.transaction() as db:
+            with database.first.transaction() as db:
                 db.execute("SELECT COUNT(*) FROM classrooms").fetchone()
             return jsonify(status="ok")
         except DB_ERRORS:
@@ -501,6 +534,11 @@ def create_app(test_config=None):
         css = (ROOT / "src" / "tokens.css").read_text(encoding="utf-8") + "\n" + \
             (ROOT / "static" / "auth.css").read_text(encoding="utf-8")
         return Response(css, mimetype="text/css")
+
+    # The developer's bar across the top of a school's pages (schools.py); nobody else's pages link to it.
+    @app.get("/developer.css")
+    def developer_css():
+        return Response((ROOT / "static" / "developer.css").read_text(encoding="utf-8"), mimetype="text/css")
 
     @app.get("/code.js")
     def code_js():
@@ -586,12 +624,18 @@ def create_app(test_config=None):
               "fresh": fresh, "stay": g.session["remember"], "initial": avatars.initial(g.user["name"]),
               "avatar": avatars.url(g.user["id"], g.user["avatar_at"]),
               "tour": not toured, "assistant": assistant.enabled(app), "site": site_settings.title()}
+        # The developer's bar: the school they have opened and the view they chose (railway-storage.js draws it).
+        bar = schools.developer_bar()
+        if bar:
+            me["dev"] = {"school": bar["school"], "view": bar["view"], "views": bar["views"]}
         html = (ROOT / "Master_Dashboard_standalone.html").read_text(encoding="utf-8")
         # The site title under Ilmi in the menu's top left corner (site_settings.py); with none, just Ilmi.
         if me["site"]:
             html = html.replace('<small class="org" hidden></small>', f'<small class="org">{escape(me["site"])}</small>', 1)
         html = html.replace("<script>", f"<script>window.RAILWAY=true;window.ME={script_json(me)};{TAB_GUARD}</script>\n<script>", 1)
         look = themes.current(g.user)
+        if bar:
+            html = html.replace("</style>", '</style>\n<link rel="stylesheet" href="/developer.css">', 1)
         # has-dock: the menu is the dock (static/dock.js), so the side menu never shows first.
         html = html.replace("<html lang=\"en\">", f"<html lang=\"en\" class=\"has-dock\"{themes.html_attrs(look)}>", 1)
         html = html.replace('<meta name="theme-color" content="#4b552f">', f'<meta name="theme-color" content="{look["menu"]}">', 1)
@@ -628,8 +672,8 @@ def create_app(test_config=None):
         return g.user["role"] == "admin"
 
     def sees_all():
-        """Admins and HeadTeachers see and record on every classroom."""
-        return g.user["role"] in auth.SEES_ALL
+        """The Office and HeadTeachers see and record on every classroom (and the developer, in any view)."""
+        return auth.sees_all()
 
     def can_edit(db, class_id):
         return sees_all() or db.execute("SELECT 1 FROM classroom_members WHERE class_id = ? AND user_id = ?",
@@ -706,10 +750,10 @@ def create_app(test_config=None):
                     current = db.execute("SELECT json FROM classrooms WHERE id = ? AND revision = ?",
                                          (class_id, document["revision"])).fetchone()
                     if current and any(len(json.loads(current["json"]).get(k, [])) != len(state.get(k, [])) for k in ("S", "X")):
-                        return jsonify(error="Only an admin can add or remove students."), 403
+                        return jsonify(error="Only the Office can add or remove students."), 403
                     # House points are given by admins only (on the Record page and Counted coins), not by HeadTeachers or teachers.
                     if current and coins(state) - coins(json.loads(current["json"])):
-                        return jsonify(error="Only an admin can give house points."), 403
+                        return jsonify(error="Only the Office can give house points."), 403
                 saved = update_classroom(db, class_id, state, document["revision"], g.user["id"])
                 if saved:
                     return jsonify(revision=saved)
@@ -728,7 +772,7 @@ def create_app(test_config=None):
         if not CLASS_ID.fullmatch(class_id) or not isinstance(document, dict) or type(document.get("revision")) is not int:
             abort(400)
         if not is_admin():
-            return jsonify(error="Only an admin can delete a classroom."), 403
+            return jsonify(error="Only the Office can delete a classroom."), 403
         with database.transaction() as db:
             cursor = db.execute("DELETE FROM classrooms WHERE id = ? AND revision = ?", (class_id, document["revision"]))
             if cursor.rowcount:

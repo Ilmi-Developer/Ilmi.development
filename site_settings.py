@@ -1,4 +1,4 @@
-"""Settings for the whole site, which admins choose on Account.
+"""Settings for a whole school, which its Office chooses on Account.
 
 For now there is one: the site title, usually the school's or madrasah's name. It shows under Ilmi in the top left
 corner of every page (the side menu, the sign-in pages and the start page), on the TV and in emails. With no title
@@ -9,6 +9,7 @@ import re
 from flask import Blueprint, current_app, g, request
 
 import auth
+import schools
 from db import DB_ERRORS
 
 bp = Blueprint("site", __name__)
@@ -39,12 +40,23 @@ def write(tx, key, value):
 
 @bp.app_template_global("site_title")
 def title():
-    """The site title, or "" when none is set. Read once per request; a page still renders (with just Ilmi) when
-    the database can't be reached, such as the error page shown then."""
+    """The current school's site title, or "" when none is set. Read once per request; a page still renders (with
+    just Ilmi) when the database can't be reached, such as the error page shown then.
+
+    Signed out, a page belongs to no school and shows just Ilmi, with one exception: while the site has a single
+    school, the sign-in and start pages carry its title, as they did before there could be more."""
     if "site_title" not in g:
         try:
-            with current_app.config["DB"].transaction() as tx:
-                g.site_title = read(tx, "title")
+            router = current_app.config["DB"]
+            database = router.current()
+            if router.current_id() == schools.CONTROL:
+                only = router.all() if not g.get("user") else []
+                database = router.get(only[0]["id"]) if len(only) == 1 else None
+            if database is None:
+                g.site_title = ""
+            else:
+                with database.transaction() as tx:
+                    g.site_title = read(tx, "title")
         except DB_ERRORS:
             current_app.logger.warning("Couldn't read the site title; showing just Ilmi.")
             return ""
@@ -70,6 +82,9 @@ def save_title():
         if text != before:
             write(tx, "title", text)
             auth.audit(tx, "site.title", detail={"title": text})
+    if text and text != before:
+        # The developer's list of schools shows each school by this name.
+        auth.db().rename(auth.db().current_id(), text, title_too=False)
     g.site_title = text
     notice = (f"Saved. Every page now shows “{text}” under Ilmi in the top left corner." if text
               else "Saved. Pages now show just Ilmi in the top left corner.")

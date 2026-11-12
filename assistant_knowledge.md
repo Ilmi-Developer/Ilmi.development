@@ -12,10 +12,10 @@ checked.
 The website is Ilmi (علمي, "my knowledge"), the madrasah manager. Everyone signs in with their own email and password. What you see depends on
 your role:
 
-- **Teachers** see only the classes an administrator has given them.
+- **Teachers** see only the classes the Office has given them.
 - **HeadTeachers** see every class, and also have Record, House points, Rankings, Presenter and FAQs. They have none
   of the Administration pages.
-- **Administrators** see everything, including the Administration pages (Students, Manage users, Activity, Class
+- **The Office** (the account in charge of the school's settings) sees everything, including the Administration pages (Students, Manage users, Activity, Class
   history, Counted coins, Spreadsheet, Import, FAQs, Assistant requests and Presenter for the TV screens).
 
 The menu is on the left on a computer. On a phone it is the bar at the bottom of the screen (the dock); **More**
@@ -28,7 +28,7 @@ opens the full menu.
 3. Tick **Stay signed in for 30 days** if this is your own device. Leave it unticked on a shared computer.
 4. Press **Sign in**.
 
-- Administrators are then emailed a 6-digit code. Type it on the **Check your email** page. If no email arrives
+- The Office is then emailed a 6-digit code. Type it on the **Check your email** page. If no email arrives
   after a minute, check your spam folder or sign in again for a new code.
 - If you didn't tick "Stay signed in", closing the browser signs you out. You are also signed out 20 minutes after
   the dashboard was last open, and after 12 hours at most.
@@ -43,13 +43,13 @@ opens the full menu.
 3. Open the email and follow the link within 1 hour. Choose a new password (at least 12 characters) and type it twice.
 4. Using the link signs you out on your other devices.
 
-If no email comes, check your spam folder. If reset emails aren't set up, the page says so: ask an administrator to
+If no email comes, check your spam folder. If reset emails aren't set up, the page says so: ask the Office to
 send you a reset link from Manage users. Your old password keeps working until you use the link.
 
 ### First sign-in (invite)
 
-An administrator invites you from Manage users. You get a link, usually by email, to choose your password. Invite
-links work once and expire after 72 hours; ask an administrator for a new one if yours has expired.
+The Office invites you from Manage users. You get a link, usually by email, to choose your password. Invite
+links work once and expire after 72 hours; ask the Office for a new one if yours has expired.
 
 ### Your account (Account page)
 
@@ -65,7 +65,7 @@ Open it with **Account** under your name at the bottom of the menu.
 
 ### Finding your class
 
-1. Press **Classes** in the menu. Teachers see **Your classes**; HeadTeachers and administrators see every class.
+1. Press **Classes** in the menu. Teachers see **Your classes**; HeadTeachers and the Office see every class.
 2. Press a class's card to open it. On the overview, a teacher can also press **Open tracker** to go straight to
    their class.
 3. Inside a class, the tabs along the top are **Quran**, **Memo**, **Progress** and **Settings**.
@@ -74,12 +74,12 @@ Open it with **Account** under your name at the bottom of the menu.
 Classes are shown with the year, class letter and teacher's title in full. For example, the class stored as
 "Yr3-A-QM-Br Tariq" shows as "Yr3A Ustadh Tariq".
 
-If you see "No classrooms yet", an administrator hasn't added you to your classes yet. Ask them to tick your classes
+If you see "No classrooms yet", the Office hasn't added you to your classes yet. Ask the Office to tick your classes
 on Manage users.
 
 ### The overview
 
-**Overview** is the first page. Teachers see a **Class overview**; HeadTeachers and administrators see the **School
+**Overview** is the first page. Teachers see a **Class overview**; HeadTeachers and the Office see the **School
 overview**. It shows who needs attention (for example students with no pass in 3 or more weeks), this term's
 activity, the houses and top classes, and where students are in the book. Press a section's title to see its full
 list. [CHECK: confirm the sections a teacher's overview shows]
@@ -99,7 +99,7 @@ list. [CHECK: confirm the sections a teacher's overview shows]
 - Class days are Saturdays and Sundays. The calendar button (**Go to a class day**) goes to any day.
 - **Last 6 weeks** and **All** choose how far back the days go.
 - The **Full sheet** button shows every day at once, on a computer only.
-- A score with a gold border is a level test score from the Record page. Only an admin can change it.
+- A score with a gold border is a level test score from the Record page. Only the Office can change it.
 
 ### Merits, warnings and statistics (the menu on a student's name)
 
@@ -142,7 +142,7 @@ The Memo tab has two views, **Tracker** and **Students**, switched at the top ri
 Absences are shared with the Quran tab: a student marked absent on one shows as absent on the other.
 
 The Tracker marks that a test happened. **The pass itself is recorded on the Record page** by whoever tests the
-student (an administrator or HeadTeacher), or added as a past pass on the Progress tab (below). [CHECK]
+student (the Office or a HeadTeacher), or added as a past pass on the Progress tab (below). [CHECK]
 
 **Students**: each student's position and passes. Students who should pass soon (three weeks or more since their last
 pass) come first. Press a student for their profile, where **Details** shows their details and **History** shows their
@@ -177,9 +177,9 @@ Removing a pass takes one off the student's pass count. It doesn't change their 
 - **First class day**: the Quran and Memo sheets start from this day.
 - **Clear warnings** removes every student's warning in this class.
 - **Reset all scores** sets every student's passes and merits back to zero. Fails, Quran scores and house tokens are
-  kept. This can't be undone from the class page, so ask an administrator first. An administrator can restore an
+  kept. This can't be undone from the class page, so ask the Office first. The Office can restore an
   earlier version from Class history. [CHECK]
-- Only administrators can add or remove students, or delete a class. A teacher sees "An administrator adds students
+- Only the Office can add or remove students, or delete a class. A teacher sees "The office adds students
   to your class."
 
 ### Presenter (showing your class on the big screen)
@@ -202,11 +202,11 @@ At the bottom of a teacher's overview there is a **Help or Requests** button ("N
 3. Type your message and send it.
 
 The reply appears in the same pop-up, and a red dot on the button shows a reply you haven't opened. The assistant can
-also send a request to the administrators for you (see section C).
+also send a request to the Office for you (see section C).
 
 ### House points
 
-Teachers hand students physical house coins. Students put them in the box at the office, and an administrator counts
+Teachers hand students physical house coins. Students put them in the box at the office, and the Office counts
 them and adds each house's total on Counted coins. Coins aren't given on the dashboard. The three houses are
 **Makkah**, **Al-Aqsa** and **Madinah**. Teachers can see the whole school's house totals.
 
@@ -216,7 +216,7 @@ them and adds each house's total on Counted coins. Coins aren't given on the das
 | Blue | 20 |
 | Red (book completion) | 50 |
 
-### Record page (HeadTeachers and administrators)
+### Record page (HeadTeachers and the Office)
 
 The Record page records level tests and book completions when a student is tested.
 
@@ -239,11 +239,11 @@ starts a new line.
 - The square button stops an answer that's taking too long. **New chat** starts again.
 
 - Teachers and HeadTeachers: the assistant answers questions about the site, the syllabus and Islam, and can send a
-  request to the administrators. It can't see or change any student records.
-- Administrators: it can also look up and change student records. Every change is shown first and only happens when
-  the administrator presses **Confirm**. Changes can be undone from Class history.
+  request to the Office. It can't see or change any student records.
+- The Office: it can also look up and change student records. Every change is shown first and only happens when
+  the Office presses **Confirm**. Changes can be undone from Class history.
 - The conversation is forgotten when you close or reload the tab.
-- Each person can ask 30 questions an hour (administrators 60). Teachers and HeadTeachers also have a daily
+- Each person can ask 30 questions an hour (the Office 60). Teachers and HeadTeachers also have a daily
   allowance; when it's used up, Ask Ilmi says so, and it resets at midnight.
 
 ---
@@ -326,7 +326,7 @@ separately. Years 2 to 6 (and Year 1 or Reception) count as primary, and Years 7
 ## C. Requests and contacts
 
 The assistant can submit a request for you: a new feature, a change, or a problem report. It writes a one or two
-sentence summary, shows it to you, and sends it only after you confirm. Administrators see requests on **Assistant
+sentence summary, shows it to you, and sends it only after you confirm. The Office sees requests on **Assistant
 requests** and mark them done or declined. You can ask the assistant for the status of your own requests. Sending a
 request doesn't mean it will be approved.
 

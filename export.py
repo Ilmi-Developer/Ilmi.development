@@ -140,7 +140,7 @@ def gather(db):
     classes = [(row["id"], json.loads(row["json"])) for row in db.execute("SELECT id, json FROM classrooms").fetchall()]
     classes.sort(key=lambda c: natural(c[1].get("name", c[0])))
     users = db.execute("SELECT u.id, u.name, u.email, u.role, u.disabled, u.password_hash, u.created_at FROM users u "
-                       "ORDER BY u.role, u.name").fetchall()
+                       "WHERE u.developer = 0 ORDER BY u.role, u.name").fetchall()
     member_of = {}
     for row in db.execute("SELECT class_id, user_id FROM classroom_members").fetchall():
         member_of.setdefault(row["user_id"], []).append(row["class_id"])
@@ -221,7 +221,7 @@ def gather(db):
     sheets["stars"].rows.sort(key=lambda r: r[0], reverse=True)
     for u in users:
         status = "Turned off" if u["disabled"] else "Invited" if not u["password_hash"] else "Active"
-        sheets["staff"].add(u["name"], u["email"], {"admin": "Administrator", "head": "HeadTeacher"}.get(u["role"], "Teacher"),
+        sheets["staff"].add(u["name"], u["email"], {"admin": "Office", "head": "HeadTeacher"}.get(u["role"], "Teacher"),
                             "All classes" if u["role"] in ("admin", "head") else
                             ", ".join(sorted((names.get(c, c) for c in member_of.get(u["id"], [])), key=natural)),
                             status, when(u["created_at"] * 1000).date() if u["created_at"] else None)

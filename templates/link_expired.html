@@ -7,9 +7,9 @@
   <h1>This link has expired</h1>
   <p class="lede">{{ "Invite" if purpose == "invite" else "Password reset" }} links work once, and only for a limited time.</p>
   {% if purpose == "invite" %}
-  {% set contact_title = "Ask an administrator for a new invite" %}
+  {% set contact_title = "Ask the office for a new invite" %}
   {% set contact_subject = "Ilmi: new invite link" %}
-  {% set contact_fallback = "Ask an administrator to send you a new invite." %}
+  {% set contact_fallback = "Ask the office to send you a new invite." %}
   {% include "_contact.html" %}
   {% else %}
   <p><a class="btn primary" href="/forgot">Ask for a new link</a></p>

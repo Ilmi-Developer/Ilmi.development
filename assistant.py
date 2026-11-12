@@ -150,10 +150,10 @@ KNOWLEDGE BASE:
 {knowledge}
 """
 
-TEACHER_PROMPT = """You cannot see or change any student or classroom data. If asked about a specific student, or asked to change anything, explain that they can find or update it on the dashboard and how, or that an administrator can help. Offer to submit a request if a change needs an admin.
+TEACHER_PROMPT = """You cannot see or change any student or classroom data. If asked about a specific student, or asked to change anything, explain that they can find or update it on the dashboard and how, or that the Office can help. Offer to submit a request if a change needs the Office.
 """
 
-ADMIN_PROMPT = """You are talking to an administrator. You also have tools to look up and change student and classroom data.
+ADMIN_PROMPT = """You are talking to the school's Office (the account in charge of the school's settings, called an administrator in older notes). You also have tools to look up and change student and classroom data.
 
 How the syllabus maps to the data:
 - Targets 1 to 107 are the book (L1 T1 to L10 T14). After that, Juz item = target − 90, so target 108 is item 198 An-Naba (Juz 30), counting up to 332 (Juz 1). A higher item number means further progress.

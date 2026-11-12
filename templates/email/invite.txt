@@ -1,6 +1,6 @@
 Assalamu alaikum, {{ name }}
 
-{{ by if by else "An administrator" }} has given you a staff account on Ilmi{{ " for " ~ site_title() if site_title() }}, where we record each student's Quran progress, merits and house points.
+{{ by if by else "The office" }} has given you a staff account on Ilmi{{ " for " ~ site_title() if site_title() }}, where we record each student's Quran progress, merits and house points.
 
 Choose your password here:
 {{ link }}
@@ -9,7 +9,7 @@ Sign-in email: {{ email }}
 Role: {{ role_name(role) }}
 {% if role == "teacher" and rooms %}Your classrooms: {{ rooms|join(", ") }}
 {% endif %}
-The link works once and expires in {{ invite_hours }}. If it has expired, ask an administrator for a new invite, or use "Forgotten your password?" on the sign-in page: {{ forgot }}
+The link works once and expires in {{ invite_hours }}. If it has expired, ask the office for a new invite, or use "Forgotten your password?" on the sign-in page: {{ forgot }}
 
 You're getting this because an administrator invited {{ email }} to the dashboard. If you weren't expecting it, you can ignore this email.
 {% if support_email %}Questions? Email the school office at {{ support_email }}.

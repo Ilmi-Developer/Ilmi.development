@@ -4,7 +4,7 @@ Your sign-in code for Ilmi is:
 
 {{ code }}
 
-Type it on the sign-in page to finish signing in as an administrator. It works once, in the browser where you typed your password, and expires in {{ code_minutes }} minutes. Never share it: nobody from the school will ask you for it.
+Type it on the sign-in page to finish signing in. It works once, in the browser where you typed your password, and expires in {{ code_minutes }} minutes. Never share it: nobody from the school will ask you for it.
 
 Asked for: {{ at|when }} (UK time)
 

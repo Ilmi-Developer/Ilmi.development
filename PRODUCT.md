@@ -8,8 +8,12 @@ the design skills in `.claude/skills`. Correct it here if anything is wrong.
 - **Teachers** at the madrasah record passes, merits, fails,
   warnings, Quran scores, memo progress and house tokens for their class,
   usually between lessons and often on a laptop or phone.
-- **Administrators** watch whole-school performance, upload student lists,
-  manage staff accounts and run the hall TV screens.
+- **The Office** (one or more people at each school, role `admin` in the code)
+  is in charge of the school's settings: it watches whole-school performance,
+  uploads student lists, manages staff accounts and runs the hall TV screens.
+- **The developer** (one account) looks after every school: adds schools,
+  opens any of them as its Office, HeadTeacher or a Teacher sees it, and
+  invites each school's Office.
 
 ## Purpose
 

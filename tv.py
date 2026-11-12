@@ -18,6 +18,7 @@ from markupsafe import escape
 
 import auth
 import house_extra
+import schools
 import site_settings
 
 ROOT = Path(__file__).resolve().parent
@@ -436,10 +437,10 @@ def staff_data():
 
 
 def presenter_class(class_id, school=False):
-    """The class a signed-in teacher may present: one of their own; an admin or HeadTeacher may present any. With school=True, also
+    """The class a signed-in teacher may present: one of their own; the Office or a HeadTeacher may present any. With school=True, also
     every classroom, to place the class in the school."""
     with auth.db().transaction() as tx:
-        if g.user["role"] not in auth.SEES_ALL and not tx.execute(
+        if not auth.sees_all() and not tx.execute(
                 "SELECT 1 FROM classroom_members WHERE class_id = ? AND user_id = ?", (class_id, g.user["id"])).fetchone():
             abort(404)
         row = tx.execute("SELECT id, json FROM classrooms WHERE id = ?", (class_id,)).fetchone()
@@ -464,7 +465,7 @@ LINK_ENDED = "This Presenter link has ended. Press Presenter on the dashboard to
 @bp.get("/presenter/<class_id>")
 def presenter_page(class_id):
     presenter_class(class_id)
-    token = secrets.token_urlsafe(32)
+    token = schools.new_token()  # starts with the school's number, so the link finds its school
     with auth.db().transaction() as tx:
         tx.execute("INSERT INTO presenter_links (token_hash, class_id, created_by, created_at) VALUES (?, ?, ?, ?)",
                    (auth.token_hash(token), class_id, g.user["id"], auth.now()))
@@ -581,7 +582,7 @@ def admin_screens():
 def admin_new_screen():
     auth.check_form_token()
     name = " ".join(request.form.get("name", "").split())[:80] or "TV"
-    token = secrets.token_urlsafe(32)
+    token = schools.new_token()  # starts with the school's number, so the TV finds its school
     with auth.db().transaction() as tx:
         screen_id = tx.insert("INSERT INTO tv_screens (name, token_hash, created_by, created_at) VALUES (?, ?, ?, ?)",
                               (name, auth.token_hash(token), g.user["id"], auth.now()))
