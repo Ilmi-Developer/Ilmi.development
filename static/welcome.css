@@ -66,14 +66,16 @@ html{overflow-x:hidden;overflow-x:clip}
 .hero>:not(.hwash){position:relative;z-index:1}
 .hero-art{min-height:560px;color:var(--wink)}
 .hero-art .art-sprig{position:absolute;left:-6px;top:28px;width:150px}
-.hmark{position:relative;margin:0;padding:52px 0 0 128px;font-weight:600;line-height:1}
-.hm-en{display:block;font:600 clamp(7.5rem,13.4vw,12.5rem)/.86 var(--font-hand);letter-spacing:-.025em;color:var(--ink);white-space:nowrap}
+/* The wordmark stands clear of the sprig on its left, and علمي sits below "Ilmi" with room between them, so the
+   lam's stroke never reaches the i. */
+.hmark{position:relative;margin:0;padding:52px 0 0 172px;font-weight:600;line-height:1}
+.hm-en{display:block;font:600 clamp(6.5rem,11.4vw,10.75rem)/.86 var(--font-hand);letter-spacing:-.01em;color:var(--ink);white-space:nowrap}
 .hm-en .l{display:inline-block}
 /* The i's dot is a drop of olive paint, as in the reference. */
 .hm-en .l4{position:relative}
 .hm-en .dot{position:absolute;left:50%;top:.09em;width:.15em;height:.15em;margin-left:-.06em;border-radius:50%;background:#7a8848;
  box-shadow:inset -.02em -.02em .03em rgba(40,46,20,.25)}
-.hm-ar{display:block;width:max-content;margin:-.3em 0 0 1.05em;font:700 clamp(6rem,10.6vw,9.75rem)/1.25 var(--font-ar);color:var(--ink);letter-spacing:0;font-feature-settings:"rlig" 0}
+.hm-ar{display:block;width:max-content;margin:-.1em 0 0 1.15em;font:700 clamp(6rem,10.6vw,9.75rem)/1.25 var(--font-ar);color:var(--ink);letter-spacing:0;font-feature-settings:"rlig" 0}
 .hero-art .art-rahle{position:absolute;left:-26px;bottom:-6px;width:min(310px,46%)}
 .hero-art .hs1{width:420px;height:420px;left:-140px;bottom:-150px;background-image:url(/art/splat-b.webp);opacity:.5}
 /* Where the drop of olive lands on the i, it splashes. */
@@ -427,7 +429,7 @@ html{overflow-x:hidden;overflow-x:clip}
 /* ---------- Tablets and phones ---------- */
 @media (max-width:1100px){
  .hero{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 40px}
- .hmark{padding-left:96px}
+ .hmark{padding-left:136px}
  .hero-art .art-sprig{width:120px}
 }
 @media (max-width:959.98px){
@@ -438,9 +440,9 @@ html{overflow-x:hidden;overflow-x:clip}
  .hero{grid-template-columns:minmax(0,1fr);padding:0 20px 56px}
  .hero-art{min-height:0;padding-bottom:150px}
  .hero-art .art-sprig{width:96px;left:-8px;top:12px}
- .hmark{padding:28px 0 0 74px}
- .hm-en{font-size:clamp(5.75rem,25vw,8.5rem)}
- .hm-ar{font-size:clamp(4.5rem,19vw,6.75rem);margin-left:.9em}
+ .hmark{padding:28px 0 0 104px}
+ .hm-en{font-size:clamp(4.75rem,20vw,7.25rem)}
+ .hm-ar{font-size:clamp(4rem,16vw,6rem);margin-left:1em}
  .hero-art .art-rahle{width:220px;left:auto;right:-6px;bottom:0}
  .hero-text{padding:28px 0 0;margin-top:8px}
  .hero-text::before{left:0;right:auto;top:0;bottom:auto;width:64px;height:1px;transform-origin:left;animation-name:w-growx}

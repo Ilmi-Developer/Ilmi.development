@@ -460,3 +460,5 @@ body:has(.crop:not([hidden])){overflow:hidden}
 .js-th .thup{display:none}
 @media (prefers-reduced-motion:reduce){.tht,.thtools,.thmini rect,.thmini circle{transition:none}
  .tht[aria-pressed="true"]::after,.tht[aria-pressed="true"]::before,.thedit:not([hidden]){animation:none}}
+/* A card whose title is followed straight by its form (sign-in has no line under its title): room between them. */
+.solo .card>h1+form{margin-top:24px}
