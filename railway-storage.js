@@ -145,7 +145,7 @@
   var nameLine = document.createElement("b");
   nameLine.textContent = ME.name || "";
   var roleLine = document.createElement("span");
-  roleLine.textContent = ME.role === "admin" ? "Office" : ME.role === "head" ? "HeadTeacher" : "Teacher";
+  roleLine.textContent = ME.role === "admin" ? "Admin" : ME.role === "head" ? "HeadTeacher" : "Teacher";
   text.appendChild(nameLine); text.appendChild(roleLine);
   who.appendChild(av); who.appendChild(text);
   var row = document.createElement("div");
@@ -330,7 +330,7 @@
     checkedIn = Date.now();
     fetch("/api/houses", { credentials: "same-origin", cache: "no-store" }).catch(function () {});
   }, 10000);
-  // Help or Requests (helpdesk.py): teachers ask the office for help or make a request from the bottom of their
+  // Help or Requests (helpdesk.py): teachers ask an admin for help or make a request from the bottom of their
   // overview, and read the replies in the same pop-up. Admins answer on the FAQs page.
   if (ME.role === "teacher") (function () {
     var KIND = {help: "Help", request: "Request"};
@@ -345,7 +345,7 @@
     var state = {items: [], unread: 0, email: false, loaded: false}, kind = null, note = "";
     var foot = document.createElement("div");
     foot.className = "hrq";
-    foot.innerHTML = '<div class="hrq-t"><b>Need a hand?</b><span>Ask the office for help, or make a request.</span></div>'
+    foot.innerHTML = '<div class="hrq-t"><b>Need a hand?</b><span>Ask an admin for help, or make a request.</span></div>'
       + '<button type="button" class="btn hrq-b" aria-haspopup="dialog">' + SVG + ICON.faq + '</svg>Help or Requests'
       + '<span class="hrq-dot" hidden></span><span class="sr-only hrq-new"></span></button>';
     var overview = document.getElementById("vM");
@@ -390,12 +390,12 @@
       } catch (error) { /* Tried again later. */ }
     }
     function list() {
-      if (!state.items.length) return '<p class="cap hrq-none">Nothing sent yet. Your messages and the office\'s replies will appear here.</p>';
+      if (!state.items.length) return '<p class="cap hrq-none">Nothing sent yet. Your messages and the admins\' replies will appear here.</p>';
       return '<ol class="hrq-list">' + state.items.map(function (i) {
         return '<li class="hrq-it' + (i.unread ? " new" : "") + '"><div class="hrq-h"><span class="pill ' + (i.kind === "help" ? "blue" : "amber") + '">' + KIND[i.kind] + "</span>"
           + (i.unread ? '<span class="pill green">New reply</span>' : "") + '<span class="cap">' + e(when(i.at)) + "</span></div>"
           + '<p class="hrq-msg">' + e(i.body) + "</p>"
-          + (i.reply ? '<div class="hrq-r"><p class="cap"><b>' + e(i.by || "The office") + "</b> replied " + e(when(i.repliedAt)) + (i.emailed ? ", also by email" : "") + '</p><p class="hrq-msg">' + e(i.reply) + "</p></div>"
+          + (i.reply ? '<div class="hrq-r"><p class="cap"><b>' + e(i.by || "An admin") + "</b> replied " + e(when(i.repliedAt)) + (i.emailed ? ", also by email" : "") + '</p><p class="hrq-msg">' + e(i.reply) + "</p></div>"
             : '<p class="cap hrq-wait">Waiting for a reply</p>') + "</li>";
       }).join("") + "</ol>";
     }
@@ -403,7 +403,7 @@
       kind = null;
       var body = document.getElementById("drwB");
       body.innerHTML = (note ? '<p class="hrq-ok" role="status">' + e(note) + "</p>" : "")
-        + '<p class="cap">Choose one. The office replies here' + (state.email ? ", and by email" : "") + ".</p>"
+        + '<p class="cap">Choose one. An admin replies here' + (state.email ? ", and by email" : "") + ".</p>"
         + '<div class="hrq-pick">' + ["help", "request"].map(function (k) {
           return '<button type="button" class="hrq-opt" data-hk="' + k + '"><span class="hrq-ic">' + SVG + ICON[k] + "</svg></span><b>" + KIND[k] + "</b><span>"
             + (k === "help" ? "Something isn't working, or you're not sure how to do it." : "Ask for something new, like a change to the dashboard or a resource for your class.") + "</span></button>";
@@ -444,7 +444,7 @@
       send.disabled = true; send.textContent = "Sending…";
       try {
         take(await call("/api/help", {kind: kind, body: text.value}));
-        note = (kind === "help" ? "Your message was sent." : "Your request was sent.") + " The office will reply here" + (state.email ? " and by email." : ".");
+        note = (kind === "help" ? "Your message was sent." : "Your request was sent.") + " An admin will reply here" + (state.email ? " and by email." : ".");
         if (open()) { home(); document.getElementById("drwX").focus(); }
       } catch (error) {
         if (!document.contains(err)) return;

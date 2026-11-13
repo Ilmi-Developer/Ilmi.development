@@ -3,7 +3,7 @@
 {% block width %} narrow{% endblock %}
 {% block content %}
 <div class="band slim"><div class="band-top"><h1>Counted coins</h1><div class="acts"><a class="btn" href="/#house-points">See the House points page</a></div></div>
-<p class="lede">Count the house coins from the office box here, for each house.</p>
+<p class="lede">Count the house coins an admin box here, for each house.</p>
 <details class="how"><summary>How this works</summary><div><p>Teachers give students physical house coins, students put them in the box at the office, and you count them here for each house. They count in each house's total on the dashboard and the TV, and show on the House points page as "Counted coins".</p><p>Admins can also give a student house points on the Record page. Teachers can't give house points, and passes give none.</p></div></details></div>
 <p class="sub">{% for h in houses %}{{ h }} {{ sums[h] }}{{ "," if not loop.last else "" }} {% endfor %}points from here, including the school's historical points.</p>
 <div class="mod line">

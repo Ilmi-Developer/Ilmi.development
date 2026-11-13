@@ -2,12 +2,12 @@
 {% block title %}Schools{% endblock %}
 {% block content %}
 {# The developer's first page (schools.py, static/developer.css): every school as a tile, like the class cards on
-   the dashboard. Pressing a tile opens that school as its Office sees it. Add a school makes a school and, with a
-   name and email, its Office account; Manage, in a tile's corner, sets a school's Office account or renames it.
+   the dashboard. Pressing a tile opens that school as its admin sees it. Add a school makes a school and, with a
+   name and email, its admin account; Manage, in a tile's corner, sets a school's admin account or renames it.
    This page runs no scripts of its own: both are pop-ups that open from their links (#new, #manage-3), as Invite
    staff does on Manage users, so nothing on the page moves when they open. #}
 <div class="band slim"><div class="band-top"><h1>Schools</h1><div class="acts"><a class="btn primary" href="#new">Add a school</a></div></div>
-<p class="lede">Each school has its own database: its classes, students, staff accounts, settings and history are kept apart from every other school’s. Open one to see it as its Office does.</p>
+<p class="lede">Each school has its own database: its classes, students, staff accounts, settings and history are kept apart from every other school’s. Open one to see it as its admin does.</p>
 <div class="figs"><div class="fig"><b>{{ schools|length }}</b><span>School{{ "s" if schools|length != 1 }}</span></div><div class="fig"><b>{{ schools|sum(attribute="classes") }}</b><span>Classes</span></div><div class="fig"><b>{{ schools|sum(attribute="students") }}</b><span>Students</span></div><div class="fig"><b>{{ schools|sum(attribute="staff") }}</b><span>Staff accounts</span></div></div></div>
 {% if link %}
 <div class="panel linkbox" role="status">
@@ -21,9 +21,9 @@
   <div class="sch-top"><span class="sch-k">School {{ s.id }}{% if s.id == opened %}<span class="sch-now">Open now</span>{% endif %}</span><a class="sch-edit" href="#manage-{{ s.id }}">Manage<span class="sr-only"> {{ s.name }}</span></a></div>
   <form method="post" action="/schools/{{ s.id }}/open" class="sch-open"><input type="hidden" name="csrf" value="{{ csrf }}"><h2 class="sch-n"><button class="lk" title="Open {{ s.name }}"><span class="sch-nt">{{ s.name }}</span></button></h2></form>
   {% if not s.ok %}<p class="sch-o is-warn">Its database couldn’t be read just now.</p>
-  {% elif s.office %}<p class="sch-o" title="Office: {{ s.office|join(", ") }}">Office: {{ s.office|join(", ") }}</p>
-  {% elif s.invited %}<p class="sch-o" title="Office invited, not signed in yet: {{ s.invited|join(", ") }}">Office invited: {{ s.invited|join(", ") }}</p>
-  {% else %}<p class="sch-o is-warn"><a class="sch-set" href="#manage-{{ s.id }}">Set the Office account</a></p>{% endif %}
+  {% elif s.office %}<p class="sch-o" title="Admin: {{ s.office|join(", ") }}">Admin: {{ s.office|join(", ") }}</p>
+  {% elif s.invited %}<p class="sch-o" title="Admin invited, not signed in yet: {{ s.invited|join(", ") }}">Admin invited: {{ s.invited|join(", ") }}</p>
+  {% else %}<p class="sch-o is-warn"><a class="sch-set" href="#manage-{{ s.id }}">Set the admin account</a></p>{% endif %}
   <dl class="sch-f"><div><dt>Classes</dt><dd{{ ' class="is-zero"'|safe if not s.classes }}>{{ s.classes }}</dd></div><div><dt>Students</dt><dd{{ ' class="is-zero"'|safe if not s.students }}>{{ s.students }}</dd></div><div><dt>Staff</dt><dd{{ ' class="is-zero"'|safe if not s.staff }}>{{ s.staff }}</dd></div></dl>
 </li>
 {% endfor %}
@@ -38,11 +38,11 @@
   <form method="post" action="/schools/new">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <label class="field">School name<input name="name" value="{{ name_draft if new_open and name_draft else "" }}" maxlength="{{ name_max }}" autocomplete="off" required></label>
-    <fieldset class="sch-set-office"><legend>Office account</legend>
+    <fieldset class="sch-set-office"><legend>Admin account</legend>
       <p class="sub">The person in charge of this school’s settings, accounts and records. They get {{ "an email with " if mail_enabled }}a link to choose their password, which expires in {{ invite_hours }} hours, and then invite their own staff. Leave both empty to set it later.</p>
       <div class="formrow">
-        <label class="field">Office’s name<input name="office_name" value="{{ office_name_draft if new_open and office_name_draft else "" }}" maxlength="80" autocomplete="off"></label>
-        <label class="field">Office’s email<input type="email" name="office_email" value="{{ office_email_draft if new_open and office_email_draft else "" }}" maxlength="254" autocomplete="off" spellcheck="false"></label>
+        <label class="field">Admin’s name<input name="office_name" value="{{ office_name_draft if new_open and office_name_draft else "" }}" maxlength="80" autocomplete="off"></label>
+        <label class="field">Admin’s email<input type="email" name="office_email" value="{{ office_email_draft if new_open and office_email_draft else "" }}" maxlength="254" autocomplete="off" spellcheck="false"></label>
       </div>
     </fieldset>
     <button class="btn primary">Add school</button>
@@ -58,20 +58,20 @@
   <div class="invh"><h2 id="mant-{{ s.id }}" class="sch-pt">{{ s.name }}</h2><a class="btn sm" href="{{ m_close }}">Close</a></div>
   {% if m_open and pop_error %}<p class="error" role="alert">{{ pop_error }}</p>{% endif %}
   <section class="sch-sec" aria-labelledby="offt-{{ s.id }}">
-    <h3 class="sch-h" id="offt-{{ s.id }}">Office account</h3>
+    <h3 class="sch-h" id="offt-{{ s.id }}">Admin account</h3>
     {% if s.offices %}
     <ul class="sch-off">{% for o in s.offices %}<li><span class="sch-who"><b>{{ o.name }}</b><span>{{ o.email }}</span></span><span class="pill{{ ' grey' if not o.active }}">{{ "Signed in" if o.active else "Invited" }}</span></li>{% endfor %}</ul>
     {% else %}
-    <p class="sub">This school has no Office account yet.</p>
+    <p class="sub">This school has no admin account yet.</p>
     {% endif %}
     <form method="post" action="/schools/{{ s.id }}/office">
       <input type="hidden" name="csrf" value="{{ csrf }}">
       <div class="formrow">
-        <label class="field">Office’s name<input name="office_name" value="{{ office_name_draft if m_open and office_name_draft else "" }}" maxlength="80" autocomplete="off" required></label>
-        <label class="field">Office’s email<input type="email" name="office_email" value="{{ office_email_draft if m_open and office_email_draft else "" }}" maxlength="254" autocomplete="off" spellcheck="false" required></label>
+        <label class="field">Admin’s name<input name="office_name" value="{{ office_name_draft if m_open and office_name_draft else "" }}" maxlength="80" autocomplete="off" required></label>
+        <label class="field">Admin’s email<input type="email" name="office_email" value="{{ office_email_draft if m_open and office_email_draft else "" }}" maxlength="254" autocomplete="off" spellcheck="false" required></label>
       </div>
-      <p class="hint">Someone new gets {{ "an email with " if mail_enabled }}a link to choose their password; it expires in {{ invite_hours }} hours. Someone who already has an account at this school is given the Office role. To turn an Office account off, open the school and use Manage users.</p>
-      <button class="btn primary">{{ "Add an Office account" if s.offices else "Set the Office account" }}</button>
+      <p class="hint">Someone new gets {{ "an email with " if mail_enabled }}a link to choose their password; it expires in {{ invite_hours }} hours. Someone who already has an account at this school is given the admin role. To turn an admin account off, open the school and use Manage users.</p>
+      <button class="btn primary">{{ "Add an admin account" if s.offices else "Set the admin account" }}</button>
     </form>
   </section>
   <section class="sch-sec" aria-labelledby="rent-{{ s.id }}">

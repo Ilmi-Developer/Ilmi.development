@@ -6,7 +6,7 @@
 {% block content %}
 {% call p() %}Assalamu alaikum {{ name }},{% endcall %}
 {% if by %}
-{% call p() %}{{ by }}, from the office, has sent you a link to choose a new password for your Ilmi account.{% endcall %}
+{% call p() %}{{ by }}, an admin, has sent you a link to choose a new password for your Ilmi account.{% endcall %}
 {% else %}
 {% call p() %}Someone asked to reset the password for your Ilmi account ({{ email }}).{% endcall %}
 {% endif %}

@@ -1,8 +1,8 @@
 """Staff accounts: sign-in, sessions, invites, password resets and user management.
 
-Each person has their own account at one school. The Office (role "admin") sees
+Each person has their own account at one school. The admin (role "admin") sees
 and manages every classroom and every account at its school; teachers see only
-the classrooms the Office has assigned to them. Every school has its own
+the classrooms the admin has assigned to them. Every school has its own
 database (schools.py), and one sign-in page serves them all: the email says
 which school. The developer's account belongs to no school and can open any.
 
@@ -57,13 +57,13 @@ EMAIL_FAILS, IP_FAILS = 5, 20
 EMAIL_RESETS, IP_RESETS = 3, 10
 PASSWORD_MIN = 12
 EMAIL = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
-# The roles an account at a school can be given. "admin" is the Office: the person in charge of the school's settings,
+# The roles an account at a school can be given. "admin" is the admin: the person in charge of the school's settings,
 # accounts and records. "developer" is not among them, so nobody can be given it: it is what the one account in the
 # control database is called (schools.py).
 ROLES = ("admin", "head", "teacher")
 # A HeadTeacher ("head") sees every classroom and records on any of them (Record, House points, Rankings, Presenter,
 # FAQs), but gives no house points and has none of the Administration pages: no accounts, students, imports or classroom changes.
-ROLE_NAMES = {"admin": "Office", "head": "HeadTeacher", "teacher": "Teacher", "developer": "Developer"}
+ROLE_NAMES = {"admin": "Admin", "head": "HeadTeacher", "teacher": "Teacher", "developer": "Developer"}
 SEES_ALL = ("admin", "head")
 COMMON_PASSWORDS = {
     "123456789012", "1234567890123", "qwertyuiopas", "passwordpassword", "password1234", "password12345",
@@ -98,7 +98,7 @@ ACTIONS = {
     "share.code": "Shared a Presenter link", "share.stopped": "Stopped sharing a Presenter link",
     "site.title": "Changed the site title",
     "school.created": "Added a school", "school.renamed": "Renamed a school", "school.opened": "Opened a school",
-    "school.office": "Set a school's Office account",
+    "school.office": "Set a school's admin account",
 }
 
 
@@ -347,12 +347,12 @@ def load_session():
         stand_in = schools.stand_in(tx, g.developer)
     g.user = {"id": stand_in, "email": g.developer["email"], "name": g.developer["name"], "role": g.developer["view"],
               "must_change": 0, "avatar_at": g.developer["avatar_at"], "theme": g.developer["theme"],
-              # As a teacher they have every classroom, where a teacher has the ones the Office ticked.
+              # As a teacher they have every classroom, where a teacher has the ones the admin ticked.
               "every_class": True}
 
 
 def sees_all(user=None):
-    """The Office and HeadTeachers see and record on every classroom; so does the developer in any view."""
+    """The admin and HeadTeachers see and record on every classroom; so does the developer in any view."""
     user = user or g.user
     return user["role"] in SEES_ALL or bool(user.get("every_class"))
 
@@ -805,7 +805,7 @@ def users_page(status=200, **context):
 
 
 EMAIL_PREVIEWS = (("invite", "Invite"), ("reset", "Password reset"), ("password_changed", "Password changed"),
-                  ("login_code", "Office sign-in code"),
+                  ("login_code", "Admin sign-in code"),
                   ("test", "Test email"), ("help_reply", "FAQs reply"), ("help_summary", "Weekly Help or Requests summary"))
 
 
@@ -816,7 +816,7 @@ def chosen_classes(tx):
 
 def set_classes(tx, user_id, role, classes):
     tx.execute("DELETE FROM classroom_members WHERE user_id = ?", (user_id,))
-    # The Office and HeadTeachers see every classroom, so they are not assigned any.
+    # The admin and HeadTeachers see every classroom, so they are not assigned any.
     if role == "teacher":
         for class_id in classes:
             tx.execute("INSERT INTO classroom_members VALUES (?, ?)", (class_id, user_id))
@@ -887,7 +887,7 @@ def admin_update(user_id):
     with db().transaction() as tx:
         user = user_by_id(tx, user_id)
         if user["role"] == "admin" and role != "admin" and active_admins(tx) <= 1 and not user["disabled"]:
-            return users_page(400, error="Keep at least one Office account. Give someone else the Office role first.")
+            return users_page(400, error="Keep at least one admin account. Give someone else the admin role first.")
         classes = chosen_classes(tx)
         tx.execute("UPDATE users SET name = ?, role = ? WHERE id = ?", (name, role, user_id))
         set_classes(tx, user_id, role, classes)
@@ -924,7 +924,7 @@ def admin_access(user_id):
         if disable and user_id == g.user["id"]:
             return users_page(400, error="You can't turn off your own account.")
         if disable and user["role"] == "admin" and active_admins(tx) <= 1:
-            return users_page(400, error="Keep at least one Office account.")
+            return users_page(400, error="Keep at least one admin account.")
         tx.execute("UPDATE users SET disabled = ? WHERE id = ?", (1 if disable else 0, user_id))
         if disable:
             tx.execute("DELETE FROM sessions WHERE user_id = ?", (user_id,))
@@ -937,7 +937,7 @@ def admin_access(user_id):
 @bp.post("/admin/email/test")
 @admin_required
 def admin_email_test():
-    """Sends the signed-in Office account a test email, to check that email is set up."""
+    """Sends the signed-in admin account a test email, to check that email is set up."""
     check_form_token()
     if not current_app.config["MAILER"].enabled:
         return users_page(400, error="Email isn't set up yet. Add RESEND_API_KEY and MAIL_FROM on Railway.")
@@ -973,9 +973,9 @@ def admin_activity():
 # --- Startup ------------------------------------------------------------------
 
 def bootstrap_admin(router, email, password, developer=""):
-    """Creates the first school's first Office account from ADMIN_EMAIL and DASHBOARD_PASSWORD when it has no accounts
+    """Creates the first school's first admin account from ADMIN_EMAIL and DASHBOARD_PASSWORD when it has no accounts
     yet. With a developer account (DEVELOPER_EMAIL) there needn't be one: the developer opens the school and invites
-    its Office."""
+    its admin."""
     email, developer = norm_email(email), norm_email(developer)
     with router.first.transaction() as tx:
         if tx.execute("SELECT COUNT(*) AS n FROM users WHERE developer = 0").fetchone()["n"]:
@@ -984,21 +984,21 @@ def bootstrap_admin(router, email, password, developer=""):
             return
         if not EMAIL.fullmatch(email) or not password or password == "replace-with-a-long-unique-password":
             raise RuntimeError("There are no accounts yet. Set ADMIN_EMAIL and DASHBOARD_PASSWORD to create the "
-                               "first Office account; they will choose a new password when they first sign in. "
+                               "first admin account; they will choose a new password when they first sign in. "
                                "Or set DEVELOPER_EMAIL to create the developer account, which can add schools "
-                               "and invite each one's Office.")
+                               "and invite each one's admin.")
         if router.taken_elsewhere(email, schools.FIRST):
             return
         tx.insert("INSERT INTO users (email, name, role, password_hash, must_change, created_at) VALUES (?, ?, ?, ?, 1, ?)",
-                  (email, "Office", "admin", hasher.hash(password), now()))
+                  (email, "Admin", "admin", hasher.hash(password), now()))
         router.claim(email, schools.FIRST)
-        print(f"Created the first Office account for {email}.", flush=True)
+        print(f"Created the first admin account for {email}.", flush=True)
 
 
 def reset_admin(router, email, password):
-    """For an Office account or the developer locked out while email isn't set up, so no reset link can reach them.
+    """For an admin account or the developer locked out while email isn't set up, so no reset link can reach them.
     With ADMIN_RESET_PASSWORD set on Railway, the next start gives ADMIN_EMAIL's account that password (to be changed
-    at the next sign-in), turns it back on with its Office role, clears its failed sign-ins and signs it out
+    at the next sign-in), turns it back on with its admin role, clears its failed sign-ins and signs it out
     everywhere. The account is found at whichever school it belongs to; DEVELOPER_EMAIL's is the developer account.
 
     Each value is used once: a fingerprint of it is kept in site_settings, so later restarts with the same value

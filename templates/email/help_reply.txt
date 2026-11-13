@@ -12,4 +12,4 @@ The reply is also on the dashboard, under Help or Requests at the bottom of your
 
 Open the dashboard: {{ site }}
 
-{{ site_title() or "Ilmi" }}
+Ilmi

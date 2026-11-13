@@ -14,12 +14,10 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from flask import Blueprint, Response, abort, g, jsonify, redirect, request
-from markupsafe import escape
 
 import auth
 import house_extra
 import schools
-import site_settings
 
 ROOT = Path(__file__).resolve().parent
 HOUSES = ("Makkah", "Al-Aqsa", "Madinah")
@@ -404,13 +402,9 @@ def data(settings=None):
 
 
 def page():
-    html = (ROOT / "static" / "tv.html").read_text(encoding="utf-8")
-    # The brand in the top left and the tab's name: the site title (site_settings.py), or just Ilmi.
-    name = site_settings.title()
-    if name:
-        html = html.replace("<title>Ilmi · Live</title>", f"<title>{escape(name)} · Live</title>", 1)
-        html = html.replace('<h1 id="brand">Ilmi</h1>', f'<h1 id="brand">{escape(name)}</h1>', 1)
-    return Response(html, mimetype="text/html")
+    # The brand in the top left is Ilmi's: a school's name isn't shown on its screens (it shows only on the developer's
+    # school tiles and bar).
+    return Response((ROOT / "static" / "tv.html").read_text(encoding="utf-8"), mimetype="text/html")
 
 
 def screen(token):
@@ -437,7 +431,7 @@ def staff_data():
 
 
 def presenter_class(class_id, school=False):
-    """The class a signed-in teacher may present: one of their own; the Office or a HeadTeacher may present any. With school=True, also
+    """The class a signed-in teacher may present: one of their own; the admin or a HeadTeacher may present any. With school=True, also
     every classroom, to place the class in the school."""
     with auth.db().transaction() as tx:
         if not auth.sees_all() and not tx.execute(

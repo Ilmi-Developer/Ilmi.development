@@ -12,4 +12,4 @@ Didn't just sign in? Someone knows your password. Change it on the Account page 
 {% if support_email %}
 Questions? Email the school office at {{ support_email }}.
 {% endif %}
-{{ site_title() or "Ilmi" }}
+Ilmi

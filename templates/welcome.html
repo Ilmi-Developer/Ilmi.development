@@ -13,8 +13,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="referrer" content="same-origin">
 <meta name="theme-color" content="#f4efe4">
-<title>Ilmi{{ " · " ~ site_title() if site_title() }}</title>
-<meta name="description" content="Ilmi is a madrasah manager for Qur’an lessons, memorisation, classes and house points{{ ", at " ~ site_title() if site_title() }}.">
+<title>Ilmi</title>
+<meta name="description" content="Ilmi is a madrasah manager for Qur’an lessons, memorisation, classes and house points.">
 <link rel="preload" href="/fonts/fraunces-italic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/amiri-ilmi.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/amiri-text.woff2" as="font" type="font/woff2" crossorigin>
@@ -32,7 +32,7 @@
 {% set go = "/" if user else "/login" %}
 {% set go_label = "Open Ilmi" if user else "Sign in" %}
 <header class="wnav">
-  <a class="wbrand" href="/welcome"><span class="ilmi" translate="no"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span>{% if site_title() %}<small>{{ site_title() }}</small>{% endif %}<span class="sr-only">, start page</span></a>
+  <a class="wbrand" href="/welcome"><span class="ilmi" translate="no"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span><span class="sr-only">, start page</span></a>
   <nav class="wlinks" aria-label="Start page">
     <a href="#what">What it does</a>
     <a href="#inside">Inside Ilmi</a>
@@ -209,7 +209,6 @@
 
 <footer class="wfoot">
   <span class="ilmi" translate="no"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span>
-  {% if site_title() %}<span>{{ site_title() }}</span>{% endif %}
   <a href="{{ go }}">{{ "Open Ilmi" if user else "Staff sign in" }}</a>
 </footer>
 </body>

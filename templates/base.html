@@ -53,7 +53,7 @@
 </div></div>
 {% endif %}
 <header><div class="rail">
-  <a class="brand" href="/" translate="no"><span class="ilmi"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span>{% if site_title() %}<small>{{ site_title() }}</small>{% endif %}</a>
+  <a class="brand" href="/" translate="no"><span class="ilmi"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span></a>
   {# Search opens the dashboard's search (Ctrl+K does the same here, static/menu.js). #}
   {% if user.role != "developer" %}<a class="qkb" href="/#search" aria-label="Search" aria-keyshortcuts="Control+K Meta+K"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span class="qkt">Search</span><kbd aria-hidden="true">Ctrl K</kbd></a>{% endif %}
   <input type="checkbox" id="navt" class="navt" aria-label="Show the menu">
@@ -163,7 +163,7 @@
   <div class="iword">{% include "art/intro-word.svg" %}</div>
 </div>
 {% endif %}
-<header class="solo-band"><a href="/welcome" class="ilmi" translate="no"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span><span class="sr-only">, start page</span></a>{% if site_title() %}<small>{{ site_title() }}</small>{% endif %}</header>
+<header class="solo-band"><a href="/welcome" class="ilmi" translate="no"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span><span class="sr-only">, start page</span></a></header>
 <main>
 {% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}
 {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
@@ -173,7 +173,7 @@
 <aside class="welcome" aria-label="Welcome">
   {# Olive watercolour, with pale mist drifting slowly across it (auth.css). #}
   <div class="wsky" aria-hidden="true"><span class="wdrift d1"></span><span class="wdrift d2"></span></div>
-  <a class="wmark" href="/welcome" translate="no"><span class="ilmi"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span>{% if site_title() %}<small>{{ site_title() }}</small>{% endif %}</a>
+  <a class="wmark" href="/welcome" translate="no"><span class="ilmi"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span></a>
   <figure class="wquote">
     <span class="wtab">Welcome</span>
     <blockquote><p>“The best of you are those who learn the Qur’ān and teach it.”</p></blockquote>

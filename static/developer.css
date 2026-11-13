@@ -8,7 +8,7 @@
 
 /* ---------- The bar ----------
    A strip of its own above the page, so it never sits on anything of the school's: everything under it is the page
-   as the Office, a HeadTeacher or a Teacher sees it. One row at every width, its controls one height, held to the
+   as the admin, a HeadTeacher or a Teacher sees it. One row at every width, its controls one height, held to the
    same edges as the page below (1280px wide at most, 40px in; 16px on smaller screens). From the left: the Developer
    tag, then at the right the school that is open, the view it is seen as, and the way back to all schools. */
 .devbar{--devh:34px;grid-column:1/-1;font-size:.8125rem;line-height:1.2;color:var(--ink-2);background:var(--surface-2);border-bottom:1px solid var(--line)}
@@ -38,9 +38,9 @@
 body.enter .devbar{animation:e-fade .2s ease both}
 
 /* ---------- The schools ----------
-   Tiles drawn like the dashboard's class cards: a small label, the name, who the Office is, then the figures along
+   Tiles drawn like the dashboard's class cards: a small label, the name, who the admin is, then the figures along
    the foot. The whole tile is the button that opens the school; Rename, in its corner, sits above that button.
-   The name and the Office line keep to two lines each, so every tile in a row is the same shape. */
+   The name and the admin line keep to two lines each, so every tile in a row is the same shape. */
 .sch-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
 .sch-tile{position:relative;display:flex;flex-direction:column;align-items:stretch;min-width:0;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px 12px;box-shadow:0 1px 2px rgba(60,52,30,.05);transition:border-color var(--t-fast) ease,background-color var(--t-fast) ease,box-shadow var(--t-fast) ease}
 .sch-tile:hover{border-color:var(--line-2);background:var(--surface-2);box-shadow:0 6px 16px -10px rgba(60,52,30,.35)}
@@ -64,11 +64,11 @@ body.enter .devbar{animation:e-fade .2s ease both}
 .sch-f dt{font-size:.6875rem;font-weight:500;color:var(--mute)}
 .sch-f dd{margin:0;font-weight:600;font-size:.9375rem;font-variant-numeric:tabular-nums}
 .sch-f dd.is-zero{color:var(--mute);font-weight:500}
-/* A school with no Office yet says so as a link to where one is set; like Manage, it sits above the tile's button. */
+/* A school with no admin yet says so as a link to where one is set; like Manage, it sits above the tile's button. */
 .sch-set{position:relative;z-index:1;color:inherit;font-weight:500;text-decoration:underline;text-underline-offset:2px}
 .sch-set:hover{color:var(--ink)}
 /* Add a school and Manage open as the site's pop-up does (.invite in static/auth.css), a little narrower. Manage has
-   two parts under the school's name, a rule between them: its Office accounts with the form that sets one, then
+   two parts under the school's name, a rule between them: its admin accounts with the form that sets one, then
    its name. */
 .sch-pop{width:min(560px,100%)}
 .sch-pt{min-width:0;overflow-wrap:anywhere}

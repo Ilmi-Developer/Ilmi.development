@@ -12,7 +12,7 @@
 {% if error %}<div class="panel" role="alert"><p>{{ error }}</p></div>{% endif %}
 <div class="mod line">
   <h2>{{ "The school's list" if listed else "Upload the school's list" }}</h2>
-  <p class="sub">{% if listed %}A list of {{ listed }} {{ "student" if listed == 1 else "students" }} is saved in the database. Uploading another replaces it.{% else %}No list has been uploaded yet. It is kept in the database, not with the code.{% endif %} Columns: MySafar Name, QM, AI, MySafar ID, Family ID, House, Year Group, Gender.</p>
+  <p class="sub">{% if listed %}A list of {{ listed }} {{ "student" if listed == 1 else "students" }} is saved in the database. Uploading another replaces it.{% else %}No list has been uploaded yet. It is kept in the database, not with the code.{% endif %} Columns: Student Name, QM, AI, Student ID, Family ID, House, Year Group, Gender.</p>
   <form method="post" action="/admin/set-houses/list" enctype="multipart/form-data" class="pickrow">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <label class="btn filepick"><input type="file" name="csv" accept=".csv,text/csv" required aria-label="The school's list, CSV file"><span class="fp-none">Choose CSV file</span><span class="fp-some" aria-hidden="true">CSV file chosen</span></label>

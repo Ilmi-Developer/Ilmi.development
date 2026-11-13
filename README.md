@@ -12,12 +12,12 @@ classrooms and students are added by uploading a CSV on the overview.
 **Railway deployment:** see [RAILWAY.md](RAILWAY.md) for the variables, staff
 accounts and roles, email, history and backups. Staff sign in with their own
 email and password; teachers see only their own classrooms, and the school's
-Office (the account in charge of its settings) sees everything.
+admin (the account in charge of its settings) sees everything.
 
 **Many schools:** one site serves many schools, each with a database of its
 own. The developer account (`DEVELOPER_EMAIL`) sees every school as a tile,
-adds schools and sets each one's Office account, and opens any of them as its
-Office, HeadTeacher or a Teacher would see it. See [Schools and the developer account](RAILWAY.md#schools-and-the-developer-account).
+adds schools and sets each one's admin account, and opens any of them as its
+Admin, HeadTeacher or a Teacher would see it. See [Schools and the developer account](RAILWAY.md#schools-and-the-developer-account).
 
 ## Adding students
 
@@ -45,7 +45,7 @@ ST002,Yusuf Ali,Male,Year 4,Yr4-B-QM-Sr Zainab,Yr4-B-AI-Br Idris
 - The **madrasah year group** is taken from the classroom name: `Yr7-B-QM-...` is
   Year 7. A shared `Yr9/10` classroom takes the year from the Islamic Studies
   class (`Yr9-AI-...` or `Yr10-AI-...`). An optional **Madrasah Year Group** column
-  (older files call it Safar Year Group) overrides this. The **School Year Group** (the student's primary or secondary
+  overrides this. The **School Year Group** (the student's primary or secondary
   school year) is kept separately.
 - Columns are found by their names, in any order. Student Name and the Quran
   and Memorisation teacher are required. Without a Student ID column, students

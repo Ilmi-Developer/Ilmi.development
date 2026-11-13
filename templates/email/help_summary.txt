@@ -22,4 +22,4 @@ No help or requests were sent between {{ start|when }} and {{ end|when }} (UK ti
 
 Open FAQs: {{ faqs }}
 
-{{ site_title() or "Ilmi" }}
+Ilmi

@@ -18,7 +18,6 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 import auth
-import site_settings
 from tv import natural
 
 ROOT = Path(__file__).resolve().parent
@@ -221,7 +220,7 @@ def gather(db):
     sheets["stars"].rows.sort(key=lambda r: r[0], reverse=True)
     for u in users:
         status = "Turned off" if u["disabled"] else "Invited" if not u["password_hash"] else "Active"
-        sheets["staff"].add(u["name"], u["email"], {"admin": "Office", "head": "HeadTeacher"}.get(u["role"], "Teacher"),
+        sheets["staff"].add(u["name"], u["email"], {"admin": "Admin", "head": "HeadTeacher"}.get(u["role"], "Teacher"),
                             "All classes" if u["role"] in ("admin", "head") else
                             ", ".join(sorted((names.get(c, c) for c in member_of.get(u["id"], [])), key=natural)),
                             status, when(u["created_at"] * 1000).date() if u["created_at"] else None)
@@ -249,7 +248,7 @@ def plain_text(cells):
 
 
 def build(sheets, figures, made_at, made_by, school=""):
-    """school is the site title (site_settings.py); without one the cover is headed Ilmi."""
+    """school, when given, heads the cover; without it the cover is headed Ilmi."""
     book = Workbook()
     book.properties.creator = "Ilmi"
     book.properties.title = f"{school} records" if school else "Ilmi records"
@@ -339,6 +338,6 @@ def export_download():
     with current_app.config["DB"].transaction() as db:
         sheets, figures, made_at = gather(db)
         auth.audit(db, "export.downloaded", None, {"classes": figures[0][1], "students": figures[1][1]})
-    body = build(sheets, figures, made_at, g.user["name"], site_settings.title())
+    body = build(sheets, figures, made_at, g.user["name"])
     name = f"Ilmi records {made_at.strftime('%Y-%m-%d %H%M')}.xlsx"
     return Response(body, mimetype=MIME, headers={"Content-Disposition": f'attachment; filename="{name}"'})

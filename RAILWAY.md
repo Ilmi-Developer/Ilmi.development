@@ -25,37 +25,37 @@ link belongs to. Run locally without `DATABASE_URL`, each is a SQLite file in
 - Everyone signs in on the same page. The email says which school: an email
   has one account across every school, so the same address can't be invited at
   two schools.
-- Each school is run by its **Office** (called `admin` in the code, and
+- Each school is run by its **Admin** (called `admin` in the code, and
   "Administrator" before November 2026): the person in charge of that school's
   settings, accounts and records. Wherever this page says admin, it means a
-  school's Office.
+  school's admin.
 - The **developer** is one account, for the email in `DEVELOPER_EMAIL`, kept
   in the control database. It belongs to no school. Nobody can be given this
   role: it isn't a choice on Manage users and the server refuses it. Changing
   or removing the variable turns the earlier developer account off at the next
   start.
-- The developer signs in like an Office account (password, then the emailed
+- The developer signs in like an admin account (password, then the emailed
   code) and lands on **Schools**: every school as a tile with its classes,
-  students, staff and who its Office is. **Add a school** makes an empty
-  database for it and, with a name and an email, its Office account.
-  **Manage** on a tile sets that school's Office account or renames it.
-- Setting a school's Office account: someone new gets an account at that
+  students, staff and who its admin is. **Add a school** makes an empty
+  database for it and, with a name and an email, its admin account.
+  **Manage** on a tile sets that school's admin account or renames it.
+- Setting a school's admin account: someone new gets an account at that
   school and an invite link to choose their password (emailed when email is
   set up, otherwise shown to copy; it expires after 72 hours). Someone who
-  already has an account at that school is given the Office role and keeps
+  already has an account at that school is given the admin role and keeps
   their password. An email with an account at another school is refused. To
-  turn an Office account off, open the school and use **Manage users**.
-- Pressing a tile opens that school as its Office sees it. A strip above the
+  turn an admin account off, open the school and use **Manage users**.
+- Pressing a tile opens that school as its admin sees it. A strip above the
   page, with its controls at the top right, switches the view between
-  **Office**, **HeadTeacher** and **Teacher** and leads back to **All
+  **Admin**, **HeadTeacher** and **Teacher** and leads back to **All
   schools**. Everything under the strip is the page as that role sees it. In the Teacher view the
   developer has every classroom, with a teacher's permissions. The view only
   changes what the developer sees; it is not an account anyone else can use.
 - What the developer does inside a school is recorded in that school's own
   Activity and Class history under their name. Their place in the school's
   accounts is a stand-in that can't sign in and isn't listed on Manage users.
-- A school added without an Office has no accounts until one is set. Once it
-  has an Office, the Office invites its own staff from **Manage users**.
+- A school added without an admin has no accounts until one is set. Once it
+  has an admin, the admin invites its own staff from **Manage users**.
 - The first time the site starts with `DEVELOPER_EMAIL` set, an existing
   account with that email becomes the developer account: it keeps its name,
   password and picture, and its history at its school stays under its name.
@@ -69,16 +69,16 @@ link belongs to. Run locally without `DATABASE_URL`, each is a SQLite file in
   never a school's name. A school's title shows once someone from that school
   has signed in.
 - The first school's weekly Help or Requests summary still goes to
-  `HELP_SUMMARY_TO`; every other school's goes to its own Office accounts.
+  `HELP_SUMMARY_TO`; every other school's goes to its own admin accounts.
 
 ## Accounts and access
 
 - The first page is the sign-in page. Everyone signs in with their own email
   and password.
-- **The Office** sees and edits every classroom at its school, uploads CSVs,
+- **The admin** sees and edits every classroom at its school, uploads CSVs,
   creates and deletes classrooms, and manages accounts (**Manage users**), the
   **Class history** and the **Activity** log.
-- **Teachers** see and edit only the classrooms the Office has ticked
+- **Teachers** see and edit only the classrooms the admin has ticked
   for them on **Manage users**. They can't upload CSVs, create classrooms or
   delete them. The server enforces this; the page only hides the buttons.
 - **HeadTeachers** see and record on every classroom, like an administrator, and
@@ -144,7 +144,7 @@ Assistant requests page and endpoints are all gone (they answer 404), and nothin
 its tables and logs stay, and the tests keep it working.
 
 **To turn it back on with Claude:** create an API key in the Anthropic Console (console.anthropic.com → Settings → API
-Keys, with a spend limit under Settings → Limits), then on the MySafar service set `ANTHROPIC_API_KEY` to it,
+Keys, with a spend limit under Settings → Limits), then on the web service set `ANTHROPIC_API_KEY` to it,
 `ASSISTANT_ENABLED` to `on`, and optionally `ASSISTANT_MODEL` (`claude-haiku-5-5` costs about a tenth of a penny a
 question; the default is `claude-opus-5-5`). Claude is used whenever its key is set; Gemini and Cloudflare only without it.
 
@@ -194,7 +194,7 @@ Without either set of keys the panel says the assistant isn't set up yet; nothin
 
 ### Turning Ask Ilmi off, or undoing it
 
-- **Off at once, no deploy:** delete `ANTHROPIC_API_KEY` from the MySafar service's variables. Ask Ilmi then says it
+- **Off at once, no deploy:** delete `ANTHROPIC_API_KEY` from the web service's variables. Ask Ilmi then says it
   isn't set up, and nothing is sent to Anthropic.
 - **Remove it from the site:** on GitHub, open the merged pull request that added the assistant (then called
   Ask Ilmi) and press **Revert**, then merge the
@@ -281,8 +281,8 @@ does one whose tab has been quiet for 12 hours, or whose teacher has been taken 
 | `PORT` | `8080` |
 | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
 | `DEVELOPER_EMAIL` | The one developer account's email: it sees every school and adds schools (see [Schools and the developer account](#schools-and-the-developer-account)). Without it there is no developer and the site runs its one school as before. |
-| `ADMIN_EMAIL` | The first school's first Office account's email. Used only when that school has no accounts yet; not needed when `DEVELOPER_EMAIL` is set. |
-| `DASHBOARD_PASSWORD` | The setup password for that first Office account, or for a new developer account. Used only when the account doesn't exist yet; they must choose a new one at first sign-in. Delete it from Railway once they have. |
+| `ADMIN_EMAIL` | The first school's first admin account's email. Used only when that school has no accounts yet; not needed when `DEVELOPER_EMAIL` is set. |
+| `DASHBOARD_PASSWORD` | The setup password for that first admin account, or for a new developer account. Used only when the account doesn't exist yet; they must choose a new one at first sign-in. Delete it from Railway once they have. |
 | `ADMIN_RESET_PASSWORD` | Only for an admin who is locked out while email isn't set up. On the next start, the `ADMIN_EMAIL` account gets this password (changed at the next sign-in), is turned back on and unblocked, and is signed out everywhere. Each value is used once. Remove it once signed in. |
 | `RESEND_API_KEY` | A sending-only API key from [Resend](https://resend.com), limited to your sending domain. Optional. |
 | `LOGIN_CODES` | `off` stops emailing admins a sign-in code after their password. Optional; on by default. |
@@ -329,7 +329,7 @@ on and the sending address, and links to a preview of every email.
 - Each send is tagged (`category: invite`, `password_reset`, `security`,
   `test`), so Resend's **Emails** page can be filtered by kind.
 - A send that Resend refuses for being busy or briefly down is retried once,
-  without risk of a duplicate. Failures are written to the MySafar service's
+  without risk of a duplicate. Failures are written to the web service's
   logs as `Email to ... was not sent`.
 - Reset requests are emailed from a background thread, so the page takes as
   long whether or not the email has an account.
@@ -354,7 +354,7 @@ on and the sending address, and links to a preview of every email.
   and each download is listed in **Activity**.
 - Back up the database too: turn on scheduled backups in the Postgres service's
   **Backups** tab. Deleting the Postgres service or its volume deletes the live
-  records. Redeploying or deleting the MySafar service does not.
+  records. Redeploying or deleting the web service does not.
 
 ## Run and verify locally
 

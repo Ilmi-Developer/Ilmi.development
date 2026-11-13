@@ -223,7 +223,11 @@ label.inl{display:flex;align-items:center;gap:8px;font-weight:500;font-size:.937
 .dir tbody tr:hover{background:var(--surface-2)}
 .dir td.lead{min-width:220px}
 .dir .wcount{color:var(--warn-ink);font-weight:600}
-.ws .tablewrap,.ws .sheetwrap{border:0;border-radius:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+/* A table inside a card is a rounded panel of its own: a hairline all round and soft corners, with the heading row's
+   tint following the curve, so it sits in the card rather than cutting across it. */
+.ws .tablewrap,.ws .sheetwrap{border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;overflow-x:auto;background:var(--surface)}
+.ws .tablewrap table{border-collapse:separate;border-spacing:0}
+.ws .tablewrap tbody tr:last-child>*{border-bottom:0}
 .ws .mod.line{border:0}
 .ws .tbl th,.ws .tbl td{padding:8px 12px}
 .rk4{display:grid;gap:16px 24px;grid-template-columns:minmax(0,1fr)}
@@ -1526,6 +1530,8 @@ mark.qhl{background:none;color:#2f8ae0;font-weight:inherit}
 /* Rankings page: the podium beside the rest of the list, both within one screen on a computer (the list scrolls in
    its own panel); stacked on smaller screens. */
 .rkx{display:grid;gap:16px 32px;grid-template-columns:minmax(0,1fr);align-items:start}
+/* With the dock, the podium also leaves room for it at the foot of the window, so the whole podium shows at once. */
+@media (min-width:1100px){.has-dock .rkr{max-height:calc(100dvh - 340px)}.has-dock .podium{height:calc(100dvh - 340px);min-height:320px}}
 @media (min-width:1100px){.rkx{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
  .rkr{max-height:calc(100vh - 260px);max-height:calc(100dvh - 260px);overflow-y:auto;overscroll-behavior:contain;padding-right:8px;scrollbar-width:thin}
  .podium{height:calc(100vh - 260px);height:calc(100dvh - 260px);min-height:340px}
@@ -1810,11 +1816,17 @@ html[data-mode="dark"] .sxpt{stroke:var(--surface)}
    The look of the start page carried into the work: the page is paper with a grey-green cloud in its top right
    corner (tokens.css), titles and figures are set in Fraunces, and each part of a page is a cream card lying on
    the paper with a hairline and a soft, warm shadow. A theme's own colours (html[data-logo]) keep their flat look. */
-/* The sticky header carries the same paper and cloud, fixed to the window, so it lines up with the page behind it. */
+/* The sticky header carries the same paper and cloud, fixed to the window, so it lines up with the page behind it.
+   Its paper runs the full width of the window, not just the page's column, so no seam shows at its sides, and its
+   lower edge fades out over the cards scrolling under it rather than cutting across them. */
 @media (min-width:960px){
- .head{background:var(--page-bg);background-attachment:fixed;box-shadow:0 -28px 0 0 transparent}
+ .shell{overflow-x:clip}
+ .head{background:none;isolation:isolate;box-shadow:none}
+ .head::before{content:"";position:absolute;z-index:-1;top:-40px;bottom:-28px;left:calc(50% - 50vw);right:calc(50% - 50vw);
+  background:var(--page-bg);background-attachment:fixed;pointer-events:none;
+  -webkit-mask-image:linear-gradient(#000 calc(100% - 28px),transparent);mask-image:linear-gradient(#000 calc(100% - 28px),transparent)}
  html.fresh .shell,body.enter .shell{background:none}
- html.fresh .head{background:transparent}
+ html.fresh .head::before{background:transparent}
 }
 .head h1{font-size:2rem;font-weight:600;letter-spacing:-.012em;line-height:1.2}
 .head .crumb{font-size:.875rem}

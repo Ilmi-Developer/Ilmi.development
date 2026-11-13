@@ -1,8 +1,8 @@
-"""Settings for a whole school, which its Office chooses on Account.
+"""Settings for a whole school, one row each in its site_settings table.
 
-For now there is one: the site title, usually the school's or madrasah's name. It shows under Ilmi in the top left
-corner of every page (the side menu, the sign-in pages and the start page), on the TV and in emails. With no title
-set, those places show just Ilmi.
+"title" is the school's name. The developer sets it when adding or renaming a school (schools.py), and it is shown
+only on the developer's school tiles and bar: every page, screen and email of the school itself says just Ilmi.
+It is also one of the easy guesses a password may not be (auth.password_problem).
 """
 import re
 
@@ -58,31 +58,3 @@ def title():
             current_app.logger.warning("Couldn't read the site title; showing just Ilmi.")
             return ""
     return g.site_title
-
-
-def problem(text):
-    if len(text) > TITLE_MAX:
-        return f"Keep the title to {TITLE_MAX} characters or fewer."
-    return None
-
-
-@bp.post("/account/site-title")
-@auth.admin_required
-def save_title():
-    auth.check_form_token()
-    text = tidy(request.form.get("title", ""))
-    error = problem(text)
-    if error:
-        return auth.account_page(400, error=error, title_draft=text)
-    with auth.db().transaction() as tx:
-        before = read(tx, "title")
-        if text != before:
-            write(tx, "title", text)
-            auth.audit(tx, "site.title", detail={"title": text})
-    if text and text != before:
-        # The developer's list of schools shows each school by this name.
-        auth.db().rename(auth.db().current_id(), text, title_too=False)
-    g.site_title = text
-    notice = (f"Saved. Your school’s pages now show “{text}” under Ilmi in the top left corner." if text
-              else "Saved. Pages now show just Ilmi in the top left corner.")
-    return auth.account_page(notice=notice)

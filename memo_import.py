@@ -54,7 +54,7 @@ BOOK_TARGET = re.compile(r"L(\d+)\s*Target\s*(\d+)", re.I)
 bp = Blueprint("memo_import", __name__)
 
 DATES = ("%d/%m/%Y %H:%M:%S", "%d/%m/%Y %H:%M", "%d/%m/%Y", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d")
-ID_COLUMNS = ("student id", "id", "mysafar id", "se", "se id", "se number", "student number")
+ID_COLUMNS = ("student id", "id", "se", "se id", "se number", "student number")
 # Each kind: its page title, the column that says what was passed, and what clearing takes away.
 KINDS = {"memo": {"title": "Memorisation passes", "what": ("target",), "what_name": "Target"},
          "qaidah": {"title": "Qaidah/Tajweed level passes", "what": ("level", "target"), "what_name": "Level"}}
