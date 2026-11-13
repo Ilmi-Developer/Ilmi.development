@@ -4,7 +4,7 @@ class on the school's list.
 The list is personal data, so it is never part of the code. An admin uploads it as a CSV on /admin/set-houses and
 it is kept in the database (site_settings, key "house_list") until they remove it or upload another.
 
-Students are matched by their MySafar name (see plan). The same name can be on the list twice, in two classes.
+Students are matched by their name (the Student Name column). The same name can be on the list twice, in two classes.
 
 The page then shows, class by class, how many of these details would change, which students on the dashboard
 aren't on the list and who on the list isn't on the dashboard; nothing changes until the admin confirms.
@@ -25,7 +25,9 @@ import site_settings
 KEY = "house_list"
 HOUSES = ("Makkah", "Al-Aqsa", "Madinah")
 FIELDS = ("sid", "fid", "house", "sy", "gender", "ist")
-COLUMNS = ("MySafar Name", "QM", "AI", "MySafar ID", "Family ID", "House", "Year Group", "Gender")
+COLUMNS = ("Student Name", "QM", "AI", "Student ID", "Family ID", "House", "Year Group", "Gender")
+# Lists made before the columns were renamed call two of them by older names; those still work.
+OLDER = {"Student Name": "MySafar Name", "Student ID": "MySafar ID"}
 
 bp = Blueprint("set_houses", __name__)
 
@@ -51,23 +53,24 @@ def parse(text):
     """Rows of an uploaded list: {sid, name, cls, fid, house, sy, gender, ist}. ValueError says what's wrong with it."""
     reader = csv.DictReader(io.StringIO(text.lstrip("\ufeff"), newline=""))
     cols = [c.strip() for c in reader.fieldnames or []]
+    cols = [next((new for new, old in OLDER.items() if c == old and new not in cols), c) for c in cols]
     reader.fieldnames = cols
-    lacking = [c for c in ("MySafar Name", "QM", "Family ID", "House") if c not in cols]
+    lacking = [c for c in ("Student Name", "QM", "Family ID", "House") if c not in cols]
     if lacking:
         raise ValueError("That CSV has no " + ", ".join(lacking) + " column. It needs these columns: "
                          + ", ".join(COLUMNS) + ".")
     out = []
     for n, row in enumerate(reader, start=2):
         row = {k: (v or "") for k, v in row.items() if isinstance(k, str)}
-        name = " ".join(row["MySafar Name"].split())
+        name = " ".join(row["Student Name"].split())
         if not name and not any(str(v).strip() for v in row.values()):
             continue
         house = row["House"].strip()
         if not name:
-            raise ValueError(f"Row {n} has no MySafar Name.")
+            raise ValueError(f"Row {n} has no Student Name.")
         if house not in HOUSES:
             raise ValueError(f"Row {n} ({name}) has the house “{house}”. It must be one of " + ", ".join(HOUSES) + ".")
-        out.append({"sid": (row.get("MySafar ID") or row.get("Student ID") or "").strip(),
+        out.append({"sid": (row.get("Student ID") or "").strip(),
                     "name": name, "cls": class_key(row.get("QM")),
                     "fid": row["Family ID"].strip(), "house": house, "sy": " ".join(row.get("Year Group", "").split()),
                     "gender": row.get("Gender", "").strip(), "ist": " ".join(row.get("AI", "").split())})

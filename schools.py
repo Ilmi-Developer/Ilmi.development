@@ -11,9 +11,9 @@ sign-in cookie or from the link's token, both of which start with the school's n
 link from before there were schools has no number and belongs to the first school.
 
 The developer (DEVELOPER_EMAIL, one account, kept in the control database) signs in like anyone else and lands on
-/schools: every school as a tile. There they add a school and set its Office account (the person in charge of that
+/schools: every school as a tile. There they add a school and set its admin account (the person in charge of that
 school's settings): someone new is sent an invite to choose a password, and someone who already has an account at the
-school is given the Office role. Opening a school shows it as its Office sees it; the bar across the top switches the
+school is given the admin role. Opening a school shows it as its admin sees it; the bar across the top switches the
 view to HeadTeacher or Teacher and leads back to all schools. Nobody can be given the developer role:
 it isn't a role in any school's accounts, only the account for that one email. Inside a school the developer's
 work is recorded under a stand-in account (users.developer = 1) that can't sign in and isn't listed on Manage users.
@@ -32,7 +32,7 @@ from db import DB_ERRORS, SCHEMA, Database
 
 CONTROL = 0  # the control database's number in cookies, links and school_emails
 FIRST = 1    # the school whose tables were there before there were schools
-VIEWS = ("admin", "head", "teacher")
+VIEWS = ("admin", "head", "teacher", "finance")
 NAME_MAX = 60  # site_settings.TITLE_MAX: a school's name is its site title
 MAX_SCHOOLS = 500
 # The school the current request (or background job) is working in; None outside both, which means the first school.
@@ -341,13 +341,38 @@ def developer_bar():
     if not developer:
         return None
     school_id = developer["school_id"]
-    return {"school": router().name(school_id) if school_id else "", "view": developer["view"],
-            "inside": bool(g.user and g.user["role"] != "developer"),
+    inside = bool(g.user and g.user["role"] != "developer")
+    return {"school": router().name(school_id) if school_id else "", "view": developer["view"], "inside": inside,
+            "teacher": developer.get("teacher"), "teacher_name": developer.get("teacher_name", ""),
+            "teachers": teachers() if inside else [],
             "views": [(v, auth.ROLE_NAMES[v]) for v in VIEWS]}
 
 
+def teachers():
+    """The open school's teachers, for the developer's Teacher pop-up: each one's id, name and classes."""
+    if "dev_teachers" not in g:
+        with router().transaction() as tx:
+            people = tx.execute("SELECT id, name FROM users WHERE role = 'teacher' AND disabled = 0 AND developer = 0 "
+                                "ORDER BY name").fetchall()
+            rooms = {r["id"]: r["json"] for r in tx.execute("SELECT id, json FROM classrooms").fetchall()}
+            member = tx.execute("SELECT class_id, user_id FROM classroom_members").fetchall()
+        import tv  # the dashboard's own way of naming a class: "Yr3-A-QM-Br Ahmed" is "Yr3A Ustadh Ahmed"
+        names = {}
+        for class_id, text in rooms.items():
+            try:
+                names[class_id] = tv.class_label(json.loads(text).get("name") or class_id)
+            except ValueError:
+                names[class_id] = class_id
+        mine = {}
+        for row in member:
+            if row["class_id"] in names:
+                mine.setdefault(row["user_id"], []).append(names[row["class_id"]])
+        g.dev_teachers = [{"id": p["id"], "name": p["name"], "classes": sorted(mine.get(p["id"], []))} for p in people]
+    return g.dev_teachers
+
+
 def summary(school):
-    """A school's tile: its classes, students and staff, and who its Office is."""
+    """A school's tile: its classes, students and staff, and who its admin is."""
     info = dict(school, classes=0, students=0, staff=0, office=[], invited=[], offices=[], ok=True)
     try:
         with router().get(school["id"]).transaction() as tx:
@@ -365,7 +390,7 @@ def summary(school):
         except ValueError:
             pass
     info["staff"] = len(people)
-    # Its Office accounts: those who have signed in (chosen a password), then those invited and still to accept.
+    # Its admin accounts: those who have signed in (chosen a password), then those invited and still to accept.
     info["offices"] = sorted(({"name": p["name"], "email": p["email"], "active": bool(p["active"])}
                               for p in people if p["role"] == "admin"), key=lambda o: not o["active"])
     info["office"] = [o["name"] for o in info["offices"] if o["active"]]
@@ -388,20 +413,20 @@ def clean_name():
     return site_settings.tidy(request.form.get("name", ""))
 
 
-# --- A school's Office account ----------------------------------------------------------------------------------
+# --- A school's admin account ----------------------------------------------------------------------------------
 
 def office_fields():
-    """The Office's name and email as typed on Add a school or Manage."""
+    """The Admin's name and email as typed on Add a school or Manage."""
     return (" ".join(request.form.get("office_name", "").split())[:80],
             auth.norm_email(request.form.get("office_email"))[:254])
 
 
 def office_problem(name, email, school_id=None):
-    """Why this person can't be made the Office of this school (None: a school about to be added), or None."""
+    """Why this person can't be made the admin of this school (None: a school about to be added), or None."""
     if not name or not auth.EMAIL.fullmatch(email):
-        return "Enter the Office’s name and a valid email address."
+        return "Enter the Admin’s name and a valid email address."
     if email == auth.developer_email():
-        return "That is your own developer email. The Office needs an email of its own."
+        return "That is your own developer email. The admin needs an email of its own."
     home = router().home_of(email)
     if home is not None and home != school_id:
         # One account for each email across every school, since the email is what finds the school at sign-in.
@@ -414,9 +439,9 @@ def office_problem(name, email, school_id=None):
 
 
 def set_office(school_id, name, email):
-    """Makes this person an Office account of the school, working in that school's own database. Someone new gets
+    """Makes this person an admin account of the school, working in that school's own database. Someone new gets
     an account and an invite link to choose their password; someone who already has an account there is given the
-    Office role (and a fresh invite if they never accepted theirs). Returns what happened: who, whether they were
+    Admin role (and a fresh invite if they never accepted theirs). Returns what happened: who, whether they were
     already at the school, whether an email went out, and the link to pass on when it didn't."""
     every, link = router(), None
     # The invite email carries the school's own title, not the one this page read for itself.
@@ -430,7 +455,7 @@ def set_office(school_id, name, email):
                 user_id, who, active, already = row["id"], row["name"], bool(row["active"]), True
                 if row["role"] != "admin":
                     tx.execute("UPDATE users SET role = 'admin' WHERE id = ?", (user_id,))
-                    # The Office sees every classroom, so it isn't assigned any.
+                    # The admin sees every classroom, so it isn't assigned any.
                     tx.execute("DELETE FROM classroom_members WHERE user_id = ?", (user_id,))
                     auth.audit(tx, "user.updated", detail={"user": user_id, "role": "admin", "classes": []}, user_id=by)
             else:
@@ -454,13 +479,13 @@ def office_notice(result, school, added=False):
     """What set_office did, for the top of the schools page; `added` when the school itself was just added."""
     name, email = result["name"], result["email"]
     if added:
-        return (f"Added {school}. {name} has been emailed an invite at {email} to be its Office." if result["sent"] else
-                f"Added {school}. {name} is its Office: send them the link below to choose a password.")
+        return (f"Added {school}. {name} has been emailed an invite at {email} to be its admin." if result["sent"] else
+                f"Added {school}. {name} is its admin: send them the link below to choose a password.")
     if result["active"]:
-        return f"{name} is now an Office account at {school}. They sign in with the password they already have."
+        return f"{name} is now an admin account at {school}. They sign in with the password they already have."
     if result["sent"]:
-        return f"{name} has been emailed an invite at {email}. They become {school}’s Office once they choose a password."
-    return f"{name} now has an Office account at {school}. Send them the link below to choose a password."
+        return f"{name} has been emailed an invite at {email}. They become {school}’s admin once they choose a password."
+    return f"{name} now has an admin account at {school}. Send them the link below to choose a password."
 
 
 def set_view(school_id, view):
@@ -486,7 +511,7 @@ def new():
         return schools_page(400, error=f"Give the school a name of {NAME_MAX} characters or fewer.", **drafts)
     if len(router().all()) >= MAX_SCHOOLS:
         return schools_page(400, error=f"Ilmi holds at most {MAX_SCHOOLS} schools.", **drafts)
-    # The Office account is checked before the school is made, so a mistyped email doesn't leave a school behind.
+    # The admin account is checked before the school is made, so a mistyped email doesn't leave a school behind.
     with_office = bool(office_name or office_email)
     if with_office:
         error = office_problem(office_name, office_email)
@@ -496,7 +521,7 @@ def new():
     with router().control.transaction() as tx:
         auth.audit(tx, "school.created", detail={"school": school_id, "name": name})
     if not with_office:
-        return schools_page(notice=f"Added {name}. It has no Office account yet: set one from Manage on its tile.")
+        return schools_page(notice=f"Added {name}. It has no admin account yet: set one from Manage on its tile.")
     result = set_office(school_id, office_name, office_email)
     with router().control.transaction() as tx:
         auth.audit(tx, "school.office", detail={"school": school_id, "email": office_email})
@@ -506,7 +531,7 @@ def new():
 @bp.post("/schools/<int:school_id>/office")
 @developer_required
 def office(school_id):
-    """Sets a school's Office account: the person in charge of that school's settings, accounts and records."""
+    """Sets a school's admin account: the person in charge of that school's settings, accounts and records."""
     auth.check_form_token()
     if not router().exists(school_id) or school_id == CONTROL:
         abort(404)
@@ -540,7 +565,7 @@ def rename(school_id):
 @bp.post("/schools/<int:school_id>/open")
 @developer_required
 def open_school(school_id):
-    """Opens a school: the developer sees it as its Office does until they choose another view."""
+    """Opens a school: the developer sees it as its admin does until they choose another view."""
     auth.check_form_token()
     if not router().exists(school_id) or school_id == CONTROL:
         abort(404)
@@ -553,11 +578,20 @@ def open_school(school_id):
 @bp.post("/schools/view")
 @developer_required
 def choose_view():
-    """Office, HeadTeacher or Teacher: how the developer sees the school they have opened."""
+    """Admin, HeadTeacher or one teacher: how the developer sees the school they have opened. The Teacher view is
+    always one teacher's, chosen in the bar's pop-up, so it shows exactly their classes."""
     auth.check_form_token()
     view = request.form.get("view")
     school_id = g.developer["school_id"]
     if view not in VIEWS or not school_id:
         abort(400)
+    if view == "teacher":
+        teacher = request.form.get("teacher", "")
+        with router().use(school_id), router().transaction() as tx:
+            ok = teacher.isdigit() and tx.execute("SELECT 1 FROM users WHERE id = ? AND role = 'teacher' AND disabled = 0 "
+                                                  "AND developer = 0", (int(teacher),)).fetchone()
+        if not ok:
+            abort(400)
+        view = f"teacher:{int(teacher)}"
     set_view(school_id, view)
     return redirect("/", code=303)

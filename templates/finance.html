@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Finance{% endblock %}
+{% block content %}
+{# The Finance account's page (finance.py). Empty for now; finance features are built here from the same parts as the
+   rest of Ilmi: this band, cards (.mod), figures (.figs), rounded tables (.tablewrap) and pop-ups. #}
+<div class="band slim"><div class="band-top"><h1>Finance</h1></div></div>
+<div class="mod fin-empty">
+  <span class="fin-ic" aria-hidden="true">{{ icon("sheet") }}</span>
+  <h2>Nothing here yet</h2>
+  <p class="sub">This is where your school’s finance tools will be. They’re on their way.</p>
+</div>
+{% endblock %}

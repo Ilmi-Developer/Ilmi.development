@@ -7,13 +7,13 @@
   {% include "_mark.html" %}
   <h1>Reset your password</h1>
   {% if not mail_enabled %}
-  <p class="lede">Password reset emails aren't set up yet, so the office needs to send you a reset link.</p>
-  {% set contact_title = "Ask the office for a reset link" %}
-  {% set contact_fallback = "Ask the office to send you a reset link from Manage users." %}
+  <p class="lede">Password reset emails aren't set up yet, so an admin needs to send you a reset link.</p>
+  {% set contact_title = "Ask an admin for a reset link" %}
+  {% set contact_fallback = "Ask an admin to send you a reset link from Manage users." %}
   {% include "_contact.html" %}
   {% elif sent %}
   <p class="notice" role="status">If there's an account for that email, we've sent it a link to choose a new password. The link expires in 1 hour.</p>
-  <p class="sub">Nothing after a few minutes? Check your spam folder, or contact the office.</p>
+  <p class="sub">Nothing after a few minutes? Check your spam folder, or contact an admin.</p>
   {% set contact_title = "Still no email?" %}
   {% include "_contact.html" %}
   {% else %}

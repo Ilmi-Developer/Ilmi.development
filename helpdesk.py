@@ -6,7 +6,7 @@ teacher sees the reply in the same pop-up, with a dot on the button until they o
 
 Every Sunday at 12:00 London time each school's weekly summary goes out: everything sent at that school since the
 Sunday before, or a line saying nothing was. The first school's goes to HELP_SUMMARY_TO (a Railway variable;
-ADMIN_EMAIL if it isn't set); every other school's goes to its own Office accounts. A thread in the web process checks once a
+ADMIN_EMAIL if it isn't set); every other school's goes to its own admin accounts. A thread in the web process checks once a
 minute; help_summaries records each week's email, so it goes once even with a restart or a second process, and a
 summary missed while the site was down goes out when it comes back, if that is still the same Sunday or Monday.
 """
@@ -151,7 +151,7 @@ def admin_delete(item_id):
 
 def summary_recipients():
     """Who gets the current school's weekly summary: the first school's goes where the Railway variables say, as
-    it did before there were other schools; another school's goes to its own Office accounts."""
+    it did before there were other schools; another school's goes to its own admin accounts."""
     import schools
     if auth.db().current_id() == schools.FIRST:
         to = current_app.config.get("HELP_SUMMARY_TO") or current_app.config.get("ADMIN_EMAIL", "")

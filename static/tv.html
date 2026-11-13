@@ -293,7 +293,7 @@ var SLIDE_MS=30000,DATA_MS=60000;
 /* /present/<token> is a teacher's Presenter: the same scenes, for one class, with its students riding through. Like a
    TV screen's link it needs no sign-in: the dashboard's Presenter button makes a new link each time, and the first tab
    to open it claims it with a key kept in this tab's sessionStorage, so it works here until the tab is closed. */
-var path=location.pathname.replace(/\/+$/,""),LIVE=/^\/present\/([\w-]+)$/.exec(path),PRESENT=!!LIVE,LK=LIVE?"mysafar.present."+LIVE[1]:"",
+var path=location.pathname.replace(/\/+$/,""),LIVE=/^\/present\/([\w.-]+)$/.exec(path),PRESENT=!!LIVE,LK=LIVE?"mysafar.present."+LIVE[1]:"",
  VIEW="",URL=path==="/tv"?"/api/tv":path+"/data";
 if(LIVE)try{VIEW=sessionStorage.getItem(LK)||""}catch(e){}
 var CLASSY=PRESENT; // the class's own slides, with its students riding through

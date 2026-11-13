@@ -1,8 +1,8 @@
-"""Settings for a whole school, which its Office chooses on Account.
+"""Settings for a whole school, one row each in its site_settings table.
 
-For now there is one: the site title, usually the school's or madrasah's name. It shows under Ilmi in the top left
-corner of every page (the side menu, the sign-in pages and the start page), on the TV and in emails. With no title
-set, those places show just Ilmi.
+"title" is the school's name. The developer sets it when adding or renaming a school (schools.py), and it is shown
+only on the developer's school tiles and bar: every page, screen and email of the school itself says just Ilmi.
+It is also one of the easy guesses a password may not be (auth.password_problem).
 """
 import re
 
@@ -43,15 +43,12 @@ def title():
     """The current school's site title, or "" when none is set. Read once per request; a page still renders (with
     just Ilmi) when the database can't be reached, such as the error page shown then.
 
-    Signed out, a page belongs to no school and shows just Ilmi, with one exception: while the site has a single
-    school, the sign-in and start pages carry its title, as they did before there could be more."""
+    Signed out, a page belongs to no school and shows just Ilmi: the start page, the sign-in pages and the rest are
+    Ilmi's own and never carry a school's name, however many schools there are."""
     if "site_title" not in g:
         try:
             router = current_app.config["DB"]
-            database = router.current()
-            if router.current_id() == schools.CONTROL:
-                only = router.all() if not g.get("user") else []
-                database = router.get(only[0]["id"]) if len(only) == 1 else None
+            database = None if router.current_id() == schools.CONTROL else router.current()
             if database is None:
                 g.site_title = ""
             else:
@@ -61,31 +58,3 @@ def title():
             current_app.logger.warning("Couldn't read the site title; showing just Ilmi.")
             return ""
     return g.site_title
-
-
-def problem(text):
-    if len(text) > TITLE_MAX:
-        return f"Keep the title to {TITLE_MAX} characters or fewer."
-    return None
-
-
-@bp.post("/account/site-title")
-@auth.admin_required
-def save_title():
-    auth.check_form_token()
-    text = tidy(request.form.get("title", ""))
-    error = problem(text)
-    if error:
-        return auth.account_page(400, error=error, title_draft=text)
-    with auth.db().transaction() as tx:
-        before = read(tx, "title")
-        if text != before:
-            write(tx, "title", text)
-            auth.audit(tx, "site.title", detail={"title": text})
-    if text and text != before:
-        # The developer's list of schools shows each school by this name.
-        auth.db().rename(auth.db().current_id(), text, title_too=False)
-    g.site_title = text
-    notice = (f"Saved. Every page now shows “{text}” under Ilmi in the top left corner." if text
-              else "Saved. Pages now show just Ilmi in the top left corner.")
-    return auth.account_page(notice=notice)

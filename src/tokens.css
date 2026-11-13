@@ -293,6 +293,13 @@ html.has-dock{--dock-h:60px;--dock-gap:calc(14px + env(safe-area-inset-bottom,0p
 .idk-bar .idk-i>:focus-visible{outline:2px solid var(--rail-strong);outline-offset:2px}
 .idk-bar .idk-i.open>*{background:var(--rail-hover);color:var(--rail-strong)}
 /* A folder holding the page you are on, and an open folder, show a small cream dot under the icon, as running apps do. */
+/* The side menu marks the page you are on with a round pill (.navsel); in the dock the cream tile does that, so the
+   pill never shows there, whichever way the item reached the dock. */
+.idock .navsel,.idk-pops .navsel{display:none}
+/* Links in the dock and its folders keep their own colours and no underline in every browser (Safari paints a
+   visited link purple and underlines it on hover unless told otherwise), and the mouse leaves no focus ring. */
+.idock a,.idock a:visited,.idk-pops a,.idk-pops a:visited{color:inherit;text-decoration:none}
+.idock :focus:not(:focus-visible),.idk-pops :focus:not(:focus-visible),.warm-tooltip__trigger:focus:not(:focus-visible){outline:none}
 .idk-i.has-on::after,.idk-i.open::after{content:"";position:absolute;left:50%;bottom:-6px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--rail-strong);opacity:.9}
 .idk-i.has-on.is-on::after{display:none}
 .idk-av.av{--av:calc(var(--sz) * .62);box-shadow:0 0 0 1.5px var(--rail-line);font-size:calc(var(--sz) * .27)}

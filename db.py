@@ -271,10 +271,8 @@ def _m15_trusted_devices(db, postgres):
         expires_at BIGINT NOT NULL)""")
 
 
-def _m16_head_teachers(db, postgres):
-    # A third role, "head" (shown as HeadTeacher): sees every classroom, Record, House points, Rankings, Presenter and
-    # FAQs, but not the Administration pages (see auth.py). The users table's CHECK on role must allow it.
-    allowed = "CHECK (role IN ('admin', 'head', 'teacher'))"
+def _allow_roles(db, postgres, allowed):
+    """Changes the users table's CHECK on role to `allowed`."""
     if postgres:
         names = [r["conname"] for r in db.execute(
             "SELECT conname FROM pg_constraint WHERE conrelid = 'users'::regclass AND contype = 'c' "
@@ -294,6 +292,12 @@ def _m16_head_teachers(db, postgres):
     db.execute("UPDATE sqlite_master SET sql = ? WHERE type = 'table' AND name = 'users'", (new,))
     db.execute(f"PRAGMA schema_version = {version + 1}")
     db.execute("PRAGMA writable_schema = OFF")
+
+
+def _m16_head_teachers(db, postgres):
+    # A third role, "head" (shown as HeadTeacher): sees every classroom, Record, House points, Rankings, Presenter and
+    # FAQs, but not the Administration pages (see auth.py). The users table's CHECK on role must allow it.
+    _allow_roles(db, postgres, "CHECK (role IN ('admin', 'head', 'teacher'))")
 
 
 def _m17_dark_mode(db, postgres):
@@ -392,6 +396,12 @@ def _m22_schools(db, postgres):
     db.execute("ALTER TABLE sessions ADD COLUMN view_as TEXT")
 
 
+def _m23_finance(db, postgres):
+    # A fourth role, "finance" (shown as Finance): its own Finance page and nothing of the classes, students or
+    # Administration pages (see finance.py). The users table's CHECK on role must allow it.
+    _allow_roles(db, postgres, "CHECK (role IN ('admin', 'head', 'teacher', 'finance'))")
+
+
 def _c1_schools(db, postgres):
     t = _types(postgres)
     # The schools. A school's id names its database: the first school keeps the site's original tables, the
@@ -410,7 +420,7 @@ def _c1_schools(db, postgres):
 MIGRATIONS = [_m1_classrooms, _m2_accounts, _m3_tv_screens, _m4_tv_settings, _m5_house_points, _m6_help_requests,
               _m7_avatars, _m8_tutorial, _m9_tutorial_again, _m10_board_links, _m11_login_codes, _m12_stay_signed_in,
               _m13_presenter_shares, _m14_presenter_links, _m15_trusted_devices, _m16_head_teachers, _m17_dark_mode,
-              _m18_assistant, _m19_assistant_tokens, _m20_themes, _m21_site_settings, _m22_schools]
+              _m18_assistant, _m19_assistant_tokens, _m20_themes, _m21_site_settings, _m22_schools, _m23_finance]
 # Run after MIGRATIONS on the control database only, and recorded in its `control_migrations`.
 CONTROL_MIGRATIONS = [_c1_schools]
 SCHEMA = re.compile(r"[a-z_][a-z0-9_]{0,62}")

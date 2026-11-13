@@ -9,4 +9,4 @@ Didn't arrive in the inbox straight away? Check the spam or junk folder, and mar
 
 Open the dashboard: {{ signin }}
 
-{{ site_title() or "Ilmi" }}
+Ilmi

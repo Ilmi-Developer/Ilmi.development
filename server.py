@@ -9,8 +9,8 @@ of the school its sign-in or link belongs to (schools.py). In the code below,
 `database` is all of them: `database.transaction()` opens the current school's.
 
 Each classroom is one row of its school's `classrooms` table. Classrooms are
-created from the dashboard (CSV upload) by the school's Office (role "admin").
-Teachers see and edit only the classrooms the Office has assigned to them. Every save and delete is recorded in
+created from the dashboard (CSV upload) by the school's admin (role "admin").
+Teachers see and edit only the classrooms the admin has assigned to them. Every save and delete is recorded in
 `classroom_history` and `audit_log`, which are kept for RETENTION_DAYS.
 """
 import base64
@@ -26,7 +26,6 @@ from pathlib import Path
 from urllib.parse import quote
 
 from flask import Flask, Response, abort, g, jsonify, redirect, request
-from markupsafe import escape
 from werkzeug.exceptions import HTTPException, InternalServerError
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -42,6 +41,7 @@ import house_extra
 import quran_coins
 import memo_import
 import helpdesk
+import finance
 import schools
 import tv
 from db import DB_ERRORS
@@ -280,7 +280,7 @@ ERRORS = {400: ("Something went wrong", "The request couldn't be used. Go back, 
           413: ("Too large", "That was too large to send. Files must be under 2 MB."),
           429: ("Too many requests", "Wait a few minutes, then try again."),
           500: ("Something went wrong", "The dashboard hit a problem. Try again in a minute; if it keeps happening, "
-                                        "tell the office.")}
+                                        "tell an admin.")}
 
 
 class RailwayProxy:
@@ -389,6 +389,7 @@ def create_app(test_config=None):
     app.register_blueprint(themes.bp)
     app.register_blueprint(site_settings.bp)
     app.register_blueprint(schools.bp)
+    app.register_blueprint(finance.bp)
     app.register_blueprint(tv.bp)
     app.register_blueprint(cleanup.bp)
     app.register_blueprint(set_houses.bp)
@@ -463,6 +464,12 @@ def create_app(test_config=None):
             if wants_json():
                 return jsonify(error="Choose a new password before continuing."), 403
             return redirect("/account")
+        # A Finance account has its Finance page and its Account, and none of the classes, students or admin pages.
+        if g.user and g.user["role"] == "finance" and not public and not request.path.startswith(finance.FINANCE_PATHS) \
+                and request.path not in SHELL_FILES:
+            if wants_json() or request.method != "GET":
+                return jsonify(error="Your account can't open this page."), 403
+            return redirect("/finance")
         # The developer with no school open has their own pages and nothing else: every other page is a school's.
         if g.user and g.user["role"] == "developer" and not public and not auth.developer_home(request.path) \
                 and request.path not in SHELL_FILES:
@@ -496,7 +503,7 @@ def create_app(test_config=None):
             EMAIL_PREVIEW_CSP if request.path.startswith("/admin/email/preview/") else \
             ACCOUNT_CSP if request.path.startswith("/account") else \
             CODE_CSP if request.path in ("/login", "/login/code") else \
-            LOGIN_CSP if request.path.startswith(("/admin/", "/schools")) or request.path == "/welcome" else PAGE_CSP
+            LOGIN_CSP if request.path.startswith(("/admin/", "/schools", "/finance")) or request.path == "/welcome" else PAGE_CSP
         if app.config["COOKIE_SECURE"]:
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return response
@@ -620,15 +627,13 @@ def create_app(test_config=None):
         me = {"name": g.user["name"], "email": g.user["email"], "role": g.user["role"], "csrf": g.session["csrf"],
               "fresh": fresh, "stay": g.session["remember"], "initial": avatars.initial(g.user["name"]),
               "avatar": avatars.url(g.user["id"], g.user["avatar_at"]),
-              "tour": not toured, "assistant": assistant.enabled(app), "site": site_settings.title()}
+              "tour": not toured, "assistant": assistant.enabled(app)}
         # The developer's bar: the school they have opened and the view they chose (railway-storage.js draws it).
         bar = schools.developer_bar()
         if bar:
-            me["dev"] = {"school": bar["school"], "view": bar["view"], "views": bar["views"]}
+            me["dev"] = {"school": bar["school"], "view": bar["view"], "views": bar["views"], "teacher": bar["teacher"],
+                         "teacherName": bar["teacher_name"], "teachers": bar["teachers"]}
         html = (ROOT / "Master_Dashboard_standalone.html").read_text(encoding="utf-8")
-        # The site title under Ilmi in the menu's top left corner (site_settings.py); with none, just Ilmi.
-        if me["site"]:
-            html = html.replace('<small class="org" hidden></small>', f'<small class="org">{escape(me["site"])}</small>', 1)
         html = html.replace("<script>", f"<script>window.RAILWAY=true;window.ME={script_json(me)};{TAB_GUARD}</script>\n<script>", 1)
         look = themes.current(g.user)
         if bar:
@@ -669,12 +674,12 @@ def create_app(test_config=None):
         return g.user["role"] == "admin"
 
     def sees_all():
-        """The Office and HeadTeachers see and record on every classroom (and the developer, in any view)."""
+        """The admin and HeadTeachers see and record on every classroom (and the developer, in any view)."""
         return auth.sees_all()
 
     def can_edit(db, class_id):
         return sees_all() or db.execute("SELECT 1 FROM classroom_members WHERE class_id = ? AND user_id = ?",
-                                        (class_id, g.user["id"])).fetchone() is not None
+                                        (class_id, auth.member_id())).fetchone() is not None
 
     @app.get("/api/classes")
     def read_classes():
@@ -683,7 +688,7 @@ def create_app(test_config=None):
                 rows = db.execute("SELECT id, json, revision FROM classrooms ORDER BY id").fetchall()
             else:
                 rows = db.execute("SELECT c.id, c.json, c.revision FROM classrooms c JOIN classroom_members m "
-                                  "ON m.class_id = c.id WHERE m.user_id = ? ORDER BY c.id", (g.user["id"],)).fetchall()
+                                  "ON m.class_id = c.id WHERE m.user_id = ? ORDER BY c.id", (auth.member_id(),)).fetchall()
             return jsonify({row["id"]: {"json": row["json"], "revision": row["revision"]} for row in rows})
 
     @app.get("/api/houses")
@@ -747,10 +752,10 @@ def create_app(test_config=None):
                     current = db.execute("SELECT json FROM classrooms WHERE id = ? AND revision = ?",
                                          (class_id, document["revision"])).fetchone()
                     if current and any(len(json.loads(current["json"]).get(k, [])) != len(state.get(k, [])) for k in ("S", "X")):
-                        return jsonify(error="Only the Office can add or remove students."), 403
+                        return jsonify(error="Only the admin can add or remove students."), 403
                     # House points are given by admins only (on the Record page and Counted coins), not by HeadTeachers or teachers.
                     if current and coins(state) - coins(json.loads(current["json"])):
-                        return jsonify(error="Only the Office can give house points."), 403
+                        return jsonify(error="Only the admin can give house points."), 403
                 saved = update_classroom(db, class_id, state, document["revision"], g.user["id"])
                 if saved:
                     return jsonify(revision=saved)
@@ -769,7 +774,7 @@ def create_app(test_config=None):
         if not CLASS_ID.fullmatch(class_id) or not isinstance(document, dict) or type(document.get("revision")) is not int:
             abort(400)
         if not is_admin():
-            return jsonify(error="Only the Office can delete a classroom."), 403
+            return jsonify(error="Only the admin can delete a classroom."), 403
         with database.transaction() as db:
             cursor = db.execute("DELETE FROM classrooms WHERE id = ? AND revision = ?", (class_id, document["revision"]))
             if cursor.rowcount:

@@ -8,7 +8,7 @@
 
 /* ---------- The bar ----------
    A strip of its own above the page, so it never sits on anything of the school's: everything under it is the page
-   as the Office, a HeadTeacher or a Teacher sees it. One row at every width, its controls one height, held to the
+   as the admin, a HeadTeacher or a Teacher sees it. One row at every width, its controls one height, held to the
    same edges as the page below (1280px wide at most, 40px in; 16px on smaller screens). From the left: the Developer
    tag, then at the right the school that is open, the view it is seen as, and the way back to all schools. */
 .devbar{--devh:34px;grid-column:1/-1;font-size:.8125rem;line-height:1.2;color:var(--ink-2);background:var(--surface-2);border-bottom:1px solid var(--line)}
@@ -28,22 +28,57 @@
 @media (max-width:959.98px),(pointer:coarse){.devbar{--devh:44px}.devbar-in{padding-top:6px;padding-bottom:6px}.devbar .devseg button{padding:0 14px}}
 @media (max-width:959.98px){.devbar-in{padding-left:16px;padding-right:16px}.devat{display:none}}
 /* On a phone: the views at the left, all schools at the right, and nothing else. */
+/* With four views the buttons may not fit the narrowest phones: they then scroll sideways in their pill. */
+@media (max-width:559.98px){.devbar .devseg{flex:0 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain}
+ .devbar .devseg::-webkit-scrollbar{display:none}.devbar .devseg>*{flex:none}}
 @media (max-width:559.98px){.devwho{display:none}.devbar-in{gap:8px}.devbar .devseg{margin-right:auto}.devbar .devseg button{padding:0 10px}.devlink{padding:0 12px}.devall{flex:0 1 auto}}
 /* On the narrowest phones "All schools" is its icon alone (its name stays for screen readers and as its tooltip). */
 @media (max-width:389.98px){.devall{flex:none;width:var(--devh);padding:0;justify-content:center}.devall .devlink-t{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}}
 @media print{.devbar{display:none}}
+/* Teacher is a link-styled button in the views (it opens the list of teachers), drawn like the others. */
+.devbar .devseg .devteach{display:inline-flex;align-items:center;font:inherit;font-size:.8125rem;font-weight:500;border:0;border-radius:var(--r-pill);background:none;
+ color:var(--ink-2);padding:0 12px;min-height:0;cursor:pointer;text-decoration:none;white-space:nowrap;max-width:22ch;overflow:hidden;text-overflow:ellipsis}
+.devbar .devseg .devteach:hover{color:var(--ink)}
+.devbar .devseg .devteach[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(60,52,30,.12),0 0 0 1px var(--line)}
+
+/* ---------- The teacher picker ----------
+   A card over the blurred page listing the school's teachers with their classes; choosing one shows the school as
+   that teacher sees it. On the admin pages it opens on #pick-teacher with no script; on the dashboard, from the bar. */
+.devpick{position:fixed;inset:0;z-index:90;display:none;place-items:center;padding:24px 16px;background:rgba(28,30,20,.32);
+ -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.devpick:target,.devpick.open{display:grid;animation:dp-bg .18s ease both}
+.devpbg{position:fixed;inset:0}
+.devpcard{position:relative;width:min(520px,100%);max-height:calc(100dvh - 48px);overflow:auto;background:var(--surface);
+ border-radius:var(--r-xl);padding:20px 20px 12px;box-shadow:var(--shadow-lift,0 24px 60px -20px rgba(30,30,20,.45));animation:dp-in .26s var(--ease-out) both}
+.devph{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px}
+.devph h2{margin:0;font-size:1.25rem}
+.devpcard .sub{margin:0 0 12px;color:var(--mute)}
+.devpl{display:flex;flex-direction:column;gap:4px;margin:0}
+.devpi{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border:0;border-radius:var(--r);background:none;font:inherit;
+ color:var(--ink);text-align:left;cursor:pointer;transition:background-color var(--t-fast) var(--ease),transform var(--t-fast) var(--ease)}
+.devpi:hover,.devpi:focus-visible{background:var(--surface-2);transform:translateX(2px)}
+.devpi.on{background:var(--sunk)}
+.devpa{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--navy-soft);color:var(--navy-text,var(--navy));font-weight:700}
+.devpt{display:flex;flex-direction:column;min-width:0}
+.devpt b{font-weight:600}
+.devpt span{font-size:.8125rem;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body:has(.devpick:target),body:has(.devpick.open){overflow:hidden}
+@keyframes dp-bg{from{opacity:0}}
+@keyframes dp-in{from{opacity:0;transform:translateY(10px) scale(.98)}}
+@media (prefers-reduced-motion:reduce){.devpick,.devpcard,.devpi{animation:none;transition:none}}
 /* On the dashboard, after signing in, the page waits for the greeting and then fades in (src/template.css); the bar
    arrives with the page's own header. */
 @media (prefers-reduced-motion:no-preference){html.fresh .devbar{opacity:0;animation:g-safety 0s 9s forwards}}
 body.enter .devbar{animation:e-fade .2s ease both}
 
 /* ---------- The schools ----------
-   Tiles drawn like the dashboard's class cards: a small label, the name, who the Office is, then the figures along
+   Tiles drawn like the dashboard's class cards: a small label, the name, who the admin is, then the figures along
    the foot. The whole tile is the button that opens the school; Rename, in its corner, sits above that button.
-   The name and the Office line keep to two lines each, so every tile in a row is the same shape. */
+   The name and the admin line keep to two lines each, so every tile in a row is the same shape. */
 .sch-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
 .sch-tile{position:relative;display:flex;flex-direction:column;align-items:stretch;min-width:0;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px 12px;box-shadow:0 1px 2px rgba(60,52,30,.05);transition:border-color var(--t-fast) ease,background-color var(--t-fast) ease,box-shadow var(--t-fast) ease}
 .sch-tile:hover{border-color:var(--line-2);background:var(--surface-2);box-shadow:0 6px 16px -10px rgba(60,52,30,.35)}
+@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){.sch-tile{transition:transform .26s cubic-bezier(.2,.8,.2,1),box-shadow .26s cubic-bezier(.2,.8,.2,1),border-color var(--t-fast) ease,background-color var(--t-fast) ease}.sch-tile:hover{transform:translateY(-3px);box-shadow:0 1px 3px rgba(50,44,24,.1),0 18px 40px -16px rgba(50,44,24,.32)}.sch-tile:active{transform:translateY(-1px) scale(.985)}}
 .sch-tile.is-open{border-color:var(--focus)}
 .sch-tile:has(.lk:focus-visible){box-shadow:0 0 0 2px var(--focus)}
 .sch-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:24px}
@@ -64,11 +99,24 @@ body.enter .devbar{animation:e-fade .2s ease both}
 .sch-f dt{font-size:.6875rem;font-weight:500;color:var(--mute)}
 .sch-f dd{margin:0;font-weight:600;font-size:.9375rem;font-variant-numeric:tabular-nums}
 .sch-f dd.is-zero{color:var(--mute);font-weight:500}
-/* A school with no Office yet says so as a link to where one is set; like Manage, it sits above the tile's button. */
+/* A school with no admin yet says so as a link to where one is set; like Manage, it sits above the tile's button. */
 .sch-set{position:relative;z-index:1;color:inherit;font-weight:500;text-decoration:underline;text-underline-offset:2px}
 .sch-set:hover{color:var(--ink)}
+/* Figures, top right of the Schools page: a button that drops a small card with the totals. */
+.schfig{position:relative}
+.schfig>summary{list-style:none;gap:8px}
+.schfig>summary::-webkit-details-marker{display:none}
+.schfig>summary .ic{width:16px;height:16px}
+.schfig[open]>summary{background:var(--sunk)}
+.schfig-p{position:absolute;right:0;top:calc(100% + 8px);z-index:30;width:min(340px,calc(100vw - 32px));padding:16px;border-radius:var(--r-lg);
+ background:var(--surface);box-shadow:var(--shadow-float,0 18px 40px -16px rgba(30,30,20,.4)),0 0 0 1px var(--line);animation:dp-in .2s var(--ease-out) both}
+.schfig-g{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;margin-bottom:12px}
+.schfig-g div{display:flex;flex-direction:column}
+.schfig-g b{font:600 1.5rem/1.1 var(--font-display);color:var(--ink);font-variant-numeric:lining-nums tabular-nums}
+.schfig-g span{font-size:.8125rem;color:var(--mute)}
+.schfig-p p{margin:0;padding-top:12px;border-top:1px solid var(--line);font-size:.8125rem;line-height:1.5;color:var(--ink-2)}
 /* Add a school and Manage open as the site's pop-up does (.invite in static/auth.css), a little narrower. Manage has
-   two parts under the school's name, a rule between them: its Office accounts with the form that sets one, then
+   two parts under the school's name, a rule between them: its admin accounts with the form that sets one, then
    its name. */
 .sch-pop{width:min(560px,100%)}
 .sch-pt{min-width:0;overflow-wrap:anywhere}

@@ -4,7 +4,7 @@
 {% block width %} narrow{% endblock %}
 {% block content %}
 <div class="band slim"><div class="band-top"><h1>Manage users</h1><div class="acts"><a class="btn" href="#invite">Invite staff</a></div></div>
-<div class="figs"><div class="fig"><b>{{ users|length }}</b><span>Accounts</span></div><div class="fig"><b>{{ users|selectattr("role", "equalto", "teacher")|list|length }}</b><span>Teachers</span></div>{% set heads = users|selectattr("role", "equalto", "head")|list|length %}{% if heads %}<div class="fig"><b>{{ heads }}</b><span>HeadTeachers</span></div>{% endif %}<div class="fig"><b>{{ users|selectattr("role", "equalto", "admin")|list|length }}</b><span>Office</span></div><div class="fig{{ ' alert' if users|rejectattr('active')|rejectattr('disabled')|list }}"><b>{{ users|rejectattr("active")|rejectattr("disabled")|list|length }}</b><span>Invites not accepted</span></div></div></div>
+<div class="figs"><div class="fig"><b>{{ users|length }}</b><span>Accounts</span></div><div class="fig"><b>{{ users|selectattr("role", "equalto", "teacher")|list|length }}</b><span>Teachers</span></div>{% set heads = users|selectattr("role", "equalto", "head")|list|length %}{% if heads %}<div class="fig"><b>{{ heads }}</b><span>HeadTeachers</span></div>{% endif %}<div class="fig"><b>{{ users|selectattr("role", "equalto", "admin")|list|length }}</b><span>Admin</span></div><div class="fig{{ ' alert' if users|rejectattr('active')|rejectattr('disabled')|list }}"><b>{{ users|rejectattr("active")|rejectattr("disabled")|list|length }}</b><span>Invites not accepted</span></div></div></div>
 {% if link %}
 <div class="panel linkbox" role="status">
   <p><b>Send this link to {{ link_for }}</b>{% if not mail_enabled %} (email isn't set up yet){% else %} (the email couldn't be sent){% endif %}. It works once.</p>
@@ -19,13 +19,13 @@
   <div class="mod invcard" role="dialog" aria-modal="true" aria-labelledby="invt">
   <div class="invh"><h2 id="invt">Invite staff</h2><a class="btn sm" href="{{ inv_close }}">Close</a></div>
   {% if invite_open and error %}<p class="error">{{ error }}</p>{% endif %}
-  <p class="sub">They get {{ "an email with " if mail_enabled }}a link to choose their password. It expires in 72 hours. Teachers see only the classrooms you tick. HeadTeachers see every classroom, Record, House points, Rankings, Presenter and FAQs, but can't give house points or open the Administration pages. The Office is in charge of the school's settings and sees everything.</p>
+  <p class="sub">They get {{ "an email with " if mail_enabled }}a link to choose their password. It expires in 72 hours. Teachers see only the classrooms you tick. HeadTeachers see every classroom, Record, House points, Rankings, Presenter and FAQs, but can't give house points or open the Administration pages. The admin is in charge of the school's settings and sees everything. Finance has its own Finance page and none of the classes or students.</p>
   <form method="post" action="/admin/users/invite">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <div class="formrow">
       <label class="field">Name<input name="name" maxlength="80" autocomplete="off" required></label>
       <label class="field">Email<input type="email" name="email" maxlength="254" autocomplete="off" spellcheck="false" required></label>
-      <label class="field">Role<select name="role"><option value="teacher">Teacher</option><option value="head">HeadTeacher</option><option value="admin">Office</option></select></label>
+      <label class="field">Role<select name="role"><option value="teacher">Teacher</option><option value="head">HeadTeacher</option><option value="admin">Admin</option><option value="finance">Finance</option></select></label>
     </div>
     {% if rooms %}
     <fieldset><legend>Classrooms (for teachers)</legend>
@@ -54,7 +54,7 @@
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <div class="formrow">
       <label class="field">Name<input name="name" value="{{ u.name }}" maxlength="80" autocomplete="off" required></label>
-      <label class="field">Role<select name="role"><option value="teacher"{{ " selected" if u.role == "teacher" }}>Teacher</option><option value="head"{{ " selected" if u.role == "head" }}>HeadTeacher</option><option value="admin"{{ " selected" if u.role == "admin" }}>Office</option></select></label>
+      <label class="field">Role<select name="role"><option value="teacher"{{ " selected" if u.role == "teacher" }}>Teacher</option><option value="head"{{ " selected" if u.role == "head" }}>HeadTeacher</option><option value="admin"{{ " selected" if u.role == "admin" }}>Admin</option><option value="finance"{{ " selected" if u.role == "finance" }}>Finance</option></select></label>
     </div>
     {% if rooms %}
     <fieldset><legend>Classrooms (for teachers)</legend>
@@ -71,7 +71,7 @@
     <form method="post" action="/admin/users/{{ u.id }}/access"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="disable" value="{{ '0' if u.disabled else '1' }}"><button class="btn{{ '' if u.disabled else ' danger' }}">{{ "Turn account back on" if u.disabled else "Turn off account" }}</button></form>
     {% endif %}
   </div>
-  {% if u.active and not u.disabled %}<p class="hint after">Nobody can see a password, the Office included. A reset link lets {{ u.name }} choose a new one; their old password keeps working until they do.</p>{% endif %}
+  {% if u.active and not u.disabled %}<p class="hint after">Nobody can see a password, the admin included. A reset link lets {{ u.name }} choose a new one; their old password keeps working until they do.</p>{% endif %}
   </div>
 </details>
 {% endfor %}

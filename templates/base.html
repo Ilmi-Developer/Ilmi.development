@@ -16,14 +16,14 @@
 <link rel="apple-touch-icon" href="/favicon.png?v=4">
 <link rel="stylesheet" href="/auth.css">
 {# Where the wash page turn starts from; only on pages whose policy lets a script of ours run (server.py). #}
-{% if request.path in ("/login", "/login/code") or request.path.startswith(("/account", "/admin/", "/schools")) %}<script src="/wash.js"></script>{% endif %}
+{% if request.path in ("/login", "/login/code") or request.path.startswith(("/account", "/admin/", "/schools", "/finance")) %}<script src="/wash.js"></script>{% endif %}
 {% if look and look.css %}<link rel="stylesheet" href="{{ look.css }}" id="themecss">{% endif %}
 {# The developer's bar (schools.py): which school is open, the view it is seen as, and the way back to all schools. #}
 {% set dev = developer_bar() if look else none %}
 {% if dev %}<link rel="stylesheet" href="/developer.css">{% endif %}
 {% if intro %}<script src="/intro.js" defer></script>{% endif %}
 {% block head %}{% endblock %}
-{% if user and request.path.startswith(("/account", "/admin/", "/schools")) %}<script src="/menu.js" defer></script>{% endif %}
+{% if user and request.path.startswith(("/account", "/admin/", "/schools", "/finance")) %}<script src="/menu.js" defer></script>{% endif %}
 {# The dock, in place of the side menu, wherever the signed-in menu shows (static/dock.js). #}
 {% if look %}<script src="/warm-tooltip.js" defer></script><script src="/dock.js" defer></script>{% endif %}
 </head>
@@ -44,7 +44,7 @@
   <span class="devat" title="{{ dev.school }}">{{ dev.school }}</span>
   <form method="post" action="/schools/view" class="seg devseg" role="group" aria-label="View this school as">
     <input type="hidden" name="csrf" value="{{ csrf }}">
-    {% for key, label in dev.views %}<button name="view" value="{{ key }}" aria-pressed="{{ "true" if dev.view == key else "false" }}">{{ label }}</button>{% endfor %}
+    {% for key, label in dev.views %}{% if key == "teacher" %}<a class="devteach" href="#pick-teacher" role="button" aria-pressed="{{ "true" if dev.view == key else "false" }}">{{ label ~ ": " ~ dev.teacher_name if dev.view == "teacher" and dev.teacher_name else label }}</a>{% else %}<button name="view" value="{{ key }}" aria-pressed="{{ "true" if dev.view == key else "false" }}">{{ label }}</button>{% endif %}{% endfor %}
   </form>
   {% elif dev.school %}
   <a class="devlink devback" href="/" title="Back to {{ dev.school }}"><span class="devlink-t">Back to {{ dev.school }}</span></a>
@@ -53,9 +53,9 @@
 </div></div>
 {% endif %}
 <header><div class="rail">
-  <a class="brand" href="/" translate="no"><span class="ilmi"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span>{% if site_title() %}<small>{{ site_title() }}</small>{% endif %}</a>
+  <a class="brand" href="/" translate="no"><span class="ilmi"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span></a>
   {# Search opens the dashboard's search (Ctrl+K does the same here, static/menu.js). #}
-  {% if user.role != "developer" %}<a class="qkb" href="/#search" aria-label="Search" aria-keyshortcuts="Control+K Meta+K"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span class="qkt">Search</span><kbd aria-hidden="true">Ctrl K</kbd></a>{% endif %}
+  {% if user.role not in ("developer", "finance") %}<a class="qkb" href="/#search" aria-label="Search" aria-keyshortcuts="Control+K Meta+K"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span class="qkt">Search</span><kbd aria-hidden="true">Ctrl K</kbd></a>{% endif %}
   <input type="checkbox" id="navt" class="navt" aria-label="Show the menu">
   <div class="navw">
   <nav class="navs" aria-label="Main">
@@ -77,6 +77,9 @@
     {% if user.role == "developer" %}
     {{ nl("/schools", "grid", "Schools", here.startswith("/schools")) }}
     {% if dev and dev.school %}{{ nl("/", "home", dev.school) }}{% endif %}
+    {% elif user.role == "finance" %}
+    {# Finance has its own page and nothing of the classes (finance.py). #}
+    {{ nl("/finance", "sheet", "Finance", here == "/finance") }}
     {% else %}
     {{ nl("/", "home", "Overview") }}
     {% if all_classes %}{{ nl("/#record", "pen", "Record") }}{% endif %}
@@ -129,10 +132,12 @@
   <nav class="dock" aria-label="Shortcuts">
     {% if user.role == "developer" %}
     <a class="dk dk-home" href="/schools"><span class="dki">{{ icon("grid") }}</span><span>Schools</span></a>
+    {% elif user.role == "finance" %}
+    <a class="dk dk-home" href="/finance"><span class="dki">{{ icon("sheet") }}</span><span>Finance</span></a>
     {% else %}
     <a class="dk dk-home" href="/"><span class="dki">{{ icon("home") }}</span><span>Home</span></a>
     {% endif %}
-    {% if user.role == "developer" %}{% elif all_classes %}
+    {% if user.role in ("developer", "finance") %}{% elif all_classes %}
     <a class="dk dk-classes" href="/#classes"><span class="dki">{{ icon("grid") }}</span><span>Classes</span></a>
     <a class="dk dk-record" href="/#record"><span class="dki">{{ icon("pen") }}</span><span>Record</span></a>
     {% else %}
@@ -143,6 +148,24 @@
   </nav>
 </div></header>
 <div class="work">
+{% if dev and dev.inside %}
+{# The developer's Teacher view: choose one teacher and see the school exactly as they do (schools.py). #}
+<div class="devpick" id="pick-teacher">
+  <a class="devpbg" href="#_" aria-label="Close" tabindex="-1"></a>
+  <div class="devpcard" role="dialog" aria-modal="true" aria-labelledby="pickt">
+    <div class="devph"><h2 id="pickt">View as a teacher</h2><a class="btn sm" href="#_">Close</a></div>
+    {% if dev.teachers %}
+    <p class="sub">See {{ dev.school }} exactly as one teacher does: their classes and nothing else.</p>
+    <form method="post" action="/schools/view" class="devpl">
+      <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="view" value="teacher">
+      {% for t in dev.teachers %}<button name="teacher" value="{{ t.id }}" class="devpi{{ ' on' if dev.teacher == t.id }}"><span class="devpa" aria-hidden="true">{{ initial(t.name) }}</span><span class="devpt"><b>{{ t.name }}</b><span>{{ t.classes|join(", ") if t.classes else "No classes yet" }}</span></span></button>{% endfor %}
+    </form>
+    {% else %}
+    <p class="sub">This school has no teachers yet. Invite them on Manage users, then come back here.</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
 <main><div class="content{% block width %}{% endblock %}" id="main" tabindex="-1">
 {% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}
 {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
@@ -163,7 +186,7 @@
   <div class="iword">{% include "art/intro-word.svg" %}</div>
 </div>
 {% endif %}
-<header class="solo-band"><a href="/welcome" class="ilmi" translate="no"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span><span class="sr-only">, start page</span></a>{% if site_title() %}<small>{{ site_title() }}</small>{% endif %}</header>
+<header class="solo-band"><a href="/welcome" class="ilmi" translate="no"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span><span class="sr-only">, start page</span></a></header>
 <main>
 {% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}
 {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
@@ -173,11 +196,11 @@
 <aside class="welcome" aria-label="Welcome">
   {# Olive watercolour, with pale mist drifting slowly across it (auth.css). #}
   <div class="wsky" aria-hidden="true"><span class="wdrift d1"></span><span class="wdrift d2"></span></div>
-  <a class="wmark" href="/welcome" translate="no"><span class="ilmi"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span>{% if site_title() %}<small>{{ site_title() }}</small>{% endif %}</a>
+  <a class="wmark" href="/welcome" translate="no"><span class="ilmi"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span></a>
   <figure class="wquote">
     <span class="wtab">Welcome</span>
     <blockquote><p>“The best of you are those who learn the Qur’ān and teach it.”</p></blockquote>
-    <figcaption>The Prophet Muhammad (peace be upon him), Ṣaḥīḥ al-Bukhārī 5027</figcaption>
+    <figcaption>The Prophet Muhammad (PBUH), Ṣaḥīḥ al-Bukhārī 5027</figcaption>
   </figure>
   <div class="wart" aria-hidden="true">{% include "art/skyline.svg" %}</div>
 </aside>
