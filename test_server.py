@@ -3356,6 +3356,23 @@ class SchoolTests:
         self.assertEqual(self.form(hafsa, "/account", "/schools/2/office", office_name="X", office_email="x@example.com").status_code, 404)
         self.assertEqual(self.query_app(app, 2, "SELECT COUNT(*) AS n FROM users WHERE role = 'admin' AND developer = 0")[0]["n"], 2)
 
+    def test_reset_already_used_is_not_repeated_when_the_account_becomes_the_developer(self):
+        # Before there were schools: the admin was reset from ADMIN_RESET_PASSWORD, then chose their own password.
+        config = dict(self.config, ADMIN_RESET_PASSWORD="a-long-reset-password-1")
+        app = create_app(config)
+        client = self.sign_in(ADMIN[0], "a-long-reset-password-1", app=app)
+        changed = self.form(client, "/account", "/account/password", current="a-long-reset-password-1",
+                            password="my own new passphrase", confirm="my own new passphrase")
+        self.assertEqual(changed.status_code, 200)
+        # The site then starts with DEVELOPER_EMAIL set to the same email, the reset variable still there: the
+        # account becomes the developer with the password its owner chose, and the reset isn't applied again.
+        for _ in range(2):
+            app = create_app(dict(config, DEVELOPER_EMAIL=ADMIN[0]))
+            developer = self.sign_in(ADMIN[0], "my own new passphrase", app=app)
+            self.assertEqual(developer.last.status_code, 302)
+            self.assertEqual(developer.get("/schools").status_code, 200)
+            self.assertEqual(self.sign_in(ADMIN[0], "a-long-reset-password-1", app=app).last.status_code, 401)
+
     def test_existing_account_becomes_the_developer(self):
         # The site as it was before there were schools: one Office account, with records, a picture and history.
         self.assertEqual(self.write().status_code, 200)
