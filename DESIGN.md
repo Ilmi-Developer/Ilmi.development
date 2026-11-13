@@ -470,6 +470,23 @@ effects are rebuilt in-house instead:
 All of this is off under reduced motion. Nothing changes layout, so daily work
 still fits 1280x720.
 
+**Arrival and hover** (2026-11, page.html "Arrival motion", template.css "Hover
+lift"). Each time a page, class tab or view is opened, its bars draw in from the
+left one after another (clip-path, so rounded ends stay round) and its big
+figures count up to their value, flickering through nearby numbers for the first
+moments (`arrive()`, `grow()`, `countUp()`). Filters and typing redraw without
+it. The Quran tracker's two-day switch brings its rows in one after another and
+re-runs the bar and count. With a mouse, class cards, overview tiles, house
+cards, tracker rows and the developer's school tiles rise a few pixels with a
+deeper shadow and settle on press; larger panels only deepen their shadow.
+Off under reduced motion and on touch screens.
+
+**House points awards** (the drawer behind See awards): the total in Fraunces
+with its coin split as one bar and three small tiles, "Where they came from" as
+bars when there is more than one reason, then every award grouped by day, with
+the same award given several times that day shown once with its count
+(+120, 6 × 20). Counted coins rows carry no student line.
+
 **Sign-in layout**: on a computer the white sign-in card is on the left and the
 navy welcome panel on the right.
 

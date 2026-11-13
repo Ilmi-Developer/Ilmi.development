@@ -1891,3 +1891,60 @@ html:not([data-logo]) .ws .tablewrap,html:not([data-logo]) .ws .sheetwrap{box-sh
 .drawer,.dlg{background:rgba(34,35,27,.42)}
 .dhead{background:var(--surface)}
 .dhead h2,.dlg h2{font-size:1.375rem}
+
+/* Hover lift. With a mouse or trackpad, the cards and tiles that open something rise a little to meet the pointer and
+   cast a deeper shadow, and settle back on press; the larger panels only deepen their shadow, so a page never jumps.
+   Touch screens and reduced motion keep the flat colour change above. */
+@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+ .ccard,.mcard,.at,.trc,button.hcol,.tsum .house,.rkr li{transition:transform .26s cubic-bezier(.2,.8,.2,1),box-shadow .26s cubic-bezier(.2,.8,.2,1),background-color var(--t-fast) ease,border-color var(--t-fast) ease}
+ .ccard:hover,.mcard:hover,.at:hover,button.hcol:hover{transform:translateY(-3px);box-shadow:var(--shadow-lift);position:relative;z-index:1}
+ .trc:hover,.tsum .house:hover{transform:translateY(-2px)}
+ .rkr li:hover{transform:translateX(3px)}
+ .ccard:active,.mcard:active,.at:active,button.hcol:active,.trc:active{transform:translateY(-1px) scale(.985);transition-duration:.1s}
+ .ws>.mod,.tsum>.tsa>.mod,.tsum>section{transition:box-shadow .3s ease}
+ .ws>.mod:hover,.tsum>.tsa>.mod:hover,.tsum>section:hover{box-shadow:var(--shadow-card),0 16px 36px -22px rgba(50,44,24,.32)}
+ .hcol b,.at b{transition:transform .26s cubic-bezier(.2,.8,.2,1)}
+ button.hcol:hover b,.at:hover b{transform:scale(1.04);transform-origin:left center}
+}
+/* A number counting up keeps its width steady while it runs. */
+.counting{font-variant-numeric:tabular-nums}
+
+/* House points: one award list in the drawer. The total and its coins up top, then where the points came from, then
+   every award by day; the same award given several times that day shows once, with its count. */
+.hpx{padding:16px 18px 14px;border-radius:var(--r-lg);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line)}
+.hpx-n{display:flex;align-items:baseline;gap:8px;margin:0}
+.hpx-n b{font-family:var(--font-display);font-size:2.5rem;font-weight:600;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--ink)}
+.hpx-n span{color:var(--ink-2);font-size:.9375rem}
+.hpx-s{margin:6px 0 0;color:var(--ink-2);font-size:.875rem}
+.hpx-s .hdot{margin-right:5px}
+.hpx-bar{display:flex;gap:3px;height:8px;margin:14px 0 12px;border-radius:999px;overflow:hidden;background:var(--line)}
+.hpx-bar>span{display:block;min-width:6px;border-radius:999px}
+.hpx-bar>.g{background:var(--tok-g)}.hpx-bar>.b{background:var(--tok-b)}.hpx-bar>.r{background:var(--tok-r)}
+.hpx-c{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;list-style:none;margin:0;padding:0}
+.hpx-c li{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 4px;padding:8px 10px;border-radius:var(--r);background:var(--surface);font-size:.8125rem;color:var(--ink-2)}
+.hpx-c li b{font-family:var(--font-display);font-size:1.0625rem;color:var(--ink);font-variant-numeric:tabular-nums}
+.hpx-c li small{flex-basis:100%;color:var(--mute);font-size:.75rem}
+.hpx-c li.zero{opacity:.55}
+.hpx-c .tdot{width:8px;height:8px;margin-right:2px;vertical-align:0}
+.hpd h3{margin:22px 0 8px;font-size:.8125rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mute)}
+.hpr{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.hpr li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:baseline}
+.hpr .l{font-weight:500;min-width:0}.hpr .l small{margin-left:8px;color:var(--mute);font-size:.8125rem;font-weight:400}
+.hpr .v{font-weight:600;font-variant-numeric:tabular-nums}
+.hpr .bar{grid-column:1/-1;display:block;height:6px;border-radius:999px;background:var(--line)}
+.hpr .bar>i{display:block;height:100%;width:var(--w);border-radius:999px;background:var(--sage)}
+.hpday{margin:0 0 6px}
+.hpday h4{position:sticky;top:-1px;z-index:1;margin:0;padding:8px 2px 6px;background:var(--surface);font-size:.8125rem;font-weight:600;color:var(--ink-2)}
+.hpday ul{list-style:none;margin:0 0 8px;padding:0;border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line)}
+.hpday li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:2px 12px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+.hpday li:last-child{border-bottom:0}
+.hpday .w .hdot,.hpx-s .hdot{margin:0 5px 0 2px}
+.hpday .w{grid-column:1/-1;font-weight:600}.hpday .w small{display:block;font-weight:400;color:var(--mute);font-size:.8125rem}
+.hpday .x{min-width:0;font-weight:500}
+.hpday .x small{display:block;margin-top:1px;font-weight:400;color:var(--mute);font-size:.8125rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hpday .t{color:var(--mute);font-size:.75rem;font-variant-numeric:tabular-nums}
+.hpday .rtok{margin:0;padding:2px 9px;font-variant-numeric:tabular-nums}
+.hpday .rtok i{margin-left:6px;font-style:normal;font-weight:500;opacity:.75}
+@media (prefers-reduced-motion:no-preference){.hpd .hpx,.hpd .hpr,.hpd .hpday{animation:hp-in .32s cubic-bezier(.2,.8,.2,1) both}.hpd .hpr{animation-delay:.06s}.hpd .hpday{animation-delay:calc(.1s + var(--i,0) * .04s)}}
+@keyframes hp-in{from{opacity:0;transform:translateY(6px)}}
+@media (max-width:420px){.hpx-c li{padding:6px 8px}.hpday li{grid-template-columns:minmax(0,1fr) auto}.hpday .t{display:none}}

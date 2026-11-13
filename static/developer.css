@@ -78,6 +78,7 @@ body.enter .devbar{animation:e-fade .2s ease both}
 .sch-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
 .sch-tile{position:relative;display:flex;flex-direction:column;align-items:stretch;min-width:0;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px 12px;box-shadow:0 1px 2px rgba(60,52,30,.05);transition:border-color var(--t-fast) ease,background-color var(--t-fast) ease,box-shadow var(--t-fast) ease}
 .sch-tile:hover{border-color:var(--line-2);background:var(--surface-2);box-shadow:0 6px 16px -10px rgba(60,52,30,.35)}
+@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){.sch-tile{transition:transform .26s cubic-bezier(.2,.8,.2,1),box-shadow .26s cubic-bezier(.2,.8,.2,1),border-color var(--t-fast) ease,background-color var(--t-fast) ease}.sch-tile:hover{transform:translateY(-3px);box-shadow:0 1px 3px rgba(50,44,24,.1),0 18px 40px -16px rgba(50,44,24,.32)}.sch-tile:active{transform:translateY(-1px) scale(.985)}}
 .sch-tile.is-open{border-color:var(--focus)}
 .sch-tile:has(.lk:focus-visible){box-shadow:0 0 0 2px var(--focus)}
 .sch-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:24px}
