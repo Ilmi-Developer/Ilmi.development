@@ -28,9 +28,10 @@
   var MORE_ICON = SVG + '<circle cx="5.5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="18.5" cy="12" r="1.5" fill="currentColor"/></svg>';
 
   // Ilmi's tooltip: a deep olive label with cream words (the theme's menu colour, a shade darker, so a chosen theme
-  // carries through), hung above each icon.
+  // carries through), hung above each icon. It pops without blur: Safari flashed a coloured line while a blurred
+  // label scaled over the dock's frosted bar.
   var TIP = { side: "top", surfaceColor: "var(--wt-ilmi-surface)", inkColor: "var(--wt-ilmi-ink)", size: "md", radius: 9,
-    gap: 12, arrow: true, popDuration: 160, popScale: 0.94, popBlur: 4, showFuse: false, longPress: 500 };
+    gap: 12, arrow: true, popDuration: 160, popScale: 0.94, popBlur: 0, showFuse: false, longPress: 500 };
   var tips = WarmTooltip.group({ delay: 400, warmWindow: 300, travel: 320, lean: 0 });
 
   var dock = document.createElement("div");
@@ -439,8 +440,8 @@
   }
   function animateIn(pop) {
     if (RM && RM.matches || !pop.animate) return;
-    pop.animate([{ opacity: 0, transform: "translateY(4px) scale(.94)", filter: "blur(4px)" },
-      { opacity: 1, transform: "none", filter: "blur(0px)" }], { duration: 180, easing: "cubic-bezier(.23,1,.32,1)" });
+    pop.animate([{ opacity: 0, transform: "translateY(4px) scale(.94)" },
+      { opacity: 1, transform: "none" }], { duration: 180, easing: "cubic-bezier(.23,1,.32,1)" });
   }
   function toggle(rec, byKeyboard) {
     if (openRec === rec) { closeAll(true); return; }
@@ -472,8 +473,8 @@
     rec.tip.update({ disabled: false });
     if (RM && RM.matches || !f.pop.animate) f.pop.hidden = true;
     else {
-      var a = f.pop.animate([{ opacity: 1, transform: "none", filter: "blur(0px)" },
-        { opacity: 0, transform: "translateY(4px) scale(.96)", filter: "blur(3px)" }], { duration: 130, easing: "cubic-bezier(.23,1,.32,1)" });
+      var a = f.pop.animate([{ opacity: 1, transform: "none" },
+        { opacity: 0, transform: "translateY(4px) scale(.96)" }], { duration: 130, easing: "cubic-bezier(.23,1,.32,1)" });
       a.onfinish = function () { if (openRec !== rec) f.pop.hidden = true; };
     }
     if (refocus) f.button.focus();
