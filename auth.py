@@ -60,10 +60,10 @@ EMAIL = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
 # The roles an account at a school can be given. "admin" is the admin: the person in charge of the school's settings,
 # accounts and records. "developer" is not among them, so nobody can be given it: it is what the one account in the
 # control database is called (schools.py).
-ROLES = ("admin", "head", "teacher")
+ROLES = ("admin", "head", "teacher", "finance")
 # A HeadTeacher ("head") sees every classroom and records on any of them (Record, House points, Rankings, Presenter,
 # FAQs), but gives no house points and has none of the Administration pages: no accounts, students, imports or classroom changes.
-ROLE_NAMES = {"admin": "Admin", "head": "HeadTeacher", "teacher": "Teacher", "developer": "Developer"}
+ROLE_NAMES = {"admin": "Admin", "head": "HeadTeacher", "teacher": "Teacher", "finance": "Finance", "developer": "Developer"}
 SEES_ALL = ("admin", "head")
 COMMON_PASSWORDS = {
     "123456789012", "1234567890123", "qwertyuiopas", "passwordpassword", "password1234", "password12345",
@@ -341,7 +341,7 @@ def load_session():
     view, teacher = row["view_as"] or "admin", None
     if view.startswith("teacher:") and view[8:].isdigit():
         view, teacher = "teacher", int(view[8:])
-    if view not in ("admin", "head", "teacher") or (view == "teacher" and not teacher):
+    if view not in ("admin", "head", "teacher", "finance") or (view == "teacher" and not teacher):
         view, teacher = "admin", None
     g.developer = dict(g.user, school_id=opened, view=view, teacher=teacher, teacher_name="")
     g.user["role"] = "developer"

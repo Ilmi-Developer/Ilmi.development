@@ -28,6 +28,9 @@
 @media (max-width:959.98px),(pointer:coarse){.devbar{--devh:44px}.devbar-in{padding-top:6px;padding-bottom:6px}.devbar .devseg button{padding:0 14px}}
 @media (max-width:959.98px){.devbar-in{padding-left:16px;padding-right:16px}.devat{display:none}}
 /* On a phone: the views at the left, all schools at the right, and nothing else. */
+/* With four views the buttons may not fit the narrowest phones: they then scroll sideways in their pill. */
+@media (max-width:559.98px){.devbar .devseg{flex:0 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain}
+ .devbar .devseg::-webkit-scrollbar{display:none}.devbar .devseg>*{flex:none}}
 @media (max-width:559.98px){.devwho{display:none}.devbar-in{gap:8px}.devbar .devseg{margin-right:auto}.devbar .devseg button{padding:0 10px}.devlink{padding:0 12px}.devall{flex:0 1 auto}}
 /* On the narrowest phones "All schools" is its icon alone (its name stays for screen readers and as its tooltip). */
 @media (max-width:389.98px){.devall{flex:none;width:var(--devh);padding:0;justify-content:center}.devall .devlink-t{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}}

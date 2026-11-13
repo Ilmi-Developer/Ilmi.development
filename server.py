@@ -41,6 +41,7 @@ import house_extra
 import quran_coins
 import memo_import
 import helpdesk
+import finance
 import schools
 import tv
 from db import DB_ERRORS
@@ -388,6 +389,7 @@ def create_app(test_config=None):
     app.register_blueprint(themes.bp)
     app.register_blueprint(site_settings.bp)
     app.register_blueprint(schools.bp)
+    app.register_blueprint(finance.bp)
     app.register_blueprint(tv.bp)
     app.register_blueprint(cleanup.bp)
     app.register_blueprint(set_houses.bp)
@@ -462,6 +464,12 @@ def create_app(test_config=None):
             if wants_json():
                 return jsonify(error="Choose a new password before continuing."), 403
             return redirect("/account")
+        # A Finance account has its Finance page and its Account, and none of the classes, students or admin pages.
+        if g.user and g.user["role"] == "finance" and not public and not request.path.startswith(finance.FINANCE_PATHS) \
+                and request.path not in SHELL_FILES:
+            if wants_json() or request.method != "GET":
+                return jsonify(error="Your account can't open this page."), 403
+            return redirect("/finance")
         # The developer with no school open has their own pages and nothing else: every other page is a school's.
         if g.user and g.user["role"] == "developer" and not public and not auth.developer_home(request.path) \
                 and request.path not in SHELL_FILES:
@@ -495,7 +503,7 @@ def create_app(test_config=None):
             EMAIL_PREVIEW_CSP if request.path.startswith("/admin/email/preview/") else \
             ACCOUNT_CSP if request.path.startswith("/account") else \
             CODE_CSP if request.path in ("/login", "/login/code") else \
-            LOGIN_CSP if request.path.startswith(("/admin/", "/schools")) or request.path == "/welcome" else PAGE_CSP
+            LOGIN_CSP if request.path.startswith(("/admin/", "/schools", "/finance")) or request.path == "/welcome" else PAGE_CSP
         if app.config["COOKIE_SECURE"]:
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return response

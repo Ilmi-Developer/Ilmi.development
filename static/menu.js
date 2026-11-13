@@ -158,3 +158,13 @@
     window.location.href = "/#search";
   });
 })();
+
+// The developer's bar: on a narrow phone its views scroll sideways, so the one in use is brought into sight.
+(function () {
+  "use strict";
+  var dv = document.querySelector('.devseg [aria-pressed="true"]');
+  if (!dv) return;
+  var g = dv.parentNode;
+  if (g.scrollWidth <= g.clientWidth) return;
+  g.scrollLeft = dv.getBoundingClientRect().left - g.getBoundingClientRect().left + g.scrollLeft - 8;
+})();

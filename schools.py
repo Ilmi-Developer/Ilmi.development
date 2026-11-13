@@ -32,7 +32,7 @@ from db import DB_ERRORS, SCHEMA, Database
 
 CONTROL = 0  # the control database's number in cookies, links and school_emails
 FIRST = 1    # the school whose tables were there before there were schools
-VIEWS = ("admin", "head", "teacher")
+VIEWS = ("admin", "head", "teacher", "finance")
 NAME_MAX = 60  # site_settings.TITLE_MAX: a school's name is its site title
 MAX_SCHOOLS = 500
 # The school the current request (or background job) is working in; None outside both, which means the first school.

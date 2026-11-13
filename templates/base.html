@@ -16,14 +16,14 @@
 <link rel="apple-touch-icon" href="/favicon.png?v=4">
 <link rel="stylesheet" href="/auth.css">
 {# Where the wash page turn starts from; only on pages whose policy lets a script of ours run (server.py). #}
-{% if request.path in ("/login", "/login/code") or request.path.startswith(("/account", "/admin/", "/schools")) %}<script src="/wash.js"></script>{% endif %}
+{% if request.path in ("/login", "/login/code") or request.path.startswith(("/account", "/admin/", "/schools", "/finance")) %}<script src="/wash.js"></script>{% endif %}
 {% if look and look.css %}<link rel="stylesheet" href="{{ look.css }}" id="themecss">{% endif %}
 {# The developer's bar (schools.py): which school is open, the view it is seen as, and the way back to all schools. #}
 {% set dev = developer_bar() if look else none %}
 {% if dev %}<link rel="stylesheet" href="/developer.css">{% endif %}
 {% if intro %}<script src="/intro.js" defer></script>{% endif %}
 {% block head %}{% endblock %}
-{% if user and request.path.startswith(("/account", "/admin/", "/schools")) %}<script src="/menu.js" defer></script>{% endif %}
+{% if user and request.path.startswith(("/account", "/admin/", "/schools", "/finance")) %}<script src="/menu.js" defer></script>{% endif %}
 {# The dock, in place of the side menu, wherever the signed-in menu shows (static/dock.js). #}
 {% if look %}<script src="/warm-tooltip.js" defer></script><script src="/dock.js" defer></script>{% endif %}
 </head>
@@ -55,7 +55,7 @@
 <header><div class="rail">
   <a class="brand" href="/" translate="no"><span class="ilmi"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span></a>
   {# Search opens the dashboard's search (Ctrl+K does the same here, static/menu.js). #}
-  {% if user.role != "developer" %}<a class="qkb" href="/#search" aria-label="Search" aria-keyshortcuts="Control+K Meta+K"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span class="qkt">Search</span><kbd aria-hidden="true">Ctrl K</kbd></a>{% endif %}
+  {% if user.role not in ("developer", "finance") %}<a class="qkb" href="/#search" aria-label="Search" aria-keyshortcuts="Control+K Meta+K"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span class="qkt">Search</span><kbd aria-hidden="true">Ctrl K</kbd></a>{% endif %}
   <input type="checkbox" id="navt" class="navt" aria-label="Show the menu">
   <div class="navw">
   <nav class="navs" aria-label="Main">
@@ -77,6 +77,9 @@
     {% if user.role == "developer" %}
     {{ nl("/schools", "grid", "Schools", here.startswith("/schools")) }}
     {% if dev and dev.school %}{{ nl("/", "home", dev.school) }}{% endif %}
+    {% elif user.role == "finance" %}
+    {# Finance has its own page and nothing of the classes (finance.py). #}
+    {{ nl("/finance", "sheet", "Finance", here == "/finance") }}
     {% else %}
     {{ nl("/", "home", "Overview") }}
     {% if all_classes %}{{ nl("/#record", "pen", "Record") }}{% endif %}
@@ -129,10 +132,12 @@
   <nav class="dock" aria-label="Shortcuts">
     {% if user.role == "developer" %}
     <a class="dk dk-home" href="/schools"><span class="dki">{{ icon("grid") }}</span><span>Schools</span></a>
+    {% elif user.role == "finance" %}
+    <a class="dk dk-home" href="/finance"><span class="dki">{{ icon("sheet") }}</span><span>Finance</span></a>
     {% else %}
     <a class="dk dk-home" href="/"><span class="dki">{{ icon("home") }}</span><span>Home</span></a>
     {% endif %}
-    {% if user.role == "developer" %}{% elif all_classes %}
+    {% if user.role in ("developer", "finance") %}{% elif all_classes %}
     <a class="dk dk-classes" href="/#classes"><span class="dki">{{ icon("grid") }}</span><span>Classes</span></a>
     <a class="dk dk-record" href="/#record"><span class="dki">{{ icon("pen") }}</span><span>Record</span></a>
     {% else %}

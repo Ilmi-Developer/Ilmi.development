@@ -462,3 +462,9 @@ body:has(.crop:not([hidden])){overflow:hidden}
  .tht[aria-pressed="true"]::after,.tht[aria-pressed="true"]::before,.thedit:not([hidden]){animation:none}}
 /* A card whose title is followed straight by its form (sign-in has no line under its title): room between them. */
 .solo .card>h1+form{margin-top:24px}
+/* The Finance page's empty state (templates/finance.html): a quiet card with an icon, a title and a line under it. */
+.fin-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:48px 24px;box-shadow:var(--shadow-card)}
+.fin-empty h2{margin:0}
+.fin-empty .sub{margin:0;max-width:44ch}
+.fin-ic{display:grid;place-items:center;width:56px;height:56px;border-radius:50%;background:var(--navy-soft);color:var(--navy-text,var(--navy));margin-bottom:4px}
+.fin-ic .ic{width:24px;height:24px}

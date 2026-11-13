@@ -1638,6 +1638,38 @@ class DashboardTests:
         # Signed in, the start page leads back into the dashboard instead of to the sign-in form.
         self.assertIn('href="/">Open Ilmi', self.client.get("/welcome").get_data(as_text=True))
 
+    def test_finance_account_has_its_own_page_and_nothing_else(self):
+        finance = self.add_user("money@example.com", role="finance")
+        self.assertEqual(self.write().status_code, 200)
+        client = self.sign_in("money@example.com", "teacher-password-1")
+        self.assertEqual(client.last.headers["Location"], "/")
+        home = client.get("/")
+        self.assertEqual((home.status_code, home.headers["Location"]), (302, "/finance"))
+        page = client.get("/finance")
+        text = page.get_data(as_text=True)
+        self.assertEqual(page.status_code, 200)
+        self.assertIn("script-src 'self'", page.headers["Content-Security-Policy"])  # its menu's scripts run
+        for part in ("<h1>Finance</h1>", "Nothing here yet", 'href="/finance"', "<span>Finance</span>"):
+            self.assertIn(part, text)
+        for gone in ("/#classes", "/#record", "Manage users"):
+            self.assertNotIn(gone, text)
+        self.assertEqual(client.get("/account").status_code, 200)
+        for path in ("/admin/users", "/admin/faqs", "/tv", "/presenter/yr3-a", "/admin/export.xlsx"):
+            self.assertEqual(client.get(path).headers.get("Location"), "/finance", path)
+        self.assertEqual(client.get("/api/classes", headers=self.headers).status_code, 403)
+        self.assertEqual(client.get("/api/houses", headers=self.headers).status_code, 403)
+        self.assertEqual(self.write(revision=1, client=client).status_code, 403)
+        # Nobody else has the Finance page; admins give the role on Manage users.
+        self.assertEqual(self.client.get("/finance").status_code, 403)
+        users = self.client.get("/admin/users").get_data(as_text=True)
+        self.assertIn('<option value="finance">Finance</option>', users)
+        self.assertIn('<option value="finance" selected>Finance</option>', users)
+        made = self.form(self.client, "/admin/users", "/admin/users/invite", name="Br Treasurer", email="t2@example.com",
+                         role="finance")
+        self.assertEqual(made.status_code, 200)
+        self.assertEqual(self.query("SELECT role FROM users WHERE email = 't2@example.com'"), [{"role": "finance"}])
+        self.assertEqual(self.query("SELECT COUNT(*) AS n FROM classroom_members WHERE user_id = ?", (finance,))[0]["n"], 0)
+
     def test_help_or_requests(self):
         mailer = FakeMailer()
         self.app.config["MAILER"] = mailer
@@ -3018,8 +3050,8 @@ class SchoolTests:
         self.open_school(developer, 1)
         me = self.me(developer)
         self.assertEqual((me["role"], me["name"]), ("admin", "Developer"))
-        self.assertEqual(me["dev"], {"school": "First school", "view": "admin",
-                                     "views": [["admin", "Admin"], ["head", "HeadTeacher"], ["teacher", "Teacher"]]})
+        self.assertEqual({k: me["dev"][k] for k in ("school", "view", "views")}, {"school": "First school", "view": "admin",
+                         "views": [["admin", "Admin"], ["head", "HeadTeacher"], ["teacher", "Teacher"], ["finance", "Finance"]]})
         self.assertIn('href="/developer.css"', developer.get("/").get_data(as_text=True))
         self.assertEqual(list(self.records(developer)), ["yr3-a"])
         users = developer.get("/admin/users").get_data(as_text=True)
@@ -3060,23 +3092,54 @@ class SchoolTests:
         self.assertEqual(developer.get("/admin/faqs").status_code, 200)
         self.assertEqual(developer.get("/admin/users").status_code, 403)
         self.assertEqual(self.delete(1, client=developer).status_code, 403)
-        self.assertEqual(self.view_as(developer, "teacher").status_code, 303)
+        # Teacher is always one teacher's view, chosen from the school's teachers.
+        self.assertEqual(self.view_as(developer, "teacher").status_code, 400)
+        with app.config["DB"].get(1).transaction() as tx:
+            hafsa = tx.insert("INSERT INTO users (email, name, role, password_hash, created_at) VALUES "
+                              "('hafsa@example.com', 'Sr Hafsa', 'teacher', 'x', 0)")
+            tx.execute("INSERT INTO classroom_members VALUES ('yr3-a', ?)", (hafsa,))
+            gone = tx.insert("INSERT INTO users (email, name, role, password_hash, created_at, disabled) VALUES "
+                             "('gone@example.com', 'Br Gone', 'teacher', 'x', 0, 1)")
+        token = self.me(developer)["csrf"]
+        self.assertEqual([t["name"] for t in self.me(developer)["dev"]["teachers"]], ["Sr Hafsa"])
+        self.assertEqual(self.me(developer)["dev"]["teachers"][0]["classes"], ["Yr3A"])  # named as on the dashboard
+        for bad in ("", "x", str(gone), "999"):
+            self.assertEqual(developer.post("/schools/view", data={"csrf": token, "view": "teacher", "teacher": bad}).status_code, 400)
+        chosen = developer.post("/schools/view", data={"csrf": token, "view": "teacher", "teacher": str(hafsa)})
+        self.assertEqual(chosen.status_code, 303)
         me = self.me(developer)
-        self.assertEqual((me["role"], me["dev"]["view"]), ("teacher", "teacher"))
-        # A teacher's view, of every classroom (a teacher has the ones the admin ticked): it records, and can't
-        # add students, delete a classroom or open FAQs.
-        self.assertEqual(sorted(self.records(developer)), ["yr3-a", "yr4-b"])
+        self.assertEqual((me["role"], me["name"], me["dev"]["view"], me["dev"]["teacherName"]), ("teacher", "Sr Hafsa", "teacher", "Sr Hafsa"))
+        # Exactly that teacher's view: their one classroom. It records, and can't add students, delete a classroom
+        # or open FAQs; what it records is under the developer's own stand-in.
+        self.assertEqual(sorted(self.records(developer)), ["yr3-a"])
         self.assertEqual(self.write(revision=1, client=developer).status_code, 200)
+        self.assertEqual(self.write(name="Yr4-B", class_id="yr4-b", revision=1, client=developer).status_code, 403)
         self.assertEqual(self.delete(2, client=developer).status_code, 403)
         self.assertEqual(developer.get("/admin/faqs").status_code, 403)
         self.assertEqual(developer.get("/presenter/yr3-a").status_code, 302)
-        self.assertFalse(self.query_app(app, 1, "SELECT 1 FROM classroom_members"))
+        self.assertEqual(developer.get("/presenter/yr4-b").status_code, 404)
+        saved_by = self.query_app(app, 1, "SELECT saved_by FROM classroom_history ORDER BY id DESC LIMIT 1")[0]["saved_by"]
+        self.assertEqual(self.query_app(app, 1, "SELECT developer FROM users WHERE id = ?", (saved_by,))[0]["developer"], 1)
+        # If that teacher goes, the view falls back to the admin's.
+        with app.config["DB"].get(1).transaction() as tx:
+            tx.execute("UPDATE users SET disabled = 1 WHERE id = ?", (hafsa,))
+        self.assertEqual(self.me(developer)["role"], "admin")
+        with app.config["DB"].get(1).transaction() as tx:
+            tx.execute("UPDATE users SET disabled = 0 WHERE id = ?", (hafsa,))
+        # Finance: its own page and nothing else.
+        self.assertEqual(self.view_as(developer, "finance").status_code, 303)
+        self.assertEqual(developer.get("/").headers["Location"], "/finance")
+        finance_page = developer.get("/finance").get_data(as_text=True)
+        self.assertIn("Nothing here yet", finance_page)
+        self.assertIn('aria-pressed="true">Finance</button>', finance_page)
+        self.assertEqual(developer.post("/schools/view", data={"csrf": token, "view": "teacher", "teacher": str(hafsa)}).status_code, 303)
         # The developer's own pages stay their own in any view, and the view is kept while they are away.
         account = developer.get("/account").get_data(as_text=True)
         self.assertIn(f"Signed in as {DEVELOPER[0]} (Developer)", account)
         self.assertIn("Back to First school", account)
         self.assertNotIn('id="site"', account)
         self.assertEqual(self.me(developer)["role"], "teacher")
+        self.assertEqual(self.me(developer)["name"], "Sr Hafsa")
         self.assertEqual(self.view_as(developer, "admin").status_code, 303)
         self.assertEqual(developer.get("/admin/users").status_code, 200)
 
@@ -3098,7 +3161,7 @@ class SchoolTests:
         for client, path in pages:
             text = client.get(path).get_data(as_text=True)
             for word in ("Safar", "Academy", "Enfield"):
-                self.assertNotIn(word, text, path)
+                self.assertNotRegex(text, rf"\b{word}\b", path)
         dashboard = office.get("/").get_data(as_text=True)
         self.assertIn('<small class="org" hidden></small>', dashboard)
         self.assertNotIn('"site"', dashboard)
@@ -3123,7 +3186,7 @@ class SchoolTests:
         users = developer.get("/admin/users").get_data(as_text=True)
         bar = re.search(r'<div class="devbar".*?</div></div>', users, re.S).group(0)
         self.assertIn(shown, bar)
-        self.assertNotIn("Safar", users.replace(bar, ""))  # the bar, and nowhere else on the page
+        self.assertNotRegex(users.replace(bar, ""), r"\bSafar\b")  # the bar, and nowhere else on the page
         self.assertNotIn(name, users)
         dashboard = developer.get("/").get_data(as_text=True)
         self.assertIn('<small class="org" hidden></small>', dashboard)

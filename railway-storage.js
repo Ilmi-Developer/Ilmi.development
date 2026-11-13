@@ -99,6 +99,9 @@
     [who, at, views, all].forEach(function (e) { row.appendChild(e); });
     bar.appendChild(row);
     document.querySelector(".shell").prepend(bar);
+    // On a narrow phone the views scroll sideways: bring the one in use into sight.
+    var on = views.querySelector('[aria-pressed="true"]');
+    if (on && views.scrollWidth > views.clientWidth) views.scrollLeft = on.getBoundingClientRect().left - views.getBoundingClientRect().left + views.scrollLeft - 8;
   })();
   var ICONS = {
     users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.3-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.8a3.4 3.4 0 0 1 0 6.4"/><path d="M18 14.8c1.8.7 3 2.4 3.5 5.2"/>',
