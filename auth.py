@@ -337,7 +337,13 @@ def load_session():
     if home != schools.CONTROL:
         return
     opened = row["school_id"] if row["school_id"] and router.exists(row["school_id"]) else None
-    g.developer = dict(g.user, school_id=opened, view=row["view_as"] if row["view_as"] in schools.VIEWS else "admin")
+    # The view: "admin", "head", or "teacher:<id>" for one teacher of the school, seen exactly as they see it.
+    view, teacher = row["view_as"] or "admin", None
+    if view.startswith("teacher:") and view[8:].isdigit():
+        view, teacher = "teacher", int(view[8:])
+    if view not in ("admin", "head", "teacher") or (view == "teacher" and not teacher):
+        view, teacher = "admin", None
+    g.developer = dict(g.user, school_id=opened, view=view, teacher=teacher, teacher_name="")
     g.user["role"] = "developer"
     if not opened or g.user["must_change"] or developer_home(request.path):
         return
@@ -345,16 +351,31 @@ def load_session():
     router.set(opened)
     with router.transaction() as tx:
         stand_in = schools.stand_in(tx, g.developer)
-    g.user = {"id": stand_in, "email": g.developer["email"], "name": g.developer["name"], "role": g.developer["view"],
-              "must_change": 0, "avatar_at": g.developer["avatar_at"], "theme": g.developer["theme"],
-              # As a teacher they have every classroom, where a teacher has the ones the admin ticked.
-              "every_class": True}
+        who = tx.execute("SELECT id, name FROM users WHERE id = ? AND role = 'teacher' AND disabled = 0 AND developer = 0",
+                         (teacher,)).fetchone() if teacher else None
+    if view == "teacher" and not who:  # the teacher has since gone, or changed role: back to the admin's view
+        view = g.developer["view"] = "admin"
+        g.developer["teacher"] = None
+    g.user = {"id": stand_in, "email": g.developer["email"], "name": g.developer["name"], "role": view,
+              "must_change": 0, "avatar_at": g.developer["avatar_at"], "theme": g.developer["theme"]}
+    if who:
+        # As one teacher: their classes and their name. What the developer changes is still recorded under their
+        # own stand-in, so the school's history says who really did it.
+        g.developer["teacher_name"] = who["name"]
+        g.user.update(name=who["name"], avatar_at=None, as_teacher=who["id"])
 
 
 def sees_all(user=None):
-    """The admin and HeadTeachers see and record on every classroom; so does the developer in any view."""
+    """The admin and HeadTeachers see and record on every classroom."""
     user = user or g.user
-    return user["role"] in SEES_ALL or bool(user.get("every_class"))
+    return user["role"] in SEES_ALL
+
+
+def member_id(user=None):
+    """Whose classroom list decides what this person sees: their own, or for the developer viewing the school as one
+    teacher, that teacher's."""
+    user = user or g.user
+    return user.get("as_teacher") or user["id"]
 
 
 def start_session(tx, user_id, remember=False):

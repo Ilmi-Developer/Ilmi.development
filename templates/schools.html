@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}Schools{% endblock %}
 {% block content %}
 {# The developer's first page (schools.py, static/developer.css): every school as a tile, like the class cards on
@@ -6,9 +7,16 @@
    name and email, its admin account; Manage, in a tile's corner, sets a school's admin account or renames it.
    This page runs no scripts of its own: both are pop-ups that open from their links (#new, #manage-3), as Invite
    staff does on Manage users, so nothing on the page moves when they open. #}
-<div class="band slim"><div class="band-top"><h1>Schools</h1><div class="acts"><a class="btn primary" href="#new">Add a school</a></div></div>
-<p class="lede">Each school has its own database: its classes, students, staff accounts, settings and history are kept apart from every other school’s. Open one to see it as its admin does.</p>
-<div class="figs"><div class="fig"><b>{{ schools|length }}</b><span>School{{ "s" if schools|length != 1 }}</span></div><div class="fig"><b>{{ schools|sum(attribute="classes") }}</b><span>Classes</span></div><div class="fig"><b>{{ schools|sum(attribute="students") }}</b><span>Students</span></div><div class="fig"><b>{{ schools|sum(attribute="staff") }}</b><span>Staff accounts</span></div></div></div>
+{# Just the title and the schools; the totals and a word on how schools are kept wait in Figures, top right. #}
+<div class="band slim"><div class="band-top"><h1>Schools</h1><div class="acts">
+  <details class="schfig"><summary class="btn">{{ icon("pie") }}Figures</summary>
+    <div class="schfig-p" role="group" aria-label="Figures">
+      <div class="schfig-g"><div><b>{{ schools|length }}</b><span>School{{ "s" if schools|length != 1 }}</span></div><div><b>{{ schools|sum(attribute="classes") }}</b><span>Classes</span></div><div><b>{{ schools|sum(attribute="students") }}</b><span>Students</span></div><div><b>{{ schools|sum(attribute="staff") }}</b><span>Staff accounts</span></div></div>
+      <p>Each school has its own database: its classes, students, staff accounts, settings and history are kept apart from every other school’s. Open one to see it as its admin does.</p>
+    </div>
+  </details>
+  <a class="btn primary" href="#new">Add a school</a>
+</div></div></div>
 {% if link %}
 <div class="panel linkbox" role="status">
   <p><b>Send this link to {{ link_for }}</b>{% if not mail_enabled %} (email isn't set up yet){% else %} (the email couldn't be sent){% endif %}. It works once and expires in {{ invite_hours }} hours.</p>

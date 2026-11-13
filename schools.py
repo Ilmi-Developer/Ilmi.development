@@ -341,9 +341,34 @@ def developer_bar():
     if not developer:
         return None
     school_id = developer["school_id"]
-    return {"school": router().name(school_id) if school_id else "", "view": developer["view"],
-            "inside": bool(g.user and g.user["role"] != "developer"),
+    inside = bool(g.user and g.user["role"] != "developer")
+    return {"school": router().name(school_id) if school_id else "", "view": developer["view"], "inside": inside,
+            "teacher": developer.get("teacher"), "teacher_name": developer.get("teacher_name", ""),
+            "teachers": teachers() if inside else [],
             "views": [(v, auth.ROLE_NAMES[v]) for v in VIEWS]}
+
+
+def teachers():
+    """The open school's teachers, for the developer's Teacher pop-up: each one's id, name and classes."""
+    if "dev_teachers" not in g:
+        with router().transaction() as tx:
+            people = tx.execute("SELECT id, name FROM users WHERE role = 'teacher' AND disabled = 0 AND developer = 0 "
+                                "ORDER BY name").fetchall()
+            rooms = {r["id"]: r["json"] for r in tx.execute("SELECT id, json FROM classrooms").fetchall()}
+            member = tx.execute("SELECT class_id, user_id FROM classroom_members").fetchall()
+        import tv  # the dashboard's own way of naming a class: "Yr3-A-QM-Br Ahmed" is "Yr3A Ustadh Ahmed"
+        names = {}
+        for class_id, text in rooms.items():
+            try:
+                names[class_id] = tv.class_label(json.loads(text).get("name") or class_id)
+            except ValueError:
+                names[class_id] = class_id
+        mine = {}
+        for row in member:
+            if row["class_id"] in names:
+                mine.setdefault(row["user_id"], []).append(names[row["class_id"]])
+        g.dev_teachers = [{"id": p["id"], "name": p["name"], "classes": sorted(mine.get(p["id"], []))} for p in people]
+    return g.dev_teachers
 
 
 def summary(school):
@@ -553,11 +578,20 @@ def open_school(school_id):
 @bp.post("/schools/view")
 @developer_required
 def choose_view():
-    """Admin, HeadTeacher or Teacher: how the developer sees the school they have opened."""
+    """Admin, HeadTeacher or one teacher: how the developer sees the school they have opened. The Teacher view is
+    always one teacher's, chosen in the bar's pop-up, so it shows exactly their classes."""
     auth.check_form_token()
     view = request.form.get("view")
     school_id = g.developer["school_id"]
     if view not in VIEWS or not school_id:
         abort(400)
+    if view == "teacher":
+        teacher = request.form.get("teacher", "")
+        with router().use(school_id), router().transaction() as tx:
+            ok = teacher.isdigit() and tx.execute("SELECT 1 FROM users WHERE id = ? AND role = 'teacher' AND disabled = 0 "
+                                                  "AND developer = 0", (int(teacher),)).fetchone()
+        if not ok:
+            abort(400)
+        view = f"teacher:{int(teacher)}"
     set_view(school_id, view)
     return redirect("/", code=303)

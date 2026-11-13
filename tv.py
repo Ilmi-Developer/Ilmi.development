@@ -435,7 +435,7 @@ def presenter_class(class_id, school=False):
     every classroom, to place the class in the school."""
     with auth.db().transaction() as tx:
         if not auth.sees_all() and not tx.execute(
-                "SELECT 1 FROM classroom_members WHERE class_id = ? AND user_id = ?", (class_id, g.user["id"])).fetchone():
+                "SELECT 1 FROM classroom_members WHERE class_id = ? AND user_id = ?", (class_id, auth.member_id())).fetchone():
             abort(404)
         row = tx.execute("SELECT id, json FROM classrooms WHERE id = ?", (class_id,)).fetchone()
         rows = tx.execute("SELECT id, json FROM classrooms").fetchall() if school and row else []

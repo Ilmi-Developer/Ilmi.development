@@ -623,7 +623,8 @@ def create_app(test_config=None):
         # The developer's bar: the school they have opened and the view they chose (railway-storage.js draws it).
         bar = schools.developer_bar()
         if bar:
-            me["dev"] = {"school": bar["school"], "view": bar["view"], "views": bar["views"]}
+            me["dev"] = {"school": bar["school"], "view": bar["view"], "views": bar["views"], "teacher": bar["teacher"],
+                         "teacherName": bar["teacher_name"], "teachers": bar["teachers"]}
         html = (ROOT / "Master_Dashboard_standalone.html").read_text(encoding="utf-8")
         html = html.replace("<script>", f"<script>window.RAILWAY=true;window.ME={script_json(me)};{TAB_GUARD}</script>\n<script>", 1)
         look = themes.current(g.user)
@@ -670,7 +671,7 @@ def create_app(test_config=None):
 
     def can_edit(db, class_id):
         return sees_all() or db.execute("SELECT 1 FROM classroom_members WHERE class_id = ? AND user_id = ?",
-                                        (class_id, g.user["id"])).fetchone() is not None
+                                        (class_id, auth.member_id())).fetchone() is not None
 
     @app.get("/api/classes")
     def read_classes():
@@ -679,7 +680,7 @@ def create_app(test_config=None):
                 rows = db.execute("SELECT id, json, revision FROM classrooms ORDER BY id").fetchall()
             else:
                 rows = db.execute("SELECT c.id, c.json, c.revision FROM classrooms c JOIN classroom_members m "
-                                  "ON m.class_id = c.id WHERE m.user_id = ? ORDER BY c.id", (g.user["id"],)).fetchall()
+                                  "ON m.class_id = c.id WHERE m.user_id = ? ORDER BY c.id", (auth.member_id(),)).fetchall()
             return jsonify({row["id"]: {"json": row["json"], "revision": row["revision"]} for row in rows})
 
     @app.get("/api/houses")

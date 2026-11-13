@@ -46,12 +46,51 @@
     var token = document.createElement("input");
     token.type = "hidden"; token.name = "csrf"; token.value = ME.csrf || "";
     views.appendChild(token);
+    var pick = null;
     (ME.dev.views || []).forEach(function (v) {
       var b = document.createElement("button");
-      b.name = "view"; b.value = v[0]; b.textContent = v[1];
+      b.name = "view"; b.value = v[0];
+      b.textContent = v[0] === "teacher" && ME.dev.view === "teacher" && ME.dev.teacherName ? v[1] + ": " + ME.dev.teacherName : v[1];
       b.setAttribute("aria-pressed", String(ME.dev.view === v[0]));
+      // Teacher is always one teacher's view: it opens the list of the school's teachers first.
+      if (v[0] === "teacher") { b.type = "button"; b.className = "devteach"; b.setAttribute("aria-haspopup", "dialog"); b.onclick = function () { pick.open(b); }; }
       views.appendChild(b);
     });
+    pick = (function () {
+      var wrap = document.createElement("div"), back = document.createElement("div"), card = document.createElement("div");
+      wrap.className = "devpick"; back.className = "devpbg"; card.className = "devpcard";
+      card.setAttribute("role", "dialog"); card.setAttribute("aria-modal", "true"); card.setAttribute("aria-labelledby", "pickt");
+      var head = document.createElement("div"), h = document.createElement("h2"), x = document.createElement("button");
+      head.className = "devph"; h.id = "pickt"; h.textContent = "View as a teacher";
+      x.type = "button"; x.className = "btn sm"; x.textContent = "Close";
+      head.appendChild(h); head.appendChild(x); card.appendChild(head);
+      var T = ME.dev.teachers || [], p = document.createElement("p");
+      p.className = "sub";
+      p.textContent = T.length ? "See " + (ME.dev.school || "the school") + " exactly as one teacher does: their classes and nothing else."
+        : "This school has no teachers yet. Invite them on Manage users, then come back here.";
+      card.appendChild(p);
+      if (T.length) {
+        var f = document.createElement("form");
+        f.method = "post"; f.action = "/schools/view"; f.className = "devpl";
+        f.innerHTML = '<input type="hidden" name="csrf"><input type="hidden" name="view" value="teacher">';
+        f.querySelector('[name="csrf"]').value = ME.csrf || "";
+        T.forEach(function (t) {
+          var b = document.createElement("button"), a = document.createElement("span"), tx = document.createElement("span"), n = document.createElement("b"), c = document.createElement("span");
+          b.name = "teacher"; b.value = t.id; b.className = "devpi" + (ME.dev.teacher === t.id ? " on" : "");
+          a.className = "devpa"; a.setAttribute("aria-hidden", "true"); a.textContent = (t.name.match(/[A-Za-z0-9]/) || ["?"])[0].toUpperCase();
+          tx.className = "devpt"; n.textContent = t.name; c.textContent = t.classes.length ? t.classes.join(", ") : "No classes yet";
+          tx.appendChild(n); tx.appendChild(c); b.appendChild(a); b.appendChild(tx); f.appendChild(b);
+        });
+        card.appendChild(f);
+      }
+      wrap.appendChild(back); wrap.appendChild(card);
+      var from = null;
+      function close() { wrap.classList.remove("open"); document.removeEventListener("keydown", key); if (from) from.focus(); }
+      function key(e) { if (e.key === "Escape") close(); }
+      back.onclick = x.onclick = close;
+      document.body.appendChild(wrap);
+      return { open: function (b) { from = b; wrap.classList.add("open"); document.addEventListener("keydown", key); var first = card.querySelector(".devpi.on,.devpi") || x; first.focus(); } };
+    })();
     var all = document.createElement("a"), allText = document.createElement("span");
     all.className = "devlink devall"; all.href = "/schools"; all.title = "All schools";
     all.innerHTML = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>';
