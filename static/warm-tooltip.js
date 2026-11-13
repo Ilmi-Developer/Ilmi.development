@@ -172,7 +172,7 @@
         var rise = (1 - p) * RISE * SIGN[side] * (side === "left" ? -1 : 1);
         var tx = horizontal(side) ? 0 : rise, ty = horizontal(side) ? rise : 0;
         box.style.transform = "translate(" + tx + "px, " + ty + "px) scale(" + scale + ") rotate(" + (l * leanDeg * SIGN[side]) + "deg)";
-        box.style.filter = "blur(" + (c.popBlur * (1 - p)) + "px)";
+        box.style.filter = c.popBlur && p < 1 ? "blur(" + (c.popBlur * (1 - p)) + "px)" : "none";
       }
       box.style.opacity = String(p);
     }
@@ -193,7 +193,8 @@
       return { layer: lay, text: text };
     }
 
-    // The swap: the old words slide out one way and blur, the new ones slide in from the other (AnimatePresence).
+    // The swap: the old words slide out one way, the new ones slide in from the other (AnimatePresence). No blur:
+    // Safari draws a blurred layer sliding inside the rounded label with a flash of colour along its edge.
     function swapIn(c) {
       var made = layer(c), dir = st.swap.dir, across = st.swap.across;
       var olds = box.querySelectorAll(".warm-tooltip__layer:not(.out)");
@@ -205,12 +206,12 @@
       }
       var shift = function (d) { return across ? "translate(0px, " + d + "px)" : "translate(" + d + "px, 0px)"; };
       var timing = { duration: SWAP, easing: "cubic-bezier(" + EASE_OUT.join(",") + ")", fill: "both" };
-      made.layer.animate([{ opacity: 0, transform: shift(SWAP_SHIFT * dir), filter: "blur(3px)" },
-        { opacity: 1, transform: "translate(0px, 0px)", filter: "blur(0px)" }], timing);
+      made.layer.animate([{ opacity: 0, transform: shift(SWAP_SHIFT * dir) },
+        { opacity: 1, transform: "translate(0px, 0px)" }], timing);
       Array.prototype.forEach.call(olds, function (o) {
         o.classList.add("out");
-        var anim = o.animate([{ opacity: 1, transform: "translate(0px, 0px)", filter: "blur(0px)" },
-          { opacity: 0, transform: shift(-SWAP_SHIFT * dir), filter: "blur(3px)" }], timing);
+        var anim = o.animate([{ opacity: 1, transform: "translate(0px, 0px)" },
+          { opacity: 0, transform: shift(-SWAP_SHIFT * dir) }], timing);
         anim.onfinish = function () { o.remove(); };
       });
     }
