@@ -1563,6 +1563,30 @@ class DashboardTests:
         self.assertNotIn("script-src", anonymous.get("/forgot").headers["Content-Security-Policy"])
         self.assertEqual(self.client.get("/admin/users").headers["Cache-Control"], "no-store")
 
+    def test_liquid_glass_loads_where_scripts_run(self):
+        # The liquid glass (static/glass.js, static/glass.css) is public, like the start page's own files: the
+        # sign-in and start pages use it too. It draws each surface's map as a data: image, so the pages that run it
+        # allow data: images, and pages that run no script keep img-src 'self'.
+        anonymous = self.app.test_client()
+        for path, kind in (("/glass.js", "text/javascript"), ("/glass.css", "text/css")):
+            response = anonymous.get(path)
+            self.assertEqual((response.status_code, response.mimetype), (200, kind), path)
+        for page in ("/login", "/welcome"):
+            response = anonymous.get(page)
+            self.assertIn('<script src="/glass.js" defer></script>', response.get_data(as_text=True), page)
+            self.assertIn("img-src 'self' data:", response.headers["Content-Security-Policy"], page)
+        for page in ("/admin/users", "/account"):
+            response = self.client.get(page)
+            self.assertIn('<link rel="stylesheet" href="/glass.css">', response.get_data(as_text=True), page)
+            self.assertIn("img-src 'self' data:", response.headers["Content-Security-Policy"], page)
+        self.assertIn("blob:", self.client.get("/account").headers["Content-Security-Policy"])
+        forgot = anonymous.get("/forgot")
+        self.assertNotIn("glass.js", forgot.get_data(as_text=True))
+        self.assertNotIn("data:", forgot.headers["Content-Security-Policy"])
+        dashboard = self.client.get("/").get_data(as_text=True)
+        self.assertIn('<link rel="stylesheet" href="/glass.css"></head>', dashboard)
+        self.assertRegex(dashboard, r'<script nonce="[^"]+" src="/glass.js"></script>')
+
     def test_sign_in_opening_writes_the_arabic_name(self):
         # The opening introduces the sign-in page with علمي alone, written in by hand (templates/art/intro-word.svg and
         # the pen's timings in static/auth.css, both made by tools/art/word.py), with no Latin name, star, mark or

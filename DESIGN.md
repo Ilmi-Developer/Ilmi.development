@@ -294,6 +294,15 @@ above zero are ranked, and the rest are listed by name ("Not yet: ...").
 Nothing is cut off at a podium: every ranked list pages through everyone.
 Count badges never wrap their digits.
 
+Glass: the surfaces that float over the page are liquid glass (`static/glass.js` and `static/glass.css`, a port of
+GlassSurface from React Bits). In Chromium what is behind bends at the edge through an SVG displacement filter, with
+a faint split into colours, and the middle stays still; Safari and Firefox get frosted glass, except the dock, which
+keeps its own blur there. Glass is on the dock and its pop-ups, the dashboard's search, question box and menus, the
+developer's bar, teacher picker and school tiles, the sign-in panel's Welcome tab, and the start page's dock picture,
+value cards and ghost button. Each keeps its own colour at 80% or more (95% over a dimmed page, 88% for the olive
+dock), so text keeps its contrast; Reduce transparency, Increase contrast and print turn it off. Anything else can
+opt in with `data-glass`. Not on the TV, whose screens run all day.
+
 ## Start page
 
 `/welcome` is where anyone signed out arrives (`/` redirects there; other pages still go to sign-in with `next`).
