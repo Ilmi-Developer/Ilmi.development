@@ -4,7 +4,7 @@
 {% block content %}
 <div class="band slim"><div class="band-top"><h1>Counted coins</h1><div class="acts"><a class="btn" href="/#house-points">See the House points page</a></div></div>
 <p class="lede">Count the house coins an admin box here, for each house.</p>
-<details class="how"><summary>How this works</summary><div><p>Teachers give students physical house coins, students put them in the box at the office, and you count them here for each house. They count in each house's total on the dashboard and the TV, and show on the House points page as "Counted coins".</p><p>Admins can also give a student house points on the Record page. Teachers can't give house points, and passes give none.</p></div></details></div>
+<details class="how"><summary>How this works</summary><div><p>Teachers give students physical house coins, students put them in the box at the office, and you count them here for each house. They count in each house's total on the dashboard and the TV, and show on the House points page as "Counted coins".</p><p>If you already have each house's points added up, such as a whole term's count, put them in <b>Add a points total</b> instead: one box for each house, all saved in one go. Each total must be a multiple of 5, as every coin is, and it's kept as the coins that make it, so it counts everywhere the same way. Removing a row removes everything it added for that house.</p><p>Admins can also give a student house points on the Record page. Teachers can't give house points, and passes give none.</p></div></details></div>
 <p class="sub">{% for h in houses %}{{ h }} {{ sums[h] }}{{ "," if not loop.last else "" }} {% endfor %}points from here, including the school's historical points.</p>
 <div class="mod line">
   <h2>Add counted coins</h2>
@@ -17,15 +17,26 @@
     <button class="btn primary">Add coins</button>
   </form>
 </div>
+<div class="mod line">
+  <h2>Add a points total</h2>
+  <p class="sub">Each house's points already added up. Leave a house empty to add nothing to it.</p>
+  <form method="post" action="/admin/house-points/totals" class="inline-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    {% for h in houses %}<label class="field">{{ h }} points<input name="pts-{{ h }}" inputmode="numeric" pattern="[0-9,]*" placeholder="0" autocomplete="off"></label>{% endfor %}
+    <label class="field">Day counted<input type="date" name="day" value="{{ today }}" max="{{ today }}"></label>
+    <label class="field">Note<input name="note" maxlength="120" placeholder="For example, autumn term total…" autocomplete="off"></label>
+    <button class="btn primary">Add points</button>
+  </form>
+</div>
 <h2>Added</h2>
 {% if rows %}
 <div class="tablewrap"><table class="tbl stackable">
 <thead><tr><th scope="col">House</th><th scope="col">Coins</th><th scope="col" class="n">Points</th><th scope="col">Note</th><th scope="col">Counted</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead>
 <tbody>
 {% for r in rows %}
-<tr><td class="lead">{{ r.house }}</td><td data-label="Coins">{{ r.n }} {{ r.colour|lower }}</td><td data-label="Points" class="n"><b>{{ r.points }}</b></td><td data-label="Note">{{ r.note }}</td>
+<tr><td class="lead">{{ r.house }}</td><td data-label="Coins">{{ r.coin_text }}</td><td data-label="Points" class="n"><b>{{ r.points }}</b></td><td data-label="Note">{{ r.note }}</td>
 <td data-label="Counted">{{ r.added }}{% if r.given_by %} <span class="sub">by {{ r.given_by }}</span>{% endif %}</td>
-<td><details class="confirm"><summary class="btn sm danger">Remove<span class="sr-only"> {{ r.n }} {{ r.colour|lower }} for {{ r.house }}</span></summary>
+<td><details class="confirm"><summary class="btn sm danger">Remove<span class="sr-only"> {{ r.points }} points for {{ r.house }}</span></summary>
 <form method="post" action="/admin/house-points/{{ r.id }}/delete"><p>This takes {{ r.points }} points away from {{ r.house }}.</p><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn sm danger solid">Yes, remove</button></form></details></td></tr>
 {% endfor %}
 </tbody></table></div>

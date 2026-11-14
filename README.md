@@ -67,6 +67,10 @@ column updates each student's house; one without it leaves houses as they are.
 Only admins give house points. Teachers hand students physical house coins, students put them in the
 box at the office, and an admin counts them and adds each house's count on **Counted coins**
 (`/admin/house-points`, with the day counted), or gives a student points on the Record page's House points tab.
+When each house's points are already added up (a term's count, say), **Add a points total** on the same page takes
+a total for every house in one go; each must be a multiple of 5 and is kept as the fewest coins that make it, so
+it counts on the dashboard and the TV like any other coins. Each submission is one row per house there, and
+removing it removes all it added.
 The server refuses a teacher's save that adds a coin. Tokens on students count:
 
 | Token | Points |

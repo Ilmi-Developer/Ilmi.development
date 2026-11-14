@@ -1060,9 +1060,11 @@ class DashboardTests:
         self.assertTrue(all(e["given_at"] > 1e12 for e in extra))
         self.assertEqual(tv.summary(self.query("SELECT id, json FROM classrooms"), extra={"Makkah": 70})["houses"][0],
                          {"house": "Makkah", "points": 80})
+        # The two coins were added together, so they are one row and are removed together.
         page = self.client.get("/admin/house-points")
+        self.assertIn("1 red, 4 green", page.get_data(as_text=True))
         self.client.post(f"/admin/house-points/{extra[0]['id']}/delete", data={"csrf": csrf_of(page)})
-        self.assertEqual(len(self.client.get("/api/house-extra").get_json()), 1)
+        self.assertEqual(self.client.get("/api/house-extra").get_json(), [])
         # Coins counted on an earlier day are dated that day (noon, London); a day in the future is refused.
         late = self.form(self.client, "/admin/house-points", "/admin/house-points", house="Madinah", tg="2", day="2026-10-02")
         self.assertIn("Added 10 points to Madinah", late.get_data(as_text=True))
@@ -1075,6 +1077,32 @@ class DashboardTests:
         teacher = self.sign_in("t@example.com", "teacher-password-1")
         self.assertEqual(teacher.get("/admin/house-points").status_code, 403)
         self.assertEqual(teacher.get("/api/house-extra").status_code, 403)
+
+    def test_house_points_totals(self):
+        # A points total for several houses in one go, kept as the fewest coins that make it.
+        done = self.form(self.client, "/admin/house-points", "/admin/house-points/totals",
+                         **{"pts-Makkah": "1,275", "pts-Madinah": "40", "pts-Al-Aqsa": ""}, note="Autumn term")
+        self.assertIn("Added 1275 points to Makkah, 40 points to Madinah", done.get_data(as_text=True))
+        self.assertEqual(self.client.get("/api/houses").get_json(), {"Makkah": 1275, "Al-Aqsa": 0, "Madinah": 40})
+        extra = self.client.get("/api/house-extra").get_json()
+        self.assertEqual(sorted((e["house"], e["coin"], e["n"]) for e in extra),
+                         [("Madinah", "tb", 2), ("Makkah", "tb", 1), ("Makkah", "tg", 1), ("Makkah", "tr", 25)])
+        self.assertTrue(all(e["note"] == "Autumn term" for e in extra))
+        page = self.client.get("/admin/house-points")
+        text = page.get_data(as_text=True)
+        self.assertIn("25 red, 1 blue, 1 green", text)
+        self.assertIn("Makkah 1275, Al-Aqsa 0, Madinah 40", " ".join(text.split()))
+        # Removing Makkah's row removes all its coins and leaves Madinah's.
+        makkah = min(e["id"] for e in extra if e["house"] == "Makkah")
+        self.client.post(f"/admin/house-points/{makkah}/delete", data={"csrf": csrf_of(page)})
+        self.assertEqual(self.client.get("/api/houses").get_json(), {"Makkah": 0, "Al-Aqsa": 0, "Madinah": 40})
+        for bad in ({"pts-Makkah": "12"}, {"pts-Makkah": "x"}, {"pts-Makkah": "100005"}, {},
+                    {"pts-Makkah": "10", "day": "2999-01-01"}):
+            self.assertEqual(self.form(self.client, "/admin/house-points", "/admin/house-points/totals", **bad).status_code, 400)
+        self.assertEqual(len(self.client.get("/api/house-extra").get_json()), 1)
+        self.add_user("t@example.com")
+        teacher = self.sign_in("t@example.com", "teacher-password-1")
+        self.assertEqual(teacher.post("/admin/house-points/totals", data={"pts-Makkah": "50"}).status_code, 403)
 
     def test_remove_quran_tab_coins_lists_them_first(self):
         t = 1760000000000
