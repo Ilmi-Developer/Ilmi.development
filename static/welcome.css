@@ -341,12 +341,12 @@ html{overflow-x:hidden;overflow-x:clip}
 
 /* The menu sticks: it slips away while reading down and comes back on the way up, looking just as it does at the
    top of the page, on the page's own paper across the full width (no pill, no frosting). A hairline of olive along
-   the top shows how far down the page is. */
-.motion .wnav{position:sticky;top:0;transition:transform .55s var(--ease-out)}
-.motion .wnav::before{content:"";position:absolute;z-index:-1;top:0;bottom:0;left:50%;width:100vw;translate:-50% 0;pointer-events:none;
+   the top shows how far down the page is (not on phones, .lite, where nothing else follows the scroll). */
+.motion .wnav,.lite .wnav{position:sticky;top:0;transition:transform .55s var(--ease-out)}
+.motion .wnav::before,.lite .wnav::before{content:"";position:absolute;z-index:-1;top:0;bottom:0;left:50%;width:100vw;translate:-50% 0;pointer-events:none;
  background:var(--paper-tex),var(--canvas);opacity:0}
-.motion.scrolled .wnav::before{opacity:1}
-.motion.nav-away .wnav:not(:focus-within){transform:translateY(-110%)}
+.motion.scrolled .wnav::before,.lite.scrolled .wnav::before{opacity:1}
+.motion.nav-away .wnav:not(:focus-within),.lite.nav-away .wnav:not(:focus-within){transform:translateY(-110%)}
 .motion .sprog{display:block;position:fixed;z-index:10;left:0;right:0;top:0;height:2px;pointer-events:none}
 .sprog i{display:block;height:100%;background:var(--navy);transform-origin:left;transform:scaleX(var(--doc,0))}
 
@@ -411,7 +411,7 @@ html{overflow-x:hidden;overflow-x:clip}
  .motion .inside[data-step="0"] .mk-g:nth-child(1),.motion .inside[data-step="1"] .mk-g:nth-child(2){opacity:1;
   background:color-mix(in srgb,var(--navy) 7%,transparent);box-shadow:0 0 0 2px var(--navy)}
 }
-@media (min-width:960px) and (max-height:820px){.motion .inside .in-text>p{display:none}}
+@media (min-width:960px) and (max-height:820px){.motion .inside .in-text>p:not(.v-k){display:none}}
 
 /* Values: the three cards rise at different speeds. */
 @media (min-width:960px){
@@ -432,12 +432,21 @@ html{overflow-x:hidden;overflow-x:clip}
  .hmark{padding-left:136px}
  .hero-art .art-sprig{width:120px}
 }
+/* ---------- Phones and small tablets: one column, one rhythm ----------
+   Every section sits on the same 20px margins with the same space above and below it (64px), and opens the same way:
+   a small label with a short rule before it, then a heading in the hand italic at one size, then, where there is one,
+   a short line in the body size. Everything reads from the left; only the closing call to sign in is centred. Cards
+   are one kind of card: cream, 22px corners, the same hairline and shadow. The four features run sideways in a row
+   the thumb swipes (the browser's own scrolling, snapping to each card, with the next one peeking in), and the olive
+   swoosh sits behind the preview instead of under the words. */
 @media (max-width:959.98px){
  .motion .hero>.cue{display:none}
- .wnav{padding:16px 20px;gap:12px}
+ .wnav{padding:14px 20px;gap:12px}
  .wlinks{display:none}
  .wbrand .ilmi{font-size:1.75rem}
- .hero{grid-template-columns:minmax(0,1fr);padding:0 20px 56px}
+
+ /* The hero: the wordmark and its drawing, then the words and the two ways in. */
+ .hero{grid-template-columns:minmax(0,1fr);padding:0 20px 64px}
  .hero-art{min-height:0;padding-bottom:150px}
  .hero-art .art-sprig{width:96px;left:-8px;top:12px}
  .hmark{padding:28px 0 0 104px}
@@ -446,36 +455,77 @@ html{overflow-x:hidden;overflow-x:clip}
  .hero-art .art-rahle{width:220px;left:auto;right:-6px;bottom:0}
  .hero-text{padding:28px 0 0;margin-top:8px}
  .hero-text::before{left:0;right:auto;top:0;bottom:auto;width:64px;height:1px;transform-origin:left;animation-name:w-growx}
- .tagline{font-size:clamp(2.5rem,10.5vw,3.25rem)}
- .lede{font-size:1.1875rem}
+ .tagline{font-size:clamp(2.25rem,10vw,2.75rem);margin-bottom:16px!important}
+ .lede{font-size:1.125rem;margin-bottom:28px!important}
  .hw1{width:520px;height:331px;left:auto;right:-170px;top:-90px}
  .hw2{display:none}
- .band{padding:64px 20px 112px}
- .band-in{grid-template-columns:minmax(0,1fr);gap:32px}
- .hq-ar{font-size:clamp(1.375rem,5.6vw,1.875rem);line-height:2}
- .band-t{padding:0 0 0 24px}
- .band-t .big{font-size:1.3125rem}
  .hero-art .hs1{width:300px;height:300px;left:auto;right:-80px;bottom:-60px}
- .values{padding:8px 20px 72px}
- .v-head{margin-bottom:36px}
- .v-list{grid-template-columns:minmax(0,1fr);gap:20px;max-width:560px;margin:0 auto}
+
+ /* The label every section opens with (the hadith's sits over its Arabic, at the right). */
+ .wl .v-k{display:flex;align-items:center;gap:12px;margin:0 0 14px!important;text-align:left}
+ .wl .v-k::before,.wl .band-k::before{content:"";flex:none;width:28px;height:1px;background:currentColor;opacity:.7}
+ .wl .band-k{margin-bottom:14px}
+ /* One heading size, and one line under it. */
+ .f-intro h2,.in-text h2,.v-head h2,.close h2{font-size:clamp(2.25rem,10vw,2.75rem);line-height:1.06;margin:0}
+ .f-intro p:last-child,.in-text>p{font-size:1.0625rem;line-height:1.55;color:var(--ink-2);max-width:34ch;margin:14px 0 0!important}
+
+ /* The hadith. */
+ .band{padding:64px 20px 96px}
+ .band-in{grid-template-columns:minmax(0,1fr);gap:28px}
+ .hq-ar{font-size:clamp(1.375rem,5.6vw,1.875rem);line-height:2}
+ .band-t{padding:0 0 0 20px}
+ .band-t .big{font-size:1.25rem;margin-bottom:18px!important}
  .band-sprig{width:100px;right:-10px;bottom:-46px}
  .bmist{width:420px;height:196px;right:-120px;top:-70px}
- .feats{padding:64px 20px 24px}
- .feats ul{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:40px}
- .feats li{padding:0 16px}
- .feats li:nth-child(3)::before{display:none}
- .inside .pin-view{grid-template-columns:minmax(0,1fr);padding:48px 20px 80px;gap:36px}
- .iswoosh{top:30%;height:70%;width:calc(80% + 30vw)}
- .close{padding:24px 20px 0}
+
+ /* What it does: the four cards in a row to swipe. */
+ .feats{padding:64px 0}
+ .f-intro{text-align:left;max-width:none;margin:0 0 24px;padding:0 20px}
+ .feats ul{display:flex;gap:14px;margin:0;padding:4px 20px 28px;overflow-x:auto;overscroll-behavior-x:contain;
+  scroll-snap-type:x mandatory;scroll-padding-inline:20px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+ .feats ul::-webkit-scrollbar{display:none}
+ .feats li,.vcard{background:var(--surface);border-radius:22px;
+  box-shadow:0 0 0 1px rgba(60,52,30,.07),0 2px 4px rgba(50,44,24,.05),0 18px 36px -24px rgba(40,36,18,.4)}
+ .feats li{flex:none;width:min(300px,78vw);padding:24px 22px 26px;text-align:left;scroll-snap-align:start}
+ .feats li::before{display:none}
+ .feats .art{width:84px;margin:0 0 18px}
+ .feats h3{font-size:1.375rem}
+ .feats p{max-width:none;margin:0!important;font-size:1rem}
+
+ /* The idea: the statement, as it reads once read in. */
+ .idea .pin-view{padding:64px 20px}
+ .idea-t{font-size:clamp(1.75rem,7.4vw,2.25rem);line-height:1.22}
+ .i-splash{opacity:.12}
+
+ /* Inside Ilmi: the words on paper, then the preview with the olive swoosh behind it. */
+ .inside .pin-view{grid-template-columns:minmax(0,1fr);padding:64px 20px 88px;gap:32px}
+ .in-text hr{display:none}
+ .steps{margin-top:24px}
+ .iswoosh{display:none}
+ .mock-3d{position:relative}
+ .mock-3d::before{content:"";position:absolute;z-index:-1;top:22%;bottom:-40px;left:30%;right:-20px;
+  border-radius:46% 0 0 54%/58% 0 0 42%;background:url(/art/wash-band.webp) left center/auto 120% no-repeat,var(--olive-band);pointer-events:none}
+
+ /* Our values: the same cards, one under another. */
+ .values{padding:64px 20px}
+ .v-head{text-align:left;max-width:none;margin:0 0 24px}
+ .v-list{grid-template-columns:minmax(0,1fr);gap:16px;max-width:560px;margin:0}
+ .vcard{padding:24px 22px 26px}
+ .v-art{margin-bottom:14px}
+ .v-ar{top:24px;right:22px}
+ .vcard h3{font-size:1.375rem}
+ .vcard p{font-size:1rem}
+
+ /* The closing call, centred, over the skyline. */
+ .close{padding:48px 20px 0}
+ .close h2{margin:0 auto 24px}
+ .c-big{display:none}
  .close-art{height:170px}
  .wfoot{padding:16px 20px 24px}
 }
 @media (max-width:599.98px){
  .wnav .wbtn.sm{padding:8px 16px}
  .cta .wbtn{flex:1 1 auto;justify-content:center}
- .feats ul{grid-template-columns:minmax(0,1fr)}
- .feats li::before{display:none}
  .mk-main{padding:18px 16px 66px}
  .mk-h{font-size:1.25rem}
  .mk-head .art,.mk-cls,.mk-dock>.x{display:none}
@@ -484,5 +534,18 @@ html{overflow-x:hidden;overflow-x:clip}
  .mk-cols{grid-template-columns:minmax(0,1fr)}
  .close-art .art-grass{width:46%}
  .close-art .art-skyline{width:88%}
+}
+
+/* ---------- Light on phones and touch screens (welcome.js marks these .lite, not .motion) ----------
+   Nothing follows the scroll, and what plays is cheap to draw: the washes stay where they are rather than drifting
+   for as long as the page is open, and things rise and fade in without blur, which a phone redraws on every frame.
+   The splashes open by size and fade rather than through an animated mask. */
+@media (max-width:959.98px),(pointer:coarse){
+ .hwash{animation:w-fade 1.4s ease both}
+ .hw2{animation-delay:.3s}
+ .bwash,.bmist,.iswoosh,.cue i{animation:none}
+ @keyframes w-rise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+ @keyframes w-splash{from{opacity:0;scale:.5}70%{scale:1.03}to{scale:1}}
+ .js .rv:not(.band){transition:opacity .8s var(--ease-out),transform .9s var(--ease-out)}
 }
 @media (prefers-reduced-motion:reduce){.js .rv:not(.in){opacity:1;transform:none}}

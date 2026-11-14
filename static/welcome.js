@@ -8,15 +8,21 @@
 // of the overview, and parallax on the values and the closing. Each part gets its progress as CSS variables (--in,
 // --t, --p) and welcome.css does the rest. Without this script, or under reduced motion, nothing is pinned or moved by
 // the scroll and every part rests in its finished state.
+//
+// Phones and touch tablets (LITE, the same media query as welcome.css) are marked .lite instead of .motion: parts
+// still arrive as they scroll into view and the menu still slips away and back, but nothing else follows the scroll,
+// so the page scrolls as smoothly as the browser can (nothing is pinned, nothing is measured or restyled per frame).
 (function () {
   var root = document.documentElement;
   root.classList.add("js");
-  var still = false, fine = false;
+  var LITE = "(max-width: 959.98px), (pointer: coarse)";
+  var still = false, fine = false, lite = false;
   try {
     still = matchMedia("(prefers-reduced-motion: reduce)").matches;
     fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
+    lite = matchMedia(LITE).matches;
   } catch (e) {}
-  if (!still) root.classList.add("motion");
+  if (!still) root.classList.add(lite ? "lite" : "motion");
 
   function count(box) {
     [].forEach.call(box.querySelectorAll("[data-n]"), function (b) {
@@ -69,7 +75,60 @@
     el.style.setProperty("--n", n);
   }
 
+  // The page's own links (#what, #inside, #values) travel there smoothly too, then move focus to the section.
+  function links() {
+    var maxY = function () { return Math.max(0, root.scrollHeight - window.innerHeight); };
+    document.addEventListener("click", function (e) {
+      var a = e.target.closest && e.target.closest('a[href^="#"]');
+      if (!a || a.classList.contains("skip") || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
+      var to = document.getElementById(a.getAttribute("href").slice(1));
+      if (!to) return;
+      e.preventDefault();
+      var from = window.scrollY, dest = Math.min(maxY(), to.getBoundingClientRect().top + from), t0 = null;
+      var dur = Math.min(1600, 600 + Math.abs(dest - from) * 0.35), mine = {};
+      stopGlide(); tween = mine;
+      requestAnimationFrame(function step(t) {
+        if (tween !== mine) return;
+        if (t0 === null) t0 = t;
+        var k = Math.min(1, (t - t0) / dur), ease = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+        window.scrollTo(0, from + (dest - from) * ease);
+        if (k < 1) requestAnimationFrame(step);
+        else {
+          tween = null;
+          if (!to.hasAttribute("tabindex")) to.setAttribute("tabindex", "-1");
+          to.focus({preventScroll: true});
+          if (history.replaceState) history.replaceState(null, "", "#" + to.id);
+        }
+      });
+    });
+  }
+
+  // The menu sticks (welcome.css): on its own paper once the page has moved, slipping away while reading down past
+  // the first screen and back on the way up.
+  var nav = null, tween = null, stopGlide = function () {};
+  function navAt(y, lastY, vh) {
+    root.classList.toggle("scrolled", y > 24);
+    if (y > vh * 0.9 && y > lastY + 2) root.classList.add("nav-away");
+    else if (y < lastY - 2 || y <= vh * 0.9) root.classList.remove("nav-away");
+  }
+  // On its own, for .lite: one class check per frame while scrolling, and nothing else.
+  function menu() {
+    if (!nav) return;
+    var lastY = window.scrollY, ticking = false;
+    addEventListener("scroll", function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () {
+        ticking = false;
+        var y = window.scrollY;
+        navAt(y, lastY, window.innerHeight);
+        lastY = y;
+      });
+    }, {passive: true});
+  }
+
   function start() {
+    nav = document.querySelector(".wnav");
     var parts = [].slice.call(document.querySelectorAll(".rv"));
     if (still || !("IntersectionObserver" in window)) {
       parts.forEach(function (p) { p.classList.add("in"); });
@@ -85,9 +144,11 @@
       parts.forEach(function (p) { seen.observe(p); });
     }
     if (still) return;
+    links();
+    if (lite) { menu(); return; }
 
     [].forEach.call(document.querySelectorAll("[data-words]"), words);
-    var hero = document.querySelector(".hero"), nav = document.querySelector(".wnav");
+    var hero = document.querySelector(".hero");
     var feats = document.querySelector(".feats"), track = feats && feats.querySelector(".f-track");
     var bar = document.querySelector(".sprog i"), heroParts = list(hero, ".hero-art,.hero-text,.cue");
     var scrubs = list(document, "[data-scrub],[data-pin]").map(function (el) {
@@ -120,11 +181,7 @@
       var y = window.scrollY;
       if (y === lastY && !force) return;
       if (bar) set(bar, "--doc", clamp(y / docMax));
-      if (nav) {
-        root.classList.toggle("scrolled", y > 24);
-        if (y > vh * 0.9 && y > lastY + 2) root.classList.add("nav-away");
-        else if (y < lastY - 2 || y <= vh * 0.9) root.classList.remove("nav-away");
-      }
+      if (nav) navAt(y, lastY, vh);
       setAll(heroParts, "--h", clamp(y / Math.max(1, heroH)));
       scrubs.forEach(function (s) {
         var top = s.top - y, bottom = top + s.h;
@@ -156,7 +213,8 @@
 
     // A weighted glide for mouse wheels: each turn sets where the page is heading and the page eases towards it.
     // Pinch zoom, sideways scrolling, keyboards, scroll bars and touch all scroll as the browser does.
-    var goal = 0, at = 0, gliding = false, last = 0, tween = null;
+    var goal = 0, at = 0, gliding = false, last = 0;
+    stopGlide = function () { gliding = false; };
     function maxY() { return Math.max(0, root.scrollHeight - window.innerHeight); }
     function glide(t) {
       var dt = last ? Math.min(64, t - last) : 16.7;
@@ -177,31 +235,6 @@
         if (!gliding) { gliding = true; last = 0; requestAnimationFrame(glide); }
       }, {passive: false});
     }
-
-    // The page's own links (#what, #inside, #values) travel there smoothly too, then move focus to the section.
-    document.addEventListener("click", function (e) {
-      var a = e.target.closest && e.target.closest('a[href^="#"]');
-      if (!a || a.classList.contains("skip") || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
-      var to = document.getElementById(a.getAttribute("href").slice(1));
-      if (!to) return;
-      e.preventDefault();
-      var from = window.scrollY, dest = Math.min(maxY(), to.getBoundingClientRect().top + from), t0 = null;
-      var dur = Math.min(1600, 600 + Math.abs(dest - from) * 0.35), mine = {};
-      gliding = false; tween = mine;
-      requestAnimationFrame(function step(t) {
-        if (tween !== mine) return;
-        if (t0 === null) t0 = t;
-        var k = Math.min(1, (t - t0) / dur), ease = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
-        window.scrollTo(0, from + (dest - from) * ease);
-        if (k < 1) requestAnimationFrame(step);
-        else {
-          tween = null;
-          if (!to.hasAttribute("tabindex")) to.setAttribute("tabindex", "-1");
-          to.focus({preventScroll: true});
-          if (history.replaceState) history.replaceState(null, "", "#" + to.id);
-        }
-      });
-    });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);

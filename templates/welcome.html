@@ -4,7 +4,8 @@
    /welcome.js reveals each part as it scrolls into view, and without it everything simply shows. With motion allowed,
    the scroll also drives the page (welcome.js, welcome.css): [data-scrub] parts get their progress through the window,
    and [data-pin] parts hold still while it plays (the sideways gallery, the statement read in word by word, the
-   preview's three steps). Under reduced motion nothing is pinned and every part rests in its finished state. The preview of the
+   preview's three steps). On phones and touch screens nothing follows the scroll (welcome.js marks them .lite), and
+   under reduced motion nothing is pinned and every part rests in its finished state. The preview of the
    overview is drawn in HTML with made-up figures, never real pupils. The site title (site_settings.py), when an
    admin has set one, sits under the wordmark and in the footer. #}
 <html lang="en">
@@ -114,6 +115,7 @@
  <div class="pin-view">
   <span class="iswoosh" aria-hidden="true"></span>
   <div class="in-text rv">
+    <p class="v-k">Inside Ilmi</p>
     <h2 id="inside-h">Every class, every pupil, <em>in one place.</em></h2>
     <hr>
     <p>A clear, calm view of your classes and each pupil’s learning, so you can spend more time teaching and less time organising.</p>

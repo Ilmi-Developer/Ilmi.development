@@ -1587,6 +1587,19 @@ class DashboardTests:
         self.assertIn('<link rel="stylesheet" href="/glass.css"></head>', dashboard)
         self.assertRegex(dashboard, r'<script nonce="[^"]+" src="/glass.js"></script>')
 
+    def test_start_page_is_light_on_phones(self):
+        # Phones and touch screens get the light start page: welcome.js marks them .lite (nothing follows the scroll),
+        # welcome.css lays them out and keeps their animations cheap, and glass.js leaves the page's glass off. All
+        # three must agree on which screens those are.
+        anonymous = self.app.test_client()
+        query = "(max-width:959.98px),(pointer:coarse)"
+        for path in ("/welcome.js", "/glass.js"):
+            self.assertIn('"' + query.replace(":", ": ").replace("),", "), ") + '"', anonymous.get(path).get_data(as_text=True), path)
+        css = anonymous.get("/welcome.css").get_data(as_text=True)
+        self.assertIn("@media " + query + "{", css)
+        self.assertIn("scroll-snap-type:x mandatory", css)  # the features swipe sideways
+        self.assertIn('<p class="v-k">Inside Ilmi</p>', anonymous.get("/welcome").get_data(as_text=True))
+
     def test_sign_in_opening_writes_the_arabic_name(self):
         # The opening introduces the sign-in page with علمي alone, written in by hand (templates/art/intro-word.svg and
         # the pen's timings in static/auth.css, both made by tools/art/word.py), with no Latin name, star, mark or
