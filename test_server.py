@@ -1828,7 +1828,7 @@ class DashboardTests:
         self.assertEqual((inv["net"], inv["received"], inv["outstanding"], inv["status"]), (25000, 15000, 10000, "overdue"))
         self.assertIn("Correction", client.get(fee).get_data(as_text=True))
         # Every change is in the audit log.
-        actions = [r["action"] for r in self.query("SELECT action FROM audit_log WHERE action LIKE 'finance.%' ORDER BY id")]
+        actions = [r["action"] for r in self.query("SELECT action FROM audit_log ORDER BY id") if r["action"].startswith("finance.")]
         self.assertEqual(actions, ["finance.billed", "finance.payment", "finance.payment", "finance.refund", "finance.discount",
                                    "finance.corrected"])
         # An invoice with payments can't be reversed until they are.
