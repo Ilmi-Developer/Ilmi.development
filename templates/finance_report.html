@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% from "_finance.html" import money, change, period_bar, bars, empty with context %}
+{% block title %}{{ r.title }}{% endblock %}
+{% block head %}<script src="/finance/finance.js" defer></script>{% endblock %}
+{% block content %}
+{# One financial report (finance.py report): its period, the statement, and its exports. #}
+{% set p = r.period %}
+{% set kind = r.kind %}
+{% set extra = {} %}
+{% if kind == "budget" and r.data %}{% set extra = {"budget": r.data.id} %}{% endif %}
+<div class="band slim fin-rhead"><div class="band-top"><h1>{{ r.title }}</h1>
+  <div class="acts fin-noprint">
+    <button type="button" class="btn" data-print hidden>Print</button>
+    <a class="btn" href="/finance/reports/{{ kind }}.pdf?{{ q }}">PDF</a>
+    <a class="btn" href="/finance/reports/{{ kind }}.xlsx?{{ q }}">Excel</a>
+    <a class="btn" href="/finance/reports/{{ kind }}.csv?{{ q }}">CSV</a>
+  </div></div>
+  {% if kind == "income-expenditure" %}<p class="lede">Profit &amp; Loss. What came in and what was spent in {{ p.label }}, counting fees when they’re billed and bills when they’re due.</p>
+  {% elif kind == "balance-sheet" %}<p class="lede">What the madrasah owns and owes on {{ r.on|nice_day }}, and the funds that make up the difference.</p>
+  {% elif kind == "cash-flow" %}<p class="lede">Money that actually came in and went out in {{ p.label }}.</p>
+  {% elif kind == "budget" %}<p class="lede">Each budget line against what really happened.</p>
+  {% elif kind == "fees" %}<p class="lede">Every fee billed, what’s been paid and what’s still owed.</p>
+  {% elif kind == "funds" %}<p class="lede">What each fund held at the start of {{ p.label }}, what came in, what was spent and what it holds now.</p>
+  {% elif kind == "sofa" %}<p class="lede">Statement of Financial Activities for {{ p.label }}, in unrestricted and restricted funds.</p>
+  {% elif kind == "receipts-payments" %}<p class="lede">Money received and paid in {{ p.label }}, for charities that prepare receipts and payments accounts.</p>{% endif %}
+  <p class="fin-print-only">{{ settings.legal_name }}{% if settings.charity_number %} · Registered charity {{ settings.charity_number }}{% endif %} · Made in Ilmi on {{ r.made.strftime("%-d %b %Y") }}</p>
+  {% if kind not in ("fees", "budget") %}<div class="fin-noprint">{{ period_bar(p, "/finance/reports/" ~ kind, prev_q, next_q, extra) }}</div>{% endif %}
+  {% if kind in ("income-expenditure", "balance-sheet") %}
+  <p class="fin-noprint fin-cmp">{% if r.compare %}Compared with {{ r.compare.label }}. <a href="?{{ q }}&amp;compare=0">Hide the comparison</a>{% else %}<a href="?{{ q|replace('compare=0', '') }}">Compare with the period before</a>{% endif %}</p>
+  {% endif %}
+</div>
+{% if problems %}<p class="error" role="alert">The books don’t add up: {{ problems|join(" ") }} These reports may be wrong until this is fixed.</p>{% endif %}
+{% if charity %}<p class="notice fin-tip" role="note">A draft from the madrasah’s own records, laid out for charity reporting. It isn’t a set of statutory accounts: those must follow the Charities SORP and be independently examined or audited where the law requires it.</p>{% endif %}
+{% if not has_entries %}<div class="mod line">{{ empty("Nothing recorded yet", "This report will fill in as you bill fees and record money in and out.", "/finance/settings#opening", "Enter opening balances") }}</div>{% else %}
+
+{% if kind == "income-expenditure" %}{% set d = r.data %}
+<div class="figs fin-gap fin-figsb">
+  <div class="fig"><b>{{ d.total_income|gbp }}</b><span>Total income {{ change(d.change_income) if r.compare and d.change_income is not none }}</span></div>
+  <div class="fig"><b>{{ d.total_spending|gbp }}</b><span>Total expenditure {{ change(d.change_spending, false) if r.compare and d.change_spending is not none }}</span></div>
+  <div class="fig{{ ' alert' if d.net < 0 }}"><b>{{ d.net|gbp }}</b><span>Net {{ "surplus" if d.net >= 0 else "deficit" }}</span></div>
+</div>
+<div class="tablewrap fin-statement"><table class="tbl fin-tbl">
+  <thead><tr><th scope="col">Income &amp; Expenditure</th><th scope="col" class="n">{{ p.label }}</th>{% if r.compare %}<th scope="col" class="n">{{ r.compare.label }}</th><th scope="col" class="n">Change</th>{% endif %}</tr></thead>
+  {% for title, rows, total, prev, chg, up in (("Income", d.income, d.total_income, d.prev_income, d.change_income, true), ("Expenditure", d.spending, d.total_spending, d.prev_spending, d.change_spending, false)) %}
+  <tbody>
+  <tr class="fin-sec"><th scope="rowgroup" colspan="{{ 4 if r.compare else 2 }}">{{ title }}</th></tr>
+  {% for x in rows %}
+  {% set tx = r.detail[x.key] %}
+  <tr><td>{% if tx %}<details class="fin-x"><summary>{{ x.label }} <span class="cap">{{ tx|length }} {{ "entry" if tx|length == 1 else "entries" }}</span></summary>
+    <ul class="fin-xl">{% for e in tx[:60] %}<li><span>{{ e.day|nice_day }} · {{ e.memo or e.kind_label }}{% if e.party %} · {{ e.party }}{% endif %}{% if e.kind == "reversal" %} <span class="pill grey">Correction</span>{% endif %}</span><b>{{ money(e.effect) }}</b></li>{% endfor %}{% if tx|length > 60 %}<li class="cap">and {{ tx|length - 60 }} more (download the Excel file for all of them)</li>{% endif %}</ul>
+    </details>{% else %}<span class="fin-x0">{{ x.label }}</span>{% endif %}
+    {% for name, v in x.accounts %}<span class="fin-sub">{{ name }} {{ money(v) }}</span>{% endfor %}</td>
+    <td class="n">{{ x.total|gbp }}</td>{% if r.compare %}<td class="n fin-was">{{ x.previous|gbp }}</td><td class="n">{{ change(x.change, up) }}</td>{% endif %}</tr>
+  {% endfor %}
+  <tr class="fin-tot"><th scope="row">Total {{ title|lower }}</th><td class="n">{{ total|gbp }}</td>{% if r.compare %}<td class="n fin-was">{{ prev|gbp }}</td><td class="n">{{ change(chg, up) }}</td>{% endif %}</tr>
+  </tbody>
+  {% endfor %}
+  <tbody><tr class="fin-grand"><th scope="row">Net {{ "surplus" if d.net >= 0 else "deficit" }}</th><td class="n">{{ money(d.net, true) }}</td>{% if r.compare %}<td class="n fin-was">{{ d.prev_net|gbp }}</td><td class="n">{{ change(d.change_net) }}</td>{% endif %}</tr></tbody>
+</table></div>
+<p class="cap fin-gap">Open a category to see the entries in it. Fee discounts and waivers are taken off tuition fees.</p>
+
+{% elif kind == "balance-sheet" %}{% set d = r.data %}{% set b = r.data_before %}
+{% if not d.has_opening %}<p class="notice fin-tip" role="note">No opening balances are recorded, so money and debts from before the books started in Ilmi aren’t included. <a href="/finance/settings#opening">Enter opening balances</a></p>{% endif %}
+{% if not d.balances %}<p class="error" role="alert">Assets less liabilities ({{ d.net_assets|gbp }}) don’t equal the funds ({{ d.total_funds|gbp }}): they’re {{ d.difference|gbp }} apart. Nothing has been added to hide this. Please contact support so the books can be checked.</p>{% endif %}
+<div class="tablewrap fin-statement"><table class="tbl fin-tbl">
+  <thead><tr><th scope="col">Balance sheet</th><th scope="col" class="n">{{ r.on|nice_day }}</th>{% if b %}<th scope="col" class="n">{{ b.on|nice_day }}</th>{% endif %}</tr></thead>
+  {% macro bl(label, now, before, cls="", two=false) %}<tr{{ (' class="' ~ cls ~ '"')|safe if cls }}>{% if cls %}<th scope="row">{{ label }}</th>{% else %}<td>{{ label }}</td>{% endif %}<td class="n">{{ now|gbp }}</td>{% if two %}<td class="n fin-was">{{ before|gbp }}</td>{% endif %}</tr>{% endmacro %}
+  {% macro find(rows, label) %}{{ (rows|selectattr("label", "equalto", label)|map(attribute="amount")|list + [0])|first }}{% endmacro %}
+  <tbody><tr class="fin-sec"><th scope="rowgroup" colspan="3">What the madrasah owns</th></tr>
+  {% for x in d.assets %}{{ bl(x.label, x.amount, find(b.assets, x.label)|int if b else 0, two=(b is not none)) }}{% else %}<tr><td colspan="3" class="cap">Nothing yet</td></tr>{% endfor %}
+  {{ bl("Total assets", d.total_assets, b.total_assets if b else 0, "fin-tot", two=(b is not none)) }}</tbody>
+  <tbody><tr class="fin-sec"><th scope="rowgroup" colspan="3">What the madrasah owes</th></tr>
+  {% for x in d.liabilities %}{{ bl(x.label, x.amount, find(b.liabilities, x.label)|int if b else 0, two=(b is not none)) }}{% else %}<tr><td colspan="3" class="cap">Nothing owed</td></tr>{% endfor %}
+  {{ bl("Total liabilities", d.total_liabilities, b.total_liabilities if b else 0, "fin-tot", two=(b is not none)) }}</tbody>
+  <tbody>{{ bl("Net assets", d.net_assets, b.net_assets if b else 0, "fin-grand", two=(b is not none)) }}</tbody>
+  <tbody><tr class="fin-sec"><th scope="rowgroup" colspan="3">Funds</th></tr>
+  {{ bl("Accumulated funds brought forward", d.accumulated, b.accumulated if b else 0, two=(b is not none)) }}
+  {{ bl("Surplus or deficit this financial year (" ~ d.year.label ~ ")", d.current_surplus, b.current_surplus if b else 0, two=(b is not none)) }}
+  {{ bl("Restricted funds", d.restricted, b.restricted if b else 0, two=(b is not none)) }}
+  {{ bl("Unrestricted funds", d.unrestricted, b.unrestricted if b else 0, two=(b is not none)) }}
+  {{ bl("Total funds", d.total_funds, b.total_funds if b else 0, "fin-grand", two=(b is not none)) }}</tbody>
+</table></div>
+{% if d.balances %}<p class="fin-ok fin-gap"><span class="pill green">Balances</span> Assets less liabilities equal the funds: {{ d.net_assets|gbp }}.</p>{% endif %}
+{% if d.funds %}<details class="how fin-gap"><summary>Each fund</summary><div>
+  <table class="tbl fin-tbl"><thead><tr><th scope="col">Fund</th><th scope="col" class="n">Brought forward</th><th scope="col" class="n">This year</th><th scope="col" class="n">Balance</th></tr></thead>
+  <tbody>{% for f in d.funds %}<tr><td>{{ f.name }}{% if f.restricted %} <span class="pill amber">Restricted</span>{% endif %}</td><td class="n">{{ f.brought_forward|gbp }}</td><td class="n">{{ money(f.surplus, true) }}</td><td class="n"><b>{{ f.balance|gbp }}</b></td></tr>{% endfor %}</tbody></table>
+</div></details>{% endif %}
+
+{% elif kind == "cash-flow" %}{% set d = r.data %}
+<div class="figs fin-gap fin-figsb">
+  <div class="fig"><b>{{ d.opening|gbp }}</b><span>Cash and bank at the start</span></div>
+  <div class="fig"><b>{{ d.received|gbp }}</b><span>Received</span></div>
+  <div class="fig"><b>{{ d.paid|gbp }}</b><span>Paid out</span></div>
+  <div class="fig{{ ' alert' if d.closing < 0 }}"><b>{{ d.closing|gbp }}</b><span>Cash and bank at the end</span></div>
+</div>
+<div class="g12">
+<div class="mod s6 fin-flat"><div class="tablewrap fin-statement"><table class="tbl fin-tbl">
+  <thead><tr><th scope="col">Cash flow</th><th scope="col" class="n">{{ p.label }}</th></tr></thead>
+  <tbody>
+  <tr class="fin-tot"><th scope="row">Opening cash and bank balance</th><td class="n">{{ d.opening|gbp }}</td></tr>
+  {% for x in d.lines if x.amount or x.key != "opening" %}<tr><td>{{ x.label }}</td><td class="n">{{ money(x.amount, true) }}</td></tr>{% endfor %}
+  <tr class="fin-grand"><th scope="row">Closing cash and bank balance</th><td class="n">{{ d.closing|gbp }}</td></tr>
+  </tbody></table></div></div>
+<div class="mod s6 fin-flat"><div class="mod-h"><h2>Billed isn’t received</h2></div>
+  <div class="figs"><div class="fig quiet"><b>{{ d.fees_billed|gbp }}</b><span>Fees billed in this period</span></div><div class="fig quiet"><b>{{ d.fees_received|gbp }}</b><span>Fee payments actually received</span></div></div>
+  <p class="cap fin-gap">Payments received can be for fees billed earlier, so the two needn’t match.</p>
+  {% if d.months|length > 1 %}{{ bars(d.months, "Cash in and out by month") }}{% endif %}
+</div>
+</div>
+
+{% elif kind == "budget" %}
+{% if not r.budgets %}<div class="mod line">{{ empty("No budget yet", "Make a budget for a year, a term or a month, then come back to see how it’s going.", "/finance/budgets", "Make a budget") }}</div>
+{% else %}{% set d = r.data %}
+<form method="get" action="/finance/reports/budget" class="inline-form fin-noprint fin-gap"><label class="field">Budget<select name="budget">{% for x in r.budgets %}<option value="{{ x.id }}"{{ " selected" if d and x.id == d.id }}>{{ x.name }}</option>{% endfor %}</select></label><button class="btn sm">Show</button></form>
+{% if d %}<p class="sub">{{ d.name }}: {{ d.start|nice_day }} to {{ d.end|nice_day }}. {% if d.elapsed < 100 %}{{ d.elapsed }}% of this budget’s time has passed, so actual figures are expected to be lower than the budget for now. {% endif %}Lines more than 10% off budget in the wrong direction are marked.</p>
+<div class="tablewrap fin-statement"><table class="tbl stackable fin-tbl">
+  <thead><tr><th scope="col">Category</th><th scope="col" class="n">Budget</th><th scope="col" class="n">Actual</th><th scope="col" class="n">Variance</th><th scope="col" class="n">Variance %</th><th scope="col" class="n">Remaining</th></tr></thead>
+  {% for k, title in (("income", "Income"), ("expense", "Expenditure")) %}
+  <tbody><tr class="fin-sec"><th scope="rowgroup" colspan="6">{{ title }}</th></tr>
+  {% for x in d.rows if x.kind == k %}<tr{{ ' class="fin-alert"'|safe if x.attention }}>
+    <td class="lead">{{ x.name }}{% if x.over %} <span class="pill red">Over budget</span>{% elif x.attention %} <span class="pill amber">Below budget</span>{% endif %}</td>
+    <td data-label="Budget" class="n">{{ x.budget|gbp }}</td><td data-label="Actual" class="n">{{ x.actual|gbp }}</td>
+    <td data-label="Variance" class="n">{{ x.variance|gbp(true) }}</td><td data-label="Variance %" class="n">{{ "%+.1f%%"|format(x.pct) if x.pct is not none else "–" }}</td>
+    <td data-label="Remaining" class="n">{{ money(x.remaining, true) if x.remaining is not none else "–" }}</td></tr>
+  {% else %}<tr><td colspan="6" class="cap">No {{ title|lower }} lines</td></tr>{% endfor %}
+  <tr class="fin-tot"><th scope="row">Total {{ title|lower }}</th><td class="n">{{ d.totals[k].budget|gbp }}</td><td class="n">{{ d.totals[k].actual|gbp }}</td><td class="n">{{ (d.totals[k].actual - d.totals[k].budget)|gbp(true) }}</td><td></td><td></td></tr></tbody>
+  {% endfor %}
+</table></div>{% endif %}
+{% endif %}
+
+{% elif kind == "fees" %}
+<div class="fin-filters fin-noprint fin-gap">
+  <nav class="seg" aria-label="Show">{% for key, label in (("", "All"), ("outstanding", "Still owed"), ("overdue", "Overdue")) %}<a class="segl" href="?show={{ key }}{{ '&view=family' if r.by_family }}"{{ ' aria-current="true"'|safe if r.show == key }}>{{ label }}</a>{% endfor %}</nav>
+  <nav class="seg" aria-label="Group"><a class="segl" href="?show={{ r.show }}"{{ ' aria-current="true"'|safe if not r.by_family }}>By student</a><a class="segl" href="?show={{ r.show }}&amp;view=family"{{ ' aria-current="true"'|safe if r.by_family }}>By family</a></nav>
+</div>
+{% set rows = r.rows %}
+<div class="figs"><div class="fig"><b>{{ rows|sum(attribute="net")|gbp }}</b><span>Billed</span></div><div class="fig"><b>{{ rows|sum(attribute="received")|gbp }}</b><span>Paid</span></div><div class="fig"><b>{{ rows|selectattr("outstanding", "gt", 0)|sum(attribute="outstanding")|gbp }}</b><span>Still owed</span></div></div>
+{% if r.by_family %}
+<div class="tablewrap fin-statement fin-gap"><table class="tbl stackable fin-tbl"><thead><tr><th scope="col">Family ID</th><th scope="col">Students</th><th scope="col" class="n">Billed</th><th scope="col" class="n">Paid</th><th scope="col" class="n">Still owed</th><th scope="col" class="n">Overdue</th></tr></thead>
+<tbody>{% for f in r.families %}<tr><td class="lead">{{ f.family }}</td><td data-label="Students">{{ f.students }}</td><td data-label="Billed" class="n">{{ f.net|gbp }}</td><td data-label="Paid" class="n">{{ f.received|gbp }}</td><td data-label="Still owed" class="n"><b>{{ f.outstanding|gbp }}</b></td><td data-label="Overdue" class="n">{{ f.overdue|gbp }}</td></tr>{% else %}<tr><td colspan="6" class="cap">No fees match.</td></tr>{% endfor %}</tbody></table></div>
+{% else %}
+<div class="tablewrap fin-statement fin-gap"><table class="tbl stackable fin-tbl"><thead><tr><th scope="col">Student</th><th scope="col">Family ID</th><th scope="col">Class</th><th scope="col" class="n">Billed</th><th scope="col" class="n">Paid</th><th scope="col" class="n">Still owed</th><th scope="col">Due</th><th scope="col">Status</th></tr></thead>
+<tbody>{% for i in rows %}<tr><td class="lead"><a href="/finance/fees/{{ i.id }}">{{ i.student_name }}</a><span class="sub fin-who">{{ i.description }}</span></td><td data-label="Family ID">{{ i.family_id }}</td><td data-label="Class">{{ i.class_name }}</td><td data-label="Billed" class="n">{{ i.net|gbp }}</td><td data-label="Paid" class="n">{{ i.received|gbp }}</td><td data-label="Still owed" class="n"><b>{{ i.outstanding|gbp }}</b></td><td data-label="Due">{{ i.due_day|nice_day }}</td><td data-label="Status"><span class="pill {{ i.tone }}">{{ i.status_label }}</span></td></tr>{% else %}<tr><td colspan="8" class="cap">No fees match.</td></tr>{% endfor %}</tbody></table></div>
+{% endif %}
+
+{% elif kind == "funds" %}
+<div class="tablewrap fin-statement"><table class="tbl stackable fin-tbl">
+  <thead><tr><th scope="col">Fund</th><th scope="col" class="n">Brought forward</th><th scope="col" class="n">Money in</th><th scope="col" class="n">Money out</th><th scope="col" class="n">Balance</th></tr></thead>
+  <tbody>{% for f in r.data %}{% set bf = r.before.get(f.id, 0) + f.brought_forward %}{% if bf or f.income or f.spending %}<tr>
+    <td class="lead">{{ f.name }} <span class="pill {{ 'amber' if f.restricted else 'grey' }}">{{ "Restricted" if f.restricted else "Unrestricted" }}</span></td>
+    <td data-label="Brought forward" class="n">{{ bf|gbp }}</td><td data-label="Money in" class="n">{{ f.income|gbp }}</td><td data-label="Money out" class="n">{{ f.spending|gbp }}</td>
+    <td data-label="Balance" class="n"><b>{{ money(bf + f.income - f.spending, true) }}</b></td></tr>{% endif %}{% endfor %}</tbody>
+</table></div>
+
+{% elif kind == "sofa" %}{% set d = r.data %}
+<div class="tablewrap fin-statement"><table class="tbl fin-tbl">
+  <thead><tr><th scope="col">{{ p.label }}</th><th scope="col" class="n">Unrestricted funds</th><th scope="col" class="n">Restricted funds</th><th scope="col" class="n">Total</th></tr></thead>
+  {% macro three(label, x, cls="") %}<tr{{ (' class="' ~ cls ~ '"')|safe if cls }}>{% if cls %}<th scope="row">{{ label }}</th>{% else %}<td>{{ label }}</td>{% endif %}<td class="n">{{ x.unrestricted|gbp }}</td><td class="n">{{ x.restricted|gbp }}</td><td class="n">{{ x.total|gbp }}</td></tr>{% endmacro %}
+  <tbody><tr class="fin-sec"><th scope="rowgroup" colspan="4">Income from</th></tr>{% for x in d.income %}{{ three(x.label, x) }}{% endfor %}{{ three("Total income", d.total_income, "fin-tot") }}</tbody>
+  <tbody><tr class="fin-sec"><th scope="rowgroup" colspan="4">Expenditure on</th></tr>{% for x in d.spending %}{{ three(x.label, x) }}{% endfor %}{{ three("Total expenditure", d.total_spending, "fin-tot") }}</tbody>
+  <tbody>{{ three("Net income / (expenditure)", d.net, "fin-tot") }}{{ three("Total funds brought forward", d.brought_forward) }}{{ three("Total funds carried forward", d.carried_forward, "fin-grand") }}</tbody>
+</table></div>
+<p class="cap fin-gap">Transfers between funds and gains or losses on investments aren’t recorded in Ilmi yet, so those SoFA lines aren’t shown.</p>
+
+{% elif kind == "receipts-payments" %}{% set d = r.data %}
+<div class="tablewrap fin-statement"><table class="tbl fin-tbl">
+  <thead><tr><th scope="col">Receipts and payments</th><th scope="col" class="n">{{ p.label }}</th></tr></thead>
+  <tbody><tr class="fin-sec"><th scope="rowgroup" colspan="2">Receipts</th></tr>{% for k, v in d.receipts %}<tr><td>{{ k }}</td><td class="n">{{ v|gbp }}</td></tr>{% else %}<tr><td colspan="2" class="cap">None</td></tr>{% endfor %}<tr class="fin-tot"><th scope="row">Total receipts</th><td class="n">{{ d.total_receipts|gbp }}</td></tr></tbody>
+  <tbody><tr class="fin-sec"><th scope="rowgroup" colspan="2">Payments</th></tr>{% for k, v in d.payments %}<tr><td>{{ k }}</td><td class="n">{{ v|gbp }}</td></tr>{% else %}<tr><td colspan="2" class="cap">None</td></tr>{% endfor %}<tr class="fin-tot"><th scope="row">Total payments</th><td class="n">{{ d.total_payments|gbp }}</td></tr></tbody>
+  <tbody><tr><td>Cash and bank at the start</td><td class="n">{{ d.opening|gbp }}</td></tr><tr class="fin-grand"><th scope="row">Cash and bank at the end</th><td class="n">{{ d.closing|gbp }}</td></tr></tbody>
+</table></div>
+{% endif %}
+{% endif %}
+<p class="fin-noprint fin-gap"><a href="/finance/reports">All reports</a></p>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% from "_finance.html" import correct, empty with context %}
+{% block title %}Finance settings{% endblock %}
+{% block width %} narrow{% endblock %}
+{% block content %}
+{# Finance settings (finance.py settings_page): how the madrasah is set up, opening balances and bank checks. #}
+<div class="band slim"><div class="band-top"><h1>Settings</h1></div>
+  <p class="lede">How the madrasah is set up, what it had when the books started, and checks against the bank.</p>
+</div>
+<div class="mod line"><h2>The madrasah</h2>
+  <form method="post" action="/finance/settings">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="field">Legal name<input name="legal_name" maxlength="120" value="{{ settings.legal_name }}" placeholder="As on official documents" autocomplete="off"></label>
+    <div class="formrow">
+      <label class="field">How it’s set up<select name="structure">{% for k, label in structures %}<option value="{{ k }}"{{ " selected" if settings.structure == k }}>{{ label }}</option>{% endfor %}</select></label>
+      <label class="field">Charity number<input name="charity_number" maxlength="20" value="{{ settings.charity_number }}" placeholder="If registered" autocomplete="off"></label>
+    </div>
+    <div class="formrow">
+      <label class="field">How the accounts are kept<select name="basis">{% for k, label in bases %}<option value="{{ k }}"{{ " selected" if settings.basis == k }}>{{ label }}</option>{% endfor %}</select></label>
+      <label class="field">Financial year starts in<select name="year_start">{% for m in months %}<option value="{{ loop.index }}"{{ " selected" if settings.year_start == loop.index }}>{{ m }}</option>{% endfor %}</select></label>
+    </div>
+    <details class="how"><summary>Which should I choose?</summary><div>
+      <p>Charity reports (the Statement of Financial Activities and receipts and payments) appear on Reports only for a registered charity, a CIO or a charitable company. Not every madrasah is a charity.</p>
+      <p>Smaller charities in England and Wales can often prepare <b>receipts and payments</b> accounts; larger ones, and charitable companies, use <b>accruals</b>. Your accountant or independent examiner can say which applies. Ilmi keeps full records either way.</p>
+      <p>Terms follow the financial year: with a September start, Autumn is September to December, Spring January to March and Summer April to August.</p>
+    </div></details>
+    <button class="btn primary">Save</button>
+  </form>
+</div>
+<div class="mod line" id="opening"><h2>Opening balances</h2>
+{% if opening %}
+  <p class="sub">Recorded for {{ opening[0].day|nice_day }}: {{ opening[0].amount|gbp }} in total.</p>
+  <div class="tablewrap"><table class="tbl fin-tbl"><tbody>{% for e in opening %}<tr><td class="lead">{{ e.memo }}<span class="sub fin-who">{{ e.day|nice_day }}{% if e.by_name %} · {{ e.by_name }}{% endif %}</span></td><td>{{ correct(e, "settings") }}</td></tr>{% endfor %}</tbody></table></div>
+  <p class="cap fin-gap">To change them, correct this entry and enter them again.</p>
+{% endif %}
+{% if not opening or opening|rejectattr("reversed_by")|list|length == 0 %}
+  <p class="sub">What the madrasah had and owed on the day you start keeping its books here. Leave anything it didn’t have empty. Its funds are what it had less what it owed.</p>
+  <form method="post" action="/finance/opening">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="field">On<input type="date" name="day" value="{{ today.isoformat() }}" required></label>
+    <div class="formrow">
+      <label class="field">Bank account (£)<input name="o1010" inputmode="decimal" placeholder="0.00" autocomplete="off"></label>
+      <label class="field">Cash in hand (£)<input name="o1000" inputmode="decimal" placeholder="0.00" autocomplete="off"></label>
+    </div>
+    <div class="formrow">
+      <label class="field">Equipment (£)<input name="o1200" inputmode="decimal" placeholder="0.00" autocomplete="off"></label>
+      <label class="field">Unpaid bills (£)<input name="o2000" inputmode="decimal" placeholder="0.00" autocomplete="off"></label>
+    </div>
+    <div class="formrow">
+      <label class="field">Staff pay owed (£)<input name="o2100" inputmode="decimal" placeholder="0.00" autocomplete="off"></label>
+      <label class="field">Other amounts owed (£)<input name="o2200" inputmode="decimal" placeholder="0.00" autocomplete="off"></label>
+    </div>
+    <p class="cap">Fees families owed before this day: bill them on Student fees with the day they were billed, so each family’s balance is right.</p>
+    {% if restricted_funds %}<p class="sub">How much of it was in each restricted fund:</p>
+    <div class="formrow">{% for f in restricted_funds %}<label class="field">{{ f.name }} (£)<input name="r{{ f.id }}" inputmode="decimal" placeholder="0.00" autocomplete="off"></label>{% endfor %}</div>{% endif %}
+    <button class="btn primary">Save opening balances</button>
+  </form>
+{% endif %}
+</div>
+<div class="mod line" id="reconcile"><h2>Check against a statement</h2>
+  <p class="sub">Enter the balance on your bank statement (or a cash count) for a day. Ilmi compares it with the books, so you know the figures are right. The books say {{ balances[codes.bank]|gbp }} in the bank and {{ balances[codes.cash]|gbp }} in cash today.</p>
+  <form method="post" action="/finance/reconcile" class="inline-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="field">Account<select name="account"><option value="{{ codes.bank }}">Bank account</option><option value="{{ codes.cash }}">Cash in hand</option></select></label>
+    <label class="field">Statement date<input type="date" name="day" value="{{ today.isoformat() }}" max="{{ today.isoformat() }}" required></label>
+    <label class="field">Statement balance (£)<input name="balance" inputmode="decimal" required placeholder="0.00" autocomplete="off"></label>
+    <label class="field">Note<input name="note" maxlength="200" placeholder="Optional" autocomplete="off"></label>
+    <button class="btn primary">Check</button>
+  </form>
+  {% if recs %}
+  <div class="tablewrap fin-gap"><table class="tbl stackable fin-tbl">
+    <thead><tr><th scope="col">Account</th><th scope="col">Statement date</th><th scope="col" class="n">Statement</th><th scope="col" class="n">Books</th><th scope="col">Result</th></tr></thead>
+    <tbody>{% for x in recs %}<tr><td class="lead">{{ x.account }}<span class="sub fin-who">{{ x.note }}{% if x.by_name %} · {{ x.by_name }}{% endif %}</span></td><td data-label="Statement date">{{ x.statement_day|nice_day }}</td><td data-label="Statement" class="n">{{ x.statement_balance|gbp }}</td><td data-label="Books" class="n">{{ x.ledger_balance|gbp }}</td>
+      <td data-label="Result">{% if x.statement_balance == x.ledger_balance %}<span class="pill green">Matches</span>{% else %}<span class="pill red">{{ (x.statement_balance - x.ledger_balance)|gbp(true) }} apart</span>{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% endif %}
+</div>
+{% endblock %}

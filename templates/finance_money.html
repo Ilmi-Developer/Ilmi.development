@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% from "_finance.html" import money, period_bar, method_select, fund_select, correct, empty with context %}
+{% block title %}Income & expenses{% endblock %}
+{% block content %}
+{# Income & expenses (finance.py money): money in that isn't a fee, money out, and bills not paid yet. #}
+<div class="band slim"><div class="band-top"><h1>Income &amp; expenses</h1></div>
+  <p class="lede">Money that isn’t a student fee: donations, grants and other income, and everything the madrasah spends.</p>
+  <details class="how"><summary>How this works</summary><div>
+    <p>Record <b>money in</b> when it arrives. Tuition fees go on Student fees instead, so they count against what each family owes.</p>
+    <p>Record <b>money out</b> as paid now, or as a bill not paid yet. A bill counts as spending straight away and shows under Unpaid bills until you pay it. Equipment you buy is kept as something the madrasah owns, not as spending.</p>
+    <p>Choose a restricted fund when the money can only be used for one purpose, such as a building appeal.</p>
+  </div></details>
+</div>
+<div class="g12">
+<div class="mod s6"><h2>Money in</h2>
+  <form method="post" action="/finance/money/in">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="formrow">
+      <label class="field">What it is<select name="account" required>{% for a in in_accounts %}<option value="{{ a.id }}">{{ a.name }}</option>{% endfor %}</select></label>
+      <label class="field">Amount (£)<input name="amount" inputmode="decimal" required placeholder="0.00" autocomplete="off"></label>
+    </div>
+    <div class="formrow">
+      <label class="field">From<input name="party" maxlength="120" placeholder="Who it came from" autocomplete="off"></label>
+      {{ method_select() }}
+    </div>
+    <div class="formrow">
+      {{ fund_select(funds) }}
+      <label class="field">Received on<input type="date" name="day" value="{{ today.isoformat() }}" max="{{ today.isoformat() }}"></label>
+    </div>
+    <label class="field">Note<input name="memo" maxlength="200" placeholder="Optional" autocomplete="off"></label>
+    <button class="btn primary">Record money in</button>
+  </form>
+</div>
+<div class="mod s6"><h2>Money out</h2>
+  <form method="post" action="/finance/money/out">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="formrow">
+      <label class="field">What it’s for<select name="account" required>{% for a in out_accounts %}<option value="{{ a.id }}">{{ a.name }}</option>{% endfor %}</select></label>
+      <label class="field">Amount (£)<input name="amount" inputmode="decimal" required placeholder="0.00" autocomplete="off"></label>
+    </div>
+    <div class="formrow">
+      <label class="field">Paid to<input name="party" maxlength="120" placeholder="Who it’s paid to" autocomplete="off"></label>
+      <label class="field">Paid yet?<select name="paid"><option value="yes">Paid now</option><option value="no">Not yet: it’s a bill</option></select></label>
+    </div>
+    <div class="formrow">
+      {{ method_select() }}
+      {{ fund_select(funds, "Paid from fund") }}
+      <label class="field">Date<input type="date" name="day" value="{{ today.isoformat() }}"></label>
+    </div>
+    <label class="field">Note<input name="memo" maxlength="200" placeholder="For example, October electricity" autocomplete="off"></label>
+    <button class="btn primary">Record money out</button>
+  </form>
+</div>
+</div>
+{% if bills %}
+<div class="mod line"><h2>Unpaid bills</h2>
+<div class="tablewrap"><table class="tbl stackable fin-tbl">
+  <thead><tr><th scope="col">Bill</th><th scope="col">Date</th><th scope="col" class="n">Still owed</th><th scope="col"><span class="sr-only">Pay</span></th></tr></thead>
+  <tbody>{% for b in bills %}<tr><td class="lead">{{ b.memo }}<span class="sub fin-who">{{ b.party }}</span></td><td data-label="Date">{{ b.day|nice_day }}</td><td data-label="Still owed" class="n"><b>{{ b.owed|gbp }}</b></td>
+    <td><details class="confirm"><summary class="btn sm primary">Pay<span class="sr-only"> {{ b.memo }}</span></summary>
+      <form method="post" action="/finance/bills/{{ b.id }}/pay"><input type="hidden" name="csrf" value="{{ csrf }}">
+        <label class="field">Amount (£)<input name="amount" inputmode="decimal" value="{{ '%.2f'|format(b.owed / 100) }}" required></label>
+        {{ method_select() }}
+        <label class="field">Paid on<input type="date" name="day" value="{{ today.isoformat() }}"></label>
+        <button class="btn sm primary solid">Record payment</button></form></details></td></tr>{% endfor %}</tbody>
+</table></div></div>
+{% endif %}
+<div class="mod line"><div class="mod-h"><h2>Recorded</h2></div>
+{{ period_bar(period, "/finance/money", prev_q, next_q) }}
+{% if rows %}
+<div class="tablewrap"><table class="tbl stackable fin-tbl">
+  <thead><tr><th scope="col">What</th><th scope="col">Category</th><th scope="col">Fund</th><th scope="col">Date</th><th scope="col" class="n">Amount</th><th scope="col"><span class="sr-only">Correct</span></th></tr></thead>
+  <tbody>{% for e in rows %}<tr>
+    <td class="lead">{{ e.memo }}<span class="sub fin-who">{{ e.kind_label }}{% if e.party %} · {{ e.party }}{% endif %}{% if e.method_label %} · {{ e.method_label }}{% endif %}</span></td>
+    <td data-label="Category">{{ e.what }}</td><td data-label="Fund">{{ e.fund }}</td><td data-label="Date">{{ e.day|nice_day }}</td>
+    <td data-label="Amount" class="n">{{ money(e.effect if e.effect else -e.amount if e.kind == "bill_payment" else e.cash, true) }}</td>
+    <td>{{ correct(e, "money") }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% else %}{{ empty("Nothing recorded in " ~ period.label, "Money in and out you record will be listed here.") }}{% endif %}
+</div>
+{% endblock %}

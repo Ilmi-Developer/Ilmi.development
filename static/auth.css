@@ -462,9 +462,121 @@ body:has(.crop:not([hidden])){overflow:hidden}
  .tht[aria-pressed="true"]::after,.tht[aria-pressed="true"]::before,.thedit:not([hidden]){animation:none}}
 /* A card whose title is followed straight by its form (sign-in has no line under its title): room between them. */
 .solo .card>h1+form{margin-top:24px}
-/* The Finance page's empty state (templates/finance.html): a quiet card with an icon, a title and a line under it. */
-.fin-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:48px 24px;box-shadow:var(--shadow-card)}
-.fin-empty h2{margin:0}
-.fin-empty .sub{margin:0;max-width:44ch}
-.fin-ic{display:grid;place-items:center;width:56px;height:56px;border-radius:50%;background:var(--navy-soft);color:var(--navy-text,var(--navy));margin-bottom:4px}
-.fin-ic .ic{width:24px;height:24px}
+/* ---------- Finance (finance.py, templates/finance*.html) ----------
+   Built from the shared parts (band, figures, cards, tables, pills, .seg); these only arrange them. Amounts are
+   tabular figures; a negative amount has a minus sign as well as its colour, so it never relies on colour alone. */
+.fin-period{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-top:12px}
+.fin-period form.seg{margin:0}
+.fin-step{display:inline-flex;align-items:center;gap:8px}
+.fin-step b{font-weight:600;min-width:10ch;text-align:center}
+.fin-custom>summary{list-style:none}.fin-custom>summary::-webkit-details-marker{display:none}
+.fin-custom form{margin-top:8px;padding:12px;border-radius:var(--r);background:var(--surface-2)}
+.fin-custom .field{flex:0 1 180px}
+.seg a.segl{font-size:.8125rem;font-weight:500;border-radius:var(--r-pill);color:var(--ink-2);padding:4px 12px;min-height:28px;display:inline-flex;align-items:center;text-decoration:none}
+.seg a.segl:hover{color:var(--ink)}
+.seg a.segl[aria-current]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(60,52,30,.12),0 0 0 1px var(--line)}
+.fin-filters{display:flex;flex-wrap:wrap;gap:8px}
+.fin-figs{margin-top:20px}
+.fin-figsb{margin-bottom:20px}
+.fin-neg{color:var(--bad-ink)}
+.fin-pos{color:var(--ok-ink)}
+.fin-chg{display:inline-block;font-size:.75rem;font-weight:500;color:var(--mute);white-space:nowrap}
+.fin-chg.good{color:var(--ok-ink)}.fin-chg.bad{color:var(--bad-ink)}
+.fin-gap{margin-top:16px}
+.fin-tip a{color:inherit;font-weight:600}
+.fin-who{display:block;font-size:.75rem;margin-top:2px}
+.fin-tbl td,.fin-tbl th{font-variant-numeric:tabular-nums}
+.fin-tbl .fin-sec th{font-size:.75rem;font-weight:600;letter-spacing:.02em;color:var(--navy-text,var(--navy));background:none;padding-top:16px;text-transform:uppercase}
+.fin-tbl .fin-tot>*{font-weight:600;border-top:1px solid var(--line-2)}
+.fin-tbl .fin-grand>*{font:600 1rem/1.3 var(--font-display);border-top:2px solid var(--navy);color:var(--ink)}
+.fin-tbl .fin-was{color:var(--mute)}
+.fin-tbl tr.fin-alert>td{background:color-mix(in srgb,var(--bad-soft) 55%,transparent)}
+.fin-tbl th[scope=row]{text-align:left}
+.fin-statement{max-width:960px}
+.fin-x>summary{cursor:pointer;list-style:none;display:inline-flex;gap:8px;align-items:baseline;border-radius:var(--r-sm)}
+.fin-x>summary::-webkit-details-marker{display:none}
+.fin-x>summary::before{content:"";width:5px;height:5px;border:solid var(--navy-text,var(--navy));border-width:0 1.5px 1.5px 0;transform:translateY(-2px) rotate(-45deg);transition:transform var(--t) var(--ease)}
+.fin-x[open]>summary::before{transform:translateY(-3px) rotate(45deg)}
+.fin-x>summary:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.fin-xl{list-style:none;margin:8px 0 4px;padding:0 0 0 14px;border-left:2px solid var(--line);font-size:.8125rem;color:var(--ink-2)}
+.fin-xl li{display:flex;justify-content:space-between;gap:16px;padding:3px 0}
+.fin-xl b{font-weight:500;white-space:nowrap}
+.fin-x0{padding-left:13px}
+.fin-sub{display:block;font-size:.75rem;color:var(--mute);padding-left:13px}
+.fin-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.fin-card{display:flex;flex-direction:column;gap:6px;align-items:flex-start;text-decoration:none;color:inherit;box-shadow:var(--shadow-card);transition:box-shadow var(--t) var(--ease),transform var(--t) var(--ease)}
+.fin-card h2{font-size:1.0625rem;margin:0}
+.fin-card .sub{margin:0}
+.fin-card:hover{box-shadow:var(--shadow-lift);transform:translateY(-1px)}
+.fin-card:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.fin-add{margin-top:12px}
+.fin-add>summary{list-style:none}.fin-add>summary::-webkit-details-marker{display:none}
+.fin-add form{margin-top:12px}
+.fin-amt{width:9rem;text-align:right;font-variant-numeric:tabular-nums}
+.fin-meter{display:inline-flex;align-items:center;gap:8px;font-size:.8125rem}
+.fin-meter meter{width:96px;height:8px}
+.fin-meter.over{color:var(--bad-ink);font-weight:600}
+.fin-flat{padding:0;background:none}
+.fin-cmp{font-size:.8125rem;color:var(--c-mute);margin:8px 0 0}
+.fin-ok{font-size:.875rem;color:var(--ink-2)}
+.fin-chart{margin:0}
+.fin-chart svg{width:100%;height:auto;display:block}
+.fin-chart .fin-in{fill:var(--navy)}
+.fin-chart .fin-out{fill:var(--gold)}
+.fin-chart .fin-axis{stroke:var(--line-2);stroke-width:1}
+.fin-chart .fin-grid{stroke:var(--line);stroke-width:1;stroke-dasharray:3 4}
+.fin-chart .fin-lab{fill:var(--mute);font-size:11px}
+.fin-key{display:flex;gap:6px 8px;align-items:center;flex-wrap:wrap;font-size:.75rem;color:var(--ink-2);margin-top:4px}
+.fin-key .k{width:10px;height:10px;border-radius:3px;display:inline-block}
+.fin-key .k.in{background:var(--navy)}.fin-key .k.out{background:var(--gold);margin-left:8px}
+/* The Finance overview as a dashboard: the main dashboard's Needs attention tiles (.at, .agrid in template.css) and
+   its thin bars (.tr), as links and SVG here because these pages allow no inline styles. */
+.fin-agrid{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+.fin-ag h3{margin:0 0 4px;font-size:.75rem;font-weight:500;color:var(--mute)}
+.fin-ag h3 small{font-size:.75rem;font-weight:400}
+.fin-ag2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.fin-at{display:grid;align-content:start;min-width:0;text-decoration:none;color:var(--ink);border-radius:var(--r);padding:4px 8px;margin:0 -8px;transition:background-color var(--t-fast) ease}
+.fin-at:hover{background:var(--surface-2)}
+.fin-at:focus-visible{outline:2px solid var(--focus);outline-offset:0}
+.fin-at b{font:600 1.75rem/1.15 var(--font-display);letter-spacing:-.01em;font-variant-numeric:lining-nums tabular-nums}
+.fin-at .an{font-size:.8125rem;font-weight:500;line-height:1.3;color:var(--ink-2)}
+.fin-at small{font-size:.75rem;line-height:1.3;color:var(--mute)}
+.fin-at.bad b{color:var(--bad-ink)}.fin-at.ok b{color:var(--ok-ink)}.fin-at.warn b{color:var(--warn-ink)}.fin-at.zero b{color:var(--mute)}
+@media (min-width:960px){.fin-agrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:0}.fin-ag{padding-right:24px}.fin-ag+.fin-ag{border-left:1px solid var(--line);padding-left:24px}}
+.fin-dash>.mod{box-shadow:var(--shadow-card);align-self:stretch}
+.fin-dash .fin-chart{margin-top:4px}
+.fin-tr{display:block;width:100%;height:4px;margin-top:4px}
+.fin-tr rect{fill:var(--navy)}.fin-tr rect.bg{fill:var(--sunk)}
+.fin-tr.ok rect{fill:var(--sage)}.fin-tr.out rect{fill:var(--gold)}
+.fin-tr.ok rect.bg,.fin-tr.out rect.bg{fill:var(--sunk)}
+.fin-big{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:0 0 8px}
+.fin-big b{font:600 2.5rem/1 var(--font-display);letter-spacing:-.015em;font-variant-numeric:lining-nums tabular-nums}
+.fin-big span{font-size:.8125rem;color:var(--mute)}
+.fin-tr.big{height:8px;margin-top:0}
+.fin-legend{list-style:none;margin:16px 0 12px;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px}
+.fin-legend li{display:flex;justify-content:space-between;align-items:center;font-size:.875rem}
+.fin-legend b{font-variant-numeric:tabular-nums}
+.fin-rows{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.fin-rows li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:baseline;font-size:.875rem}
+.fin-rows li>span{min-width:0;color:var(--ink-2)}
+.fin-rows li>b{font-weight:600;font-variant-numeric:tabular-nums}
+.fin-rows .fin-tr{grid-column:1/-1}
+.fin-dash .cap{margin-top:12px}
+.fin-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin:0 0 24px}
+.fin-kpi{display:flex;flex-direction:column;gap:6px;background:var(--surface);border-radius:var(--r-lg);padding:20px 24px;box-shadow:var(--shadow-card);min-width:0}
+.fin-kpi .kl{font-size:.8125rem;font-weight:600;color:var(--mute)}
+.fin-kpi b{font:600 2rem/1.1 var(--font-display);letter-spacing:-.015em;font-variant-numeric:lining-nums tabular-nums;color:var(--ink);overflow-wrap:anywhere}
+.fin-kpi.bad b{color:var(--bad-ink)}
+.fin-kpi .kc{font-size:.75rem;line-height:1.35;color:var(--mute)}
+@media (max-width:1099.98px){.fin-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:479.98px){.fin-kpis{gap:12px}.fin-kpi{padding:16px}.fin-kpi b{font-size:1.5rem}}
+.fin-print-only{display:none}
+@media (prefers-reduced-motion:reduce){.fin-card,.fin-x>summary::before{transition:none}}
+@media print{
+ .rail,.dock,.dscrim,.skip,.devbar,.fin-noprint,details.how,.idock{display:none!important}
+ .fin-print-only{display:block;font-size:.8125rem;color:#444}
+ body,.shell,.work,main,.content{background:#fff!important;margin:0!important;padding:0!important}
+ .tablewrap{box-shadow:none;border:1px solid #ccc}
+ .fin-x>.fin-xl{display:block}
+ .fin-tbl tr{break-inside:avoid}
+}

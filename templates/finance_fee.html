@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% from "_finance.html" import money, method_select, correct with context %}
+{% block title %}{{ inv.student_name }}: {{ inv.description }}{% endblock %}
+{% block width %} narrow{% endblock %}
+{% block content %}
+{# One fee (finance.py fee): its figures, what can be done with it, and every entry that touched it. #}
+<div class="band slim"><div class="band-top"><h1>{{ inv.student_name }}</h1><div class="acts"><a class="btn" href="/finance/fees">All fees</a></div></div>
+  <p class="lede">{{ inv.description }}{% if inv.class_name %} · {{ inv.class_name }}{% endif %}{% if inv.family_id %} · <a href="/finance/fees?family={{ inv.family_id|urlencode }}">Family {{ inv.family_id }}</a>{% endif %}</p>
+  <div class="figs">
+    <div class="fig"><b>{{ inv.billed|gbp }}</b><span>Fee</span></div>
+    {% if inv.discounts %}<div class="fig"><b>{{ inv.discounts|gbp }}</b><span>Discounts and waivers</span></div>{% endif %}
+    <div class="fig"><b>{{ inv.received|gbp }}</b><span>Paid{% if inv.refunded %} ({{ inv.refunded|gbp }} refunded){% endif %}</span></div>
+    <div class="fig{{ ' alert' if inv.status == 'overdue' }}"><b>{{ inv.outstanding|gbp }}</b><span>Still owed, due {{ inv.due_day|nice_day }}</span></div>
+  </div>
+  <p><span class="pill {{ inv.tone }}">{{ inv.status_label }}</span></p>
+</div>
+{% if inv.outstanding > 0 %}
+<div class="mod line"><h2>Record a payment</h2>
+  <form method="post" action="/finance/fees/{{ inv.id }}/pay" class="inline-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="field">Amount (£)<input name="amount" inputmode="decimal" required value="{{ '%.2f'|format(inv.outstanding / 100) }}" autocomplete="off"></label>
+    {{ method_select() }}
+    <label class="field">Paid on<input type="date" name="day" value="{{ today.isoformat() }}" max="{{ today.isoformat() }}"></label>
+    <button class="btn primary">Record payment</button>
+  </form>
+</div>
+<div class="mod line"><h2>Discount or waive</h2>
+  <p class="sub">Takes money off what’s owed, for example a sibling discount or a hardship waiver.</p>
+  <form method="post" action="/finance/fees/{{ inv.id }}/discount" class="inline-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="field">Amount (£)<input name="amount" inputmode="decimal" required placeholder="0.00" autocomplete="off"></label>
+    <label class="field">Why?<input name="reason" maxlength="300" required placeholder="For example, sibling discount" autocomplete="off"></label>
+    <label class="field">Date<input type="date" name="day" value="{{ today.isoformat() }}"></label>
+    <button class="btn">Take it off</button>
+  </form>
+</div>
+{% endif %}
+{% if inv.received > 0 %}
+<div class="mod line"><h2>Pay money back</h2>
+  <p class="sub">A refund makes the amount owed again. If the family shouldn’t pay it, also add a discount or waiver.</p>
+  <form method="post" action="/finance/fees/{{ inv.id }}/refund" class="inline-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="field">Amount (£)<input name="amount" inputmode="decimal" required placeholder="0.00" autocomplete="off"></label>
+    {{ method_select() }}
+    <label class="field">Why?<input name="reason" maxlength="300" required placeholder="For example, left mid-term" autocomplete="off"></label>
+    <label class="field">Date<input type="date" name="day" value="{{ today.isoformat() }}"></label>
+    <button class="btn">Record refund</button>
+  </form>
+</div>
+{% endif %}
+<div class="mod line"><h2>History</h2>
+<div class="tablewrap"><table class="tbl stackable fin-tbl">
+  <thead><tr><th scope="col">What</th><th scope="col">Date</th><th scope="col" class="n">Amount</th><th scope="col">By</th><th scope="col"><span class="sr-only">Correct</span></th></tr></thead>
+  <tbody>{% for e in history %}<tr>
+    <td class="lead">{{ kinds.get(e.kind, e.kind) }}<span class="sub fin-who">{{ e.memo }}{% if e.reason %} · {{ e.reason }}{% endif %}{% if e.method %} · {{ dict(methods).get(e.method, e.method) }}{% endif %}</span></td>
+    <td data-label="Date">{{ e.day|nice_day }}</td><td data-label="Amount" class="n">{{ e.amount|gbp }}</td><td data-label="By">{{ e.by_name or "" }}</td>
+    <td>{{ correct(e, "fee:" ~ inv.id) }}</td></tr>{% endfor %}</tbody>
+</table></div>
+</div>
+{% endblock %}

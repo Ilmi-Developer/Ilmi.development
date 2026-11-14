@@ -1714,7 +1714,8 @@ class DashboardTests:
         text = page.get_data(as_text=True)
         self.assertEqual(page.status_code, 200)
         self.assertIn("script-src 'self'", page.headers["Content-Security-Policy"])  # its menu's scripts run
-        for part in ("<h1>Finance</h1>", "Nothing here yet", 'href="/finance"', "<span>Finance</span>"):
+        for part in ("<h1>Finance</h1>", "Nothing recorded yet", 'href="/finance"', "<span>Finance</span>",
+                     'href="/finance/reports"', 'href="/finance/fees"'):
             self.assertIn(part, text)
         for gone in ("/#classes", "/#record", "Manage users"):
             self.assertNotIn(gone, text)
@@ -1734,6 +1735,241 @@ class DashboardTests:
         self.assertEqual(made.status_code, 200)
         self.assertEqual(self.query("SELECT role FROM users WHERE email = 't2@example.com'"), [{"role": "finance"}])
         self.assertEqual(self.query("SELECT COUNT(*) AS n FROM classroom_members WHERE user_id = ?", (finance,))[0]["n"], 0)
+
+    # --- Finance (finance.py, finance_books.py) ---------------------------------------------------------------
+
+    def finance_client(self):
+        self.add_user("money@example.com", role="finance")
+        students = [dict(name=n, target=1, passes=0, merits=0, warn=0, log=[], lt=[], ml=[], lx=[], sid=sid, fid=fid)
+                    for n, sid, fid in (("Aisha Khan", "S1", "F1"), ("Yusuf Khan", "S2", "F1"), ("Omar Ali", "S3", "F2"))]
+        with self.app.config["DB"].transaction() as tx:
+            tx.execute("INSERT INTO classrooms (id, json, revision) VALUES ('yr3-a', ?, 1)",
+                       (json.dumps(dict(self.state, S=students)),))
+        return self.sign_in("money@example.com", "teacher-password-1")
+
+    def fin(self, client, action, page="/finance/settings", **data):
+        response = self.form(client, page, action, **data)
+        text = html.unescape(response.get_data(as_text=True))
+        error = re.search(r'class="error" role="alert">([^<]+)', text)
+        return response.status_code, error.group(1) if error else None
+
+    def fin_account(self, code):
+        return str(self.query("SELECT id FROM fin_accounts WHERE code = ?", (code,))[0]["id"])
+
+    def fin_books(self):
+        import finance_books
+        return finance_books
+
+    def test_finance_migration_adds_books_without_figures(self):
+        self.assertEqual(self.query("SELECT COUNT(*) AS n FROM fin_entries")[0]["n"], 0)
+        self.assertEqual(self.query("SELECT COUNT(*) AS n FROM fin_lines")[0]["n"], 0)
+        self.assertEqual(self.query("SELECT name, restricted FROM fin_funds"), [{"name": "General fund", "restricted": 0}])
+        codes = {r["code"] for r in self.query("SELECT code FROM fin_accounts")}
+        self.assertTrue({"1000", "1010", "1100", "2000", "3000", "4000", "4010", "5000"} <= codes)
+
+    def test_finance_pages_are_finance_only(self):
+        client = self.finance_client()
+        paths = ("/finance", "/finance/fees", "/finance/money", "/finance/staff", "/finance/donations", "/finance/reports",
+                 "/finance/budgets", "/finance/settings", "/finance/reports/income-expenditure",
+                 "/finance/reports/balance-sheet", "/finance/reports/cash-flow", "/finance/reports/budget",
+                 "/finance/reports/fees", "/finance/reports/funds", "/finance/reports/fees.csv")
+        for path in paths:
+            self.assertEqual(client.get(path).status_code, 200, path)
+            self.assertEqual(self.client.get(path).status_code, 403, path)  # the admin
+        teacher = self.add_user("t@example.com")
+        other = self.sign_in("t@example.com", "teacher-password-1")
+        self.assertEqual(other.get("/finance/reports/income-expenditure.pdf").status_code, 403)
+        # A change from someone else is refused before anything is read from the form.
+        token = csrf_of(self.client.get("/admin/users"))
+        self.assertEqual(self.client.post("/finance/money/in", data={"csrf": token, "amount": "5"}).status_code, 403)
+        # Charity statements only for a charity.
+        self.assertEqual(client.get("/finance/reports/sofa").status_code, 404)
+        self.assertNotIn("/finance/reports/sofa", client.get("/finance/reports").get_data(as_text=True))
+        self.assertEqual(self.fin(client, "/finance/settings", structure="charity", basis="receipts", year_start="9",
+                                  charity_number="1234567", legal_name="Test Madrasah"), (200, None))
+        self.assertEqual(client.get("/finance/reports/sofa").status_code, 200)
+        self.assertEqual(client.get("/finance/reports/receipts-payments.xlsx").status_code, 200)
+        self.assertIsNotNone(teacher)
+
+    def test_finance_fees_part_payments_discounts_refunds_and_corrections(self):
+        client = self.finance_client()
+        ok = (200, None)
+        self.assertEqual(self.fin(client, "/finance/fees/bill", "/finance/fees", student="id:S1", description="Autumn fees",
+                                  amount="300", discount="30", issued="2026-09-02", due="2026-09-30", instalments="1"), ok)
+        books, today = self.fin_books(), date(2026, 10, 15)
+        with self.app.config["DB"].transaction() as tx:
+            inv = books.invoices(tx, today)[0]
+        self.assertEqual((inv["billed"], inv["discounts"], inv["outstanding"], inv["status"]), (30000, 3000, 27000, "overdue"))
+        fee = f"/finance/fees/{inv['id']}"
+        self.assertEqual(self.fin(client, fee + "/pay", fee, amount="100", method="bank", day="2026-09-10"), ok)
+        self.assertEqual(self.fin(client, fee + "/pay", fee, amount="200", method="cash", day="2026-09-11"),
+                         (400, "That's more than the £170.00 still owed on this fee."))
+        self.assertEqual(self.fin(client, fee + "/pay", fee, amount="170", method="cash", day="2026-09-20"), ok)
+        self.assertEqual(self.fin(client, fee + "/refund", fee, amount="300", method="bank", reason="x", day="2026-10-01"),
+                         (400, "Only £270.00 has been paid on this fee."))
+        self.assertEqual(self.fin(client, fee + "/refund", fee, amount="20", method="bank", reason="Left", day="2026-10-01"), ok)
+        with self.app.config["DB"].transaction() as tx:
+            inv = books.invoice(tx, inv["id"], today)
+        self.assertEqual((inv["received"], inv["outstanding"], inv["status"]), (25000, 2000, "overdue"))
+        self.assertEqual(self.fin(client, fee + "/discount", fee, amount="20", reason="Hardship", day="2026-10-01"), ok)
+        # A payment entered by mistake is corrected, never deleted: both entries stay, linked.
+        payment = self.query("SELECT id FROM fin_entries WHERE kind = 'payment' ORDER BY id LIMIT 1")[0]["id"]
+        self.assertEqual(self.fin(client, f"/finance/entries/{payment}/reverse", fee, reason="Wrong family",
+                                  back=f"fee:{inv['id']}", day="2026-09-10"), ok)
+        self.assertEqual(self.fin(client, f"/finance/entries/{payment}/reverse", fee, reason="Again", back="fees"),
+                         (400, "That entry has already been reversed."))
+        rows = self.query("SELECT id, kind, reverses, reversed_by, reason FROM fin_entries WHERE id >= ? ORDER BY id", (payment,))
+        correction = [r for r in rows if r["kind"] == "reversal"][0]
+        self.assertEqual((correction["reverses"], correction["reason"]), (payment, "Wrong family"))
+        self.assertEqual(rows[0]["reversed_by"], correction["id"])
+        with self.app.config["DB"].transaction() as tx:
+            inv = books.invoice(tx, inv["id"], today)
+            self.assertEqual(books.check(tx), [])
+        self.assertEqual((inv["net"], inv["received"], inv["outstanding"], inv["status"]), (25000, 15000, 10000, "overdue"))
+        self.assertIn("Correction", client.get(fee).get_data(as_text=True))
+        # Every change is in the audit log.
+        actions = [r["action"] for r in self.query("SELECT action FROM audit_log ORDER BY id") if r["action"].startswith("finance.")]
+        self.assertEqual(actions, ["finance.billed", "finance.payment", "finance.payment", "finance.refund", "finance.discount",
+                                   "finance.corrected"])
+        # An invoice with payments can't be reversed until they are.
+        billed = self.query("SELECT id FROM fin_entries WHERE kind = 'invoice'")[0]["id"]
+        self.assertEqual(self.fin(client, f"/finance/entries/{billed}/reverse", fee, reason="x", back="fees")[0], 400)
+
+    def test_finance_instalments_and_billing_a_class(self):
+        client = self.finance_client()
+        self.assertEqual(self.fin(client, "/finance/fees/bill", "/finance/fees", student="id:S3", description="Year fees",
+                                  amount="100", discount="", issued="2026-09-01", due="2026-09-15", instalments="3"), (200, None))
+        rows = self.query("SELECT description, due_day FROM fin_invoices ORDER BY id")
+        self.assertEqual([r["due_day"] for r in rows], ["2026-09-15", "2026-10-15", "2026-11-15"])
+        self.assertEqual(rows[2]["description"], "Year fees (3 of 3)")
+        amounts = [r["n"] for r in self.query("SELECT l.debit AS n FROM fin_lines l JOIN fin_accounts a ON a.id = l.account_id "
+                                              "WHERE a.code = '1100' ORDER BY l.id")]
+        self.assertEqual(amounts, [3334, 3333, 3333])  # pence spread so they add up to the fee exactly
+        self.assertEqual(self.fin(client, "/finance/fees/bill-class", "/finance/fees", **{"class": "yr3-a"}, description="Books",
+                                  amount="25", issued="2026-09-01", due="2026-09-30", instalments="1"), (200, None))
+        families = self.query("SELECT family_id, COUNT(*) AS n FROM fin_invoices WHERE description = 'Books' GROUP BY family_id ORDER BY family_id")
+        self.assertEqual(families, [{"family_id": "F1", "n": 2}, {"family_id": "F2", "n": 1}])
+        text = client.get("/finance/fees?view=family").get_data(as_text=True)
+        self.assertIn("F1", text)
+        self.assertEqual(self.fin(client, "/finance/fees/bill", "/finance/fees", student="id:S3", description="x",
+                                  amount="10", discount="20", instalments="1"), (400, "The discount can't be more than the fee."))
+        self.assertEqual(self.fin(client, "/finance/fees/bill", "/finance/fees", student="nobody", description="x",
+                                  amount="10", instalments="1"), (400, "Choose a student."))
+        self.assertEqual(self.fin(client, "/finance/fees/bill", "/finance/fees", student="id:S3", description="x",
+                                  amount="-5", instalments="1")[0], 400)
+
+    def test_finance_statements_balance_and_reconcile(self):
+        client = self.finance_client()
+        ok = (200, None)
+        books = self.fin_books()
+        self.assertEqual(self.fin(client, "/finance/funds", "/finance/donations", name="Building appeal", restricted="1"), ok)
+        appeal = str(self.query("SELECT id FROM fin_funds WHERE name = 'Building appeal'")[0]["id"])
+        self.assertEqual(self.fin(client, "/finance/opening", day="2026-09-01", o1010="5,000", o1000="200", o2000="300",
+                                  **{"r" + appeal: "1000"}), ok)
+        self.assertEqual(self.fin(client, "/finance/opening", day="2026-09-01", o1010="1")[0], 400)  # only once
+        steps = [
+            ("/finance/fees/bill", "/finance/fees", dict(student="id:S1", description="Fees", amount="600", issued="2026-09-02",
+                                                         due="2026-09-30", instalments="1")),
+            ("/finance/money/in", "/finance/money", dict(account=self.fin_account("4300"), fund="", amount="400", method="bank", day="2026-09-15")),
+            ("/finance/money/out", "/finance/money", dict(account=self.fin_account("5100"), fund="", amount="1200", paid="yes", method="bank", day="2026-09-01")),
+            ("/finance/money/out", "/finance/money", dict(account=self.fin_account("5200"), fund="", amount="150.50", paid="no", day="2026-09-30")),
+            ("/finance/money/out", "/finance/money", dict(account=self.fin_account("1200"), fund=appeal, amount="800", paid="yes", method="bank", day="2026-10-02")),
+            ("/finance/staff/pay", "/finance/staff", dict(party="Ustadh Bilal", amount="900", paid="yes", method="bank", day="2026-09-30")),
+            ("/finance/staff/pay", "/finance/staff", dict(party="Ustadha Maryam", amount="600", paid="no", day="2026-09-30")),
+            ("/finance/donations", "/finance/donations", dict(account=self.fin_account("4100"), fund=appeal, amount="2,500", method="online", day="2026-09-12")),
+        ]
+        for action, page, data in steps:
+            self.assertEqual(self.fin(client, action, page, **data), ok, action)
+        self.assertEqual(self.fin(client, "/finance/money/in", "/finance/money", account=self.fin_account("4000"), amount="5", method="bank"),
+                         (400, "Record tuition fees on Student fees, so they count against what each family owes."))
+        invoice = self.query("SELECT id FROM fin_invoices")[0]["id"]
+        self.assertEqual(self.fin(client, f"/finance/fees/{invoice}/pay", f"/finance/fees/{invoice}", amount="250", method="cash", day="2026-09-20"), ok)
+        bill = self.query("SELECT id FROM fin_entries WHERE kind = 'bill'")[0]["id"]
+        self.assertEqual(self.fin(client, f"/finance/bills/{bill}/pay", "/finance/money", amount="150.50", method="bank", day="2026-10-05"), ok)
+        year = books.year_period(date(2026, 10, 1), 9)
+        with self.app.config["DB"].transaction() as tx:
+            ie = books.income_expenditure(tx, year)
+            bs = books.balance_sheet(tx, date(2026, 10, 31), 9)
+            cf = books.cash_flow(tx, year)
+            self.assertEqual(books.check(tx), [])
+        self.assertEqual((ie["total_income"], ie["total_spending"], ie["net"]), (350000, 285050, 64950))
+        assets = {a["label"]: a["amount"] for a in bs["assets"]}
+        self.assertEqual(assets, {"Bank account": 500000 + 40000 + 250000 - 120000 - 80000 - 90000 - 15050,
+                                  "Cash in hand": 45000, "Equipment": 80000, "Fees owed by families": 35000})
+        self.assertEqual({a["label"]: a["amount"] for a in bs["liabilities"]}, {"Unpaid bills": 30000, "Staff pay owed": 60000})
+        self.assertTrue(bs["balances"])
+        self.assertEqual(bs["total_funds"], bs["net_assets"])
+        self.assertEqual(bs["total_funds"], 490000 + 64950)
+        self.assertEqual(bs["restricted"], 100000 + 250000)  # equipment bought from the appeal is still held, not spent
+        # Invoiced isn't received: £600 billed, £250 paid.
+        self.assertEqual((cf["fees_billed"], cf["fees_received"]), (60000, 25000))
+        self.assertEqual(cf["opening"] + sum(l["amount"] for l in cf["lines"]), cf["closing"])
+        self.assertEqual(cf["closing"], assets["Bank account"] + assets["Cash in hand"])
+        # The statement against the books.
+        status, _ = self.fin(client, "/finance/reconcile", account="1010", day="2026-10-31", balance="3,500.00")
+        self.assertEqual(status, 200)
+        rec = self.query("SELECT statement_balance, ledger_balance FROM fin_reconciliations")[0]
+        self.assertEqual(rec, {"statement_balance": 350000, "ledger_balance": assets["Bank account"]})
+        # Exports show the same figures.
+        csv_text = client.get("/finance/reports/income-expenditure.csv?period=year&on=2026-10-01").get_data(as_text=True)
+        self.assertIn("Total income,3500.00", csv_text)
+        self.assertIn("Net surplus,649.50", csv_text)
+        xlsx = client.get("/finance/reports/balance-sheet.xlsx?period=year&on=2026-10-01")
+        self.assertEqual(xlsx.data[:2], b"PK")
+        pdf = client.get("/finance/reports/cash-flow.pdf?period=year&on=2026-10-01")
+        self.assertEqual((pdf.status_code, pdf.data[:4]), (200, b"%PDF"))
+        self.assertIn("finance.exported", [r["action"] for r in self.query("SELECT action FROM audit_log")])
+        page = client.get("/finance/reports/balance-sheet").get_data(as_text=True)
+        self.assertIn("Assets less liabilities equal the funds", page)
+        # The overview as a dashboard: what needs attention, where money came from and went, and the funds.
+        dash = html.unescape(client.get("/finance?period=year&on=2026-10-01").get_data(as_text=True))
+        for part in ("Needs attention", "Fees collected", "Where it came from", "Where it went", "Building appeal",
+                     "£350.00", "Still owed", "Staff pay owed", "£600.00", "No budget"):
+            self.assertIn(part, dash)
+
+    def test_finance_periods_and_boundaries(self):
+        books = self.fin_books()
+        self.assertEqual(books.year_period(date(2026, 8, 31), 9).label, "2025 to 2026")
+        self.assertEqual(books.year_period(date(2026, 9, 1), 9).start, date(2026, 9, 1))
+        self.assertEqual(books.term_period(date(2027, 1, 1), 9).label, "Spring term 2026 to 2027")
+        self.assertEqual(books.term_period(date(2026, 12, 31), 9).end, date(2026, 12, 31))
+        self.assertEqual(books.previous(books.term_period(date(2026, 9, 5), 9), 9).label, "Summer term 2025 to 2026")
+        self.assertEqual(books.previous(books.month_period(date(2026, 1, 9)), 9).label, "December 2025")
+        custom = books.period_from({"period": "custom", "start": "2026-10-01", "end": "2026-10-10"}, 9, date(2026, 11, 1))
+        self.assertEqual(books.previous(custom, 9).start, date(2026, 9, 21))
+        self.assertEqual(books.year_period(date(2026, 3, 1), 4).label, "2025 to 2026")
+        self.assertEqual(books.gbp(125000), "£1,250.00")
+        self.assertEqual(books.gbp(-5), "−£0.05")
+        self.assertEqual(books.pence("£1,250.5"), 125050)
+        for bad in ("1.234", "-3", "abc", "0"):
+            with self.assertRaises(books.Problem):
+                books.pence(bad)
+        # An entry on the last day of a year counts in that year, not the next.
+        client = self.finance_client()
+        self.assertEqual(self.fin(client, "/finance/money/in", "/finance/money", account=self.fin_account("4900"), amount="10",
+                                  method="cash", day="2026-08-31"), (200, None))
+        with self.app.config["DB"].transaction() as tx:
+            self.assertEqual(books.income_expenditure(tx, books.year_period(date(2026, 8, 31), 9))["total_income"], 1000)
+            self.assertEqual(books.income_expenditure(tx, books.year_period(date(2026, 9, 1), 9))["total_income"], 0)
+            # Empty: every report works and shows nothing made up.
+            self.assertEqual(books.budget_vs_actual(tx, "99"), None)
+            self.assertEqual(books.balance_sheet(tx, date(2025, 1, 1), 9)["total_funds"], 0)
+
+    def test_finance_budget_vs_actual(self):
+        client = self.finance_client()
+        rent, tuition = self.fin_account("5100"), self.fin_account("4000")
+        self.assertEqual(self.fin(client, "/finance/budgets", "/finance/budgets", name="2026 to 2027", start="2026-09-01",
+                                  end="2027-08-31", **{"a" + rent: "1000", "a" + tuition: "5000"}), (200, None))
+        self.assertEqual(self.fin(client, "/finance/money/out", "/finance/money", account=rent, amount="1250", paid="yes",
+                                  method="bank", day="2026-09-03"), (200, None))
+        books = self.fin_books()
+        with self.app.config["DB"].transaction() as tx:
+            data = books.budget_vs_actual(tx, self.query("SELECT id FROM fin_budgets")[0]["id"])
+        rows = {r["name"]: r for r in data["rows"]}
+        self.assertEqual((rows["Rent and premises"]["variance"], rows["Rent and premises"]["pct"],
+                          rows["Rent and premises"]["remaining"], rows["Rent and premises"]["over"]), (25000, 25.0, -25000, True))
+        self.assertEqual((rows["Tuition fees"]["actual"], rows["Tuition fees"]["variance"]), (0, -500000))
+        self.assertIn("Over budget", client.get("/finance/reports/budget").get_data(as_text=True))
 
     def test_help_or_requests(self):
         mailer = FakeMailer()
@@ -3195,7 +3431,7 @@ class SchoolTests:
         self.assertEqual(self.view_as(developer, "finance").status_code, 303)
         self.assertEqual(developer.get("/").headers["Location"], "/finance")
         finance_page = developer.get("/finance").get_data(as_text=True)
-        self.assertIn("Nothing here yet", finance_page)
+        self.assertIn("Nothing recorded yet", finance_page)
         self.assertIn('aria-pressed="true">Finance</button>', finance_page)
         self.assertEqual(developer.post("/schools/view", data={"csrf": token, "view": "teacher", "teacher": str(hafsa)}).status_code, 303)
         # The developer's own pages stay their own in any view, and the view is kept while they are away.
@@ -3408,6 +3644,30 @@ class SchoolTests:
         bare = new(name="Eastside")
         self.assertIn("It has no admin account yet", html.unescape(bare.get_data(as_text=True)))
         self.assertEqual(self.query_app(app, 3, "SELECT COUNT(*) AS n FROM users")[0]["n"], 0)
+
+    def test_finance_books_are_kept_apart_for_each_school(self):
+        app = self.school_app()
+        router = app.config["DB"]
+        second = router.create("Riverside")
+        for school, email in ((1, "money@first.example"), (second, "money@riverside.example")):
+            with router.get(school).transaction() as tx:
+                tx.insert("INSERT INTO users (email, name, role, password_hash, created_at) VALUES (?, ?, ?, ?, 0)",
+                          (email, "Treasurer", "finance", auth.hasher.hash("teacher-password-1")))
+            router.claim(email, school)
+        first = self.sign_in("money@first.example", "teacher-password-1", app=app)
+        other = self.sign_in("money@riverside.example", "teacher-password-1", app=app)
+        account = self.query_app(app, 1, "SELECT id FROM fin_accounts WHERE code = '4100'")[0]["id"]
+        done = self.form(first, "/finance/money", "/finance/money/in", account=account, amount="777", method="bank",
+                         day="2026-09-01", party="Secret donor")
+        self.assertEqual(done.status_code, 200)
+        self.assertEqual(self.query_app(app, 1, "SELECT COUNT(*) AS n FROM fin_entries")[0]["n"], 1)
+        self.assertEqual(self.query_app(app, second, "SELECT COUNT(*) AS n FROM fin_entries")[0]["n"], 0)
+        for path in ("/finance/money?period=year&on=2026-09-01", "/finance/reports/income-expenditure.csv?period=year&on=2026-09-01"):
+            self.assertNotIn("Secret donor", other.get(path).get_data(as_text=True))
+            self.assertNotIn("777", other.get(path).get_data(as_text=True))
+        entry = self.query_app(app, 1, "SELECT id FROM fin_entries")[0]["id"]
+        self.form(other, "/finance/money", f"/finance/entries/{entry}/reverse", reason="x", back="money")
+        self.assertEqual(self.query_app(app, 1, "SELECT reversed_by FROM fin_entries")[0]["reversed_by"], None)
 
     def test_developer_sets_a_schools_office_account(self):
         app = self.school_app()  # email isn't set up here, so links are shown to pass on

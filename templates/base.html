@@ -81,8 +81,15 @@
     {{ nl("/schools", "grid", "Schools", here.startswith("/schools")) }}
     {% if dev and dev.school %}{{ nl("/", "home", dev.school) }}{% endif %}
     {% elif user.role == "finance" %}
-    {# Finance has its own page and nothing of the classes (finance.py). #}
-    {{ nl("/finance", "sheet", "Finance", here == "/finance") }}
+    {# Finance has its own pages and nothing of the classes (finance.py). #}
+    {{ nl("/finance", "home", "Overview", here == "/finance") }}
+    {{ nl("/finance/fees", "students", "Student fees", here.startswith("/finance/fees")) }}
+    {{ nl("/finance/money", "pay", "Income & expenses", here == "/finance/money") }}
+    {{ nl("/finance/staff", "users", "Staff payments", here == "/finance/staff") }}
+    {{ nl("/finance/donations", "star", "Donations & funds", here == "/finance/donations") }}
+    {{ nl("/finance/reports", "sheet", "Reports", here.startswith("/finance/reports")) }}
+    {{ nl("/finance/budgets", "target", "Budgets", here == "/finance/budgets") }}
+    {{ nl("/finance/settings", "db", "Settings", here == "/finance/settings") }}
     {% else %}
     {{ nl("/", "home", "Overview") }}
     {% if all_classes %}{{ nl("/#record", "pen", "Record") }}{% endif %}

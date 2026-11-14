@@ -528,3 +528,13 @@ at the sign-in page; refreshing a signed-in tab keeps you signed in (a
 sessionStorage mark set by the first load after signing in; see TAB_GUARD in
 server.py). A "Stay signed in" sign-in skips this and opens straight to the
 dashboard in any tab.
+
+## Finance
+
+The Finance pages (`finance.py`, `templates/finance*.html`, the `.fin-` rules in `static/auth.css`) add no colours,
+fonts or components of their own. They use the page band and its figures, cards, rounded tables, `.seg` for the
+period (as links where a form would be odd), pills for statuses and `details.confirm` for corrections. Money is
+`£1,250.00` in tabular figures; a negative amount has a true minus sign (−£40.00) as well as the brick-red ink, so
+it never relies on colour. Charts are plain SVG bars (olive for money in, gold for money out) with a text title and
+the figures in a table beside them; the page's policy allows no inline styles, so sizes are SVG attributes. Reports
+print without the menu and dock (`@media print`) and also download as PDF, Excel and CSV.
