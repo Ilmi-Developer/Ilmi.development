@@ -69,7 +69,7 @@ TOKEN_POINTS = {"tg": 5, "tb": 20, "tr": 50}  # green, blue, red (book completio
 HOUSE_POINT_REASONS = {"bk": "tr", "lv": "tb", "hw": "tg", "ec": "tg", "cp": "tg"}
 # Reachable without signing in. /welcome is Ilmi's start page, where anyone signed out arrives.
 PUBLIC = {"/login", "/login/code", "/forgot", "/healthz", "/logo.png", "/auth.css", "/intro.js", "/code.js", "/favicon.png",
-          "/favicon.ico", "/welcome", "/welcome.css", "/welcome.js", "/wash.js"}
+          "/favicon.ico", "/welcome", "/welcome.css", "/welcome.js", "/wash.js", "/glass.js", "/glass.css"}
 # Atkinson Hyperlegible Next stays for the TV display; the dashboard and admin pages use Nunito for text, Fraunces
 # (soft) for the wordmark, titles, figures and large italic lines (both made by tools/art/type.py), and Amiri for Arabic:
 # the letters of علمي for the name, and the start page's hadith and values in a second subset (see DESIGN.md and
@@ -258,13 +258,16 @@ PAGE_CSP = ("default-src 'none'; style-src 'self'; img-src 'self'; font-src 'sel
 # signed-in admin and account pages run /menu.js, which folds and unfolds the menu's groups, and /dock.js and
 # /warm-tooltip.js, the menu's dock. All of them, and the start page, run /wash.js, which tells the wash page turn
 # where it starts (it reads and writes one sessionStorage entry, the last press's position, and nothing else).
-LOGIN_CSP = PAGE_CSP + "; script-src 'self'"
+# /glass.js (the liquid glass on the menus, cards and dock) draws each surface's displacement map as a data: image, so
+# every page that runs a script of ours also takes data: images; pages without scripts keep img-src 'self'.
+GLASS_IMG = "img-src 'self' data:"
+LOGIN_CSP = PAGE_CSP.replace("img-src 'self'", GLASS_IMG) + "; script-src 'self'"
 # The emailed sign-in code page (sent from POST /login and POST /login/code) runs /code.js, the animated code boxes,
 # which sends the finished code with fetch so the boxes can show whether it was right before the page moves on.
 CODE_CSP = LOGIN_CSP + "; connect-src 'self'"
 # The Account page runs /avatar.js, the profile picture cropper, which shows the chosen photo from a blob: address
 # and sends the cropped picture with fetch.
-ACCOUNT_CSP = PAGE_CSP.replace("img-src 'self'", "img-src 'self' blob:") + "; script-src 'self'; connect-src 'self'"
+ACCOUNT_CSP = PAGE_CSP.replace("img-src 'self'", GLASS_IMG + " blob:") + "; script-src 'self'; connect-src 'self'"
 # Email previews are styled inline, as emails must be; they have no scripts or forms.
 EMAIL_PREVIEW_CSP = ("default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; form-action 'none'; "
                      "frame-ancestors 'none'; base-uri 'none'")
@@ -553,6 +556,15 @@ def create_app(test_config=None):
     def wash_js():
         return Response((ROOT / "static" / "wash.js").read_text(encoding="utf-8"), mimetype="text/javascript")
 
+    # Liquid glass on the surfaces that float over the page (static/glass.js, static/glass.css), signed in or out.
+    @app.get("/glass.js")
+    def glass_js():
+        return Response((ROOT / "static" / "glass.js").read_text(encoding="utf-8"), mimetype="text/javascript")
+
+    @app.get("/glass.css")
+    def glass_css():
+        return Response((ROOT / "static" / "glass.css").read_text(encoding="utf-8"), mimetype="text/css")
+
     @app.get("/intro.js")
     def intro_js():
         return Response((ROOT / "static" / "intro.js").read_text(encoding="utf-8"), mimetype="text/javascript")
@@ -646,10 +658,11 @@ def create_app(test_config=None):
         html = html.replace("<header>", "<header inert>").replace("<main>", "<main inert>")
         # In the head, so the page knows where its wash starts before it is first drawn (static/wash.js).
         html = html.replace("</style></head>", '</style><script src="/wash.js"></script></head>', 1)
+        html = html.replace("</head>", '<link rel="stylesheet" href="/glass.css"></head>', 1)
         extra = '<link rel="stylesheet" href="/assistant.css"><script src="/assistant.js"></script>' if assistant.enabled(app) else ""
         html = html.replace("</body>", '<script src="/railway-storage.js"></script><script src="/menu.js"></script>'
                             '<script src="/warm-tooltip.js"></script><script src="/dock.js"></script>'
-                            + extra + '</body>')
+                            '<script src="/glass.js"></script>' + extra + '</body>')
         response = Response(html, mimetype="text/html")
         if fresh:
             response.delete_cookie(auth.fresh_cookie_name(), path="/", secure=app.config["COOKIE_SECURE"])

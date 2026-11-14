@@ -1,0 +1,57 @@
+/* Ilmi's glass (static/glass.js): the surfaces that float over the page, as liquid glass. A port of GlassSurface from
+   React Bits (MIT).
+
+   .glass--svg is Chromium: the page behind bends at the surface's edges through its SVG filter (--glass-filter).
+   .glass--fallback is Safari and Firefox: frosted glass, blurred and a little brighter. Either way the surface lets a
+   little of the page through its own colour, so text keeps its contrast: cream cards stay at least 80% cream (95% for those over a dimmed page) and
+   the olive dock at least 88% olive (DESIGN.md asks 4.5:1 for text on both). The rim is a thin line of light inside
+   the edge, as on GlassSurface, drawn under the surface's contents (glass.js puts it first).
+
+   glass.js adds nothing for anyone who asks for less transparency or more contrast; the rules below say the same,
+   so the surface is solid even if the setting changes after the page was drawn. */
+
+.glass>svg.glass-filter{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;pointer-events:none;z-index:-1}
+.glass>.glass-rim{position:absolute;inset:0;z-index:-1;display:block;width:auto;height:auto;margin:0;padding:0;border-radius:inherit;
+ pointer-events:none;background:none;
+ box-shadow:inset 0 1px 0 0 light-dark(hsl(0 0% 100% / .7),hsl(0 0% 100% / .16)),
+  inset 0 0 2px 1px light-dark(color-mix(in oklch,black,transparent 90%),color-mix(in oklch,white,transparent 78%)),
+  inset 0 0 10px 4px light-dark(color-mix(in oklch,white,transparent 80%),color-mix(in oklch,white,transparent 92%))}
+
+.glass--svg{-webkit-backdrop-filter:var(--glass-filter) saturate(var(--glass-saturation,1));
+ backdrop-filter:var(--glass-filter) saturate(var(--glass-saturation,1))}
+.glass--fallback{-webkit-backdrop-filter:blur(12px) saturate(1.4) brightness(1.04);backdrop-filter:blur(12px) saturate(1.4) brightness(1.04)}
+.glass--fallback>.glass-rim{background:linear-gradient(135deg,light-dark(hsl(0 0% 100% / .32),hsl(0 0% 100% / .08)) 0%,transparent 42%,
+ transparent 64%,light-dark(hsl(0 0% 100% / .14),hsl(0 0% 100% / .04)) 100%)}
+
+/* ---------- Each surface's tint ---------- */
+/* The dock and its pop-ups (src/tokens.css): olive, with its washes. */
+.idk-bar.glass{background:var(--rail-wash) center 70%/cover no-repeat,color-mix(in srgb,var(--rail-bg) 88%,transparent)}
+.idk-pop.glass{background:var(--rail-wash) center bottom/100% auto no-repeat,color-mix(in srgb,var(--rail-bg) 90%,transparent)}
+/* The dashboard (src/template.css): search, the question box and the menus. */
+.qkp.glass{background:color-mix(in srgb,var(--raised,var(--surface)) 95%,transparent)}
+.dlg .card.glass{background:color-mix(in srgb,var(--surface) 95%,transparent)}
+.csm.glass{background:color-mix(in srgb,var(--surface) 95%,transparent)}
+/* The developer (static/developer.css). */
+.devbar.glass{background:color-mix(in srgb,var(--surface-2) 80%,transparent)}
+.devpcard.glass{background:color-mix(in srgb,var(--surface) 95%,transparent)}
+.sch-tile.glass{background:color-mix(in srgb,var(--surface) 80%,transparent)}
+.sch-tile.glass:hover{background:color-mix(in srgb,var(--surface-2) 86%,transparent)}
+/* Signed out (static/auth.css, static/welcome.css). */
+.wtab.glass{background:hsl(42 50% 96% / .1)}
+.mk-dock.glass{background:url(/art/wash-rail.webp) center 70%/cover no-repeat,color-mix(in srgb,#4b552f 88%,transparent)}
+.vcard.glass{background:color-mix(in srgb,var(--surface) 80%,transparent)}
+.wbtn.ghost.glass{background:color-mix(in srgb,var(--surface) 22%,transparent)}
+.wbtn.ghost.glass:hover{background:color-mix(in srgb,var(--surface) 40%,transparent)}
+[data-glass].glass{background:color-mix(in srgb,var(--surface) 80%,transparent)}
+
+/* Solid again on request, and on paper. */
+@media (prefers-reduced-transparency:reduce),(prefers-contrast:more),print{
+ .glass.glass{-webkit-backdrop-filter:none;backdrop-filter:none}
+ .glass>.glass-rim{display:none}
+ .idk-bar.glass,.idk-pop.glass{background:var(--rail-wash) center 70%/cover no-repeat,var(--rail-bg)}
+ .qkp.glass{background:var(--raised,var(--surface))}
+ .dlg .card.glass,.csm.glass,.devpcard.glass,.sch-tile.glass,.vcard.glass,[data-glass].glass{background:var(--surface)}
+ .devbar.glass{background:var(--surface-2)}
+ .mk-dock.glass{background:url(/art/wash-rail.webp) center 70%/cover no-repeat,#4b552f}
+ .wtab.glass,.wbtn.ghost.glass{background:transparent}
+}

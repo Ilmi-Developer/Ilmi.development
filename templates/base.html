@@ -21,6 +21,9 @@
 {# The developer's bar (schools.py): which school is open, the view it is seen as, and the way back to all schools. #}
 {% set dev = developer_bar() if look else none %}
 {% if dev %}<link rel="stylesheet" href="/developer.css">{% endif %}
+{# Liquid glass on the dock, the developer's bar, picker and tiles, and the sign-in panel's tab (static/glass.js), on
+   the pages whose policy lets a script of ours run (server.py). #}
+{% if request.path in ("/login", "/login/code") or request.path.startswith(("/account", "/admin/", "/schools", "/finance")) %}<link rel="stylesheet" href="/glass.css"><script src="/glass.js" defer></script>{% endif %}
 {% if intro %}<script src="/intro.js" defer></script>{% endif %}
 {% block head %}{% endblock %}
 {% if user and request.path.startswith(("/account", "/admin/", "/schools", "/finance")) %}<script src="/menu.js" defer></script>{% endif %}
