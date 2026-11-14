@@ -11,12 +11,20 @@
   <div class="acts"><a class="btn" href="/finance/reports">Reports</a><a class="btn primary" href="/finance/fees">Bill or record a fee</a></div></div>
   <p class="lede">The madrasah’s money for {{ period.label }}.</p>
   {{ period_bar(period, "/finance", prev_q, next_q) }}
-  <div class="figs fin-figs">
-    <div class="fig"><b>{{ data.income|gbp }}</b><span>Income</span></div>
-    <div class="fig"><b>{{ data.spending|gbp }}</b><span>Spending</span></div>
-    <div class="fig{{ ' alert' if data.net < 0 }}"><b>{{ data.net|gbp }}</b><span>{{ "Surplus" if data.net >= 0 else "Deficit" }}</span></div>
-    <div class="fig"><b>{{ data.cash|gbp }}</b><span>Cash and bank today</span></div>
-  </div>
+</div>
+{# The headline figures as cards: what it is, the amount, and how it compares with the period before. #}
+{% macro kpi(label, value, was, good_up=true, tone="", note=none) -%}
+{% set pct = change(value, was) if was is not none else none %}
+<div class="fin-kpi{{ ' ' ~ tone if tone }}"><span class="kl">{{ label }}</span><b>{{ value|gbp }}</b>
+  <span class="kc">{% if note %}{{ note }}{% elif pct is none %}Nothing in {{ before.label }} to compare{% else %}{% set up = pct > 0 %}{% set good = (up and good_up) or (not up and not good_up) %}<span class="fin-chg {{ 'flat' if pct == 0 else ('good' if good else 'bad') }}">{{ '▲' if up else ('▼' if pct < 0 else '■') }} {{ '%.1f'|format(pct|abs) }}%</span> vs {{ before.label }} ({{ was|gbp }}){% endif %}</span></div>
+{%- endmacro %}
+<div class="fin-kpis">
+  {{ kpi("Income", data.income, prev.total_income) }}
+  {{ kpi("Spending", data.spending, prev.total_spending, false) }}
+  {% set diff = data.net - prev.net %}
+  {{ kpi("Surplus" if data.net >= 0 else "Deficit", data.net, none, true, "bad" if data.net < 0 else "",
+         ((diff|abs|gbp) ~ (" better" if diff > 0 else " worse") ~ " than " ~ before.label ~ " (" ~ (prev.net|gbp) ~ ")") if diff else "The same as " ~ before.label) }}
+  {{ kpi("Cash and bank today", data.cash, none, true, "", ("Matched the bank statement on " ~ (data.last_bank.statement_day|nice_day)) if data.last_bank and data.last_bank.statement_balance == data.last_bank.ledger_balance else "Not yet checked against a bank statement") }}
 </div>
 {% if not data.has_entries %}
 <div class="mod line">{{ empty("Nothing recorded yet", "Start with what the madrasah had on the day you begin, then bill fees and record money in and out.", "/finance/settings#opening", "Enter opening balances") }}</div>

@@ -128,9 +128,15 @@ def _who():
 def page(status=200, notice=None, error=None):
     with auth.db().transaction() as tx:
         s = books.settings(tx)
-        p, _ = _period(s)
+        p, before = _period(s)
         data = books.overview(tx, p, today())
-    return _render("finance.html", status, notice=notice, error=error, period=p, data=data,
+        # A period still running is compared with the same stretch of the one before, not all of it.
+        if p.start <= today() < p.end:
+            upto = min(before.end, before.start + (today() - p.start))
+            before = books.Period("custom", before.start, upto, f"this point in {before.label}")
+        prev = books.income_expenditure(tx, before)
+    return _render("finance.html", status, notice=notice, error=error, period=p, data=data, before=before, prev=prev,
+                   change=books.change_pct,
                    q=urlencode(_period_args(p)), prev_q=_shifted(p, s, False), next_q=_shifted(p, s, True))
 
 

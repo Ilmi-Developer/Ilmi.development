@@ -562,6 +562,14 @@ body:has(.crop:not([hidden])){overflow:hidden}
 .fin-rows li>b{font-weight:600;font-variant-numeric:tabular-nums}
 .fin-rows .fin-tr{grid-column:1/-1}
 .fin-dash .cap{margin-top:12px}
+.fin-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin:0 0 24px}
+.fin-kpi{display:flex;flex-direction:column;gap:6px;background:var(--surface);border-radius:var(--r-lg);padding:20px 24px;box-shadow:var(--shadow-card);min-width:0}
+.fin-kpi .kl{font-size:.8125rem;font-weight:600;color:var(--mute)}
+.fin-kpi b{font:600 2rem/1.1 var(--font-display);letter-spacing:-.015em;font-variant-numeric:lining-nums tabular-nums;color:var(--ink);overflow-wrap:anywhere}
+.fin-kpi.bad b{color:var(--bad-ink)}
+.fin-kpi .kc{font-size:.75rem;line-height:1.35;color:var(--mute)}
+@media (max-width:1099.98px){.fin-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:479.98px){.fin-kpis{gap:12px}.fin-kpi{padding:16px}.fin-kpi b{font-size:1.5rem}}
 .fin-print-only{display:none}
 @media (prefers-reduced-motion:reduce){.fin-card,.fin-x>summary::before{transition:none}}
 @media print{
