@@ -265,7 +265,8 @@ can present their own classes and admins any class. Its slides are podiums for t
 (students with 3 or more scores this month), Qaidah levels, house points earned,
 the class's house race (with the house logos) and merits; memorisation and book passes on
 one board like the TV's; and the month's stars of the
-week on one page. **Full screen** and **Close** show when the mouse moves;
+week on one page. Every Presenter, for every account, changes slide every 5 seconds
+(a list too long for one page shrinks to fit instead of turning pages). **Full screen** and **Close** show when the mouse moves;
 Close (or Escape) goes back to the class.
 
 Like a TV screen, the Presenter opens by link and needs no sign-in once open. Each press of
