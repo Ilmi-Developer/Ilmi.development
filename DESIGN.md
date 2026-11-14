@@ -317,6 +317,16 @@ up (`static/welcome.js`, allowed by the page's CSP along with `static/wash.js`, 
 sign-in; see Motion). Without the script, or under reduced motion,
 everything simply shows. Signed in, its buttons read "Open Ilmi" and go to the dashboard.
 
+On phones and small tablets (below 960px) the start page is one column with one rhythm: 20px margins, 64px between
+sections, and every section opening the same way, with a small label after a short rule, a heading in the hand italic
+at one size, then a short line. Everything reads from the left except the closing call to sign in. The features and
+the values are the same cream card; the features run sideways in a row the thumb swipes (native scrolling with snap,
+the next card peeking in), and the olive swoosh sits behind the preview rather than under the words. Phones and
+touch screens (`(max-width: 959.98px), (pointer: coarse)`, the same query in `welcome.css`, `welcome.js` and
+`glass.js`) are also kept light: nothing follows the scroll (no pinning, parallax, word-by-word reading or blur), the
+washes don't drift, things rise in without blur, and the start page's glass is left off. Parts still rise in as they
+arrive, and the menu still slips away and back.
+
 ## Administration
 
 Manage users leads with the accounts and an "Invite staff" button that jumps

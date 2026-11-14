@@ -22,7 +22,9 @@
     redOffset: 0, greenOffset: 10, blueOffset: 20, xChannel: "R", yChannel: "G", blend: "difference", saturation: 1 };
 
   // Where glass goes. fallback: false keeps the surface as it was in Safari and Firefox, for those that are
-  // frosted already (the dock: Safari flashed while things scaled over its blurred bar).
+  // frosted already (the dock: Safari flashed while things scaled over its blurred bar). phone: false keeps it off
+  // on phones and touch tablets (LITE), where a filter redrawn under a surface on every frame of a scroll costs more
+  // than it gives: the start page's decorations, which scroll with the page.
   var SPOTS = [
     // Everywhere signed in: the dock and its pop-ups.
     [".idk-bar", { scale: -150, fallback: false }],
@@ -37,9 +39,9 @@
     [".sch-tile", { scale: -120 }],
     // Signed out: the Welcome tab on the sign-in panel, and the start page's dock picture, values and ghost button.
     [".wtab", { scale: -100, borderWidth: 0.16 }],
-    [".mk-dock", { scale: -110, fallback: false }],
-    [".vcard", { scale: -160 }],
-    [".wbtn.ghost", { scale: -90, borderWidth: 0.14 }],
+    [".mk-dock", { scale: -110, fallback: false, phone: false }],
+    [".vcard", { scale: -160, phone: false }],
+    [".wbtn.ghost", { scale: -90, borderWidth: 0.14, phone: false }],
     ["[data-glass]", {}]
   ];
   var SELECTOR = SPOTS.map(function (s) { return s[0]; }).join(",");
@@ -60,6 +62,10 @@
     return probe.style.backdropFilter !== "";
   }
 
+  // The same query as static/welcome.js and welcome.css.
+  var LITE = "(max-width: 959.98px), (pointer: coarse)";
+  function phone() { try { return matchMedia(LITE).matches; } catch (e) { return false; } }
+
   var refract = svgFilters();
   var count = 0;
   var surfaces = new Map();
@@ -69,6 +75,7 @@
     var k;
     for (k in DEFAULTS) o[k] = DEFAULTS[k];
     o.fallback = true;
+    o.phone = true;
     SPOTS.forEach(function (s) {
       if (s[0] !== "[data-glass]" && el.matches(s[0])) for (k in s[1]) o[k] = s[1][k];
     });
@@ -162,7 +169,7 @@
   function attach(node) {
     if (surfaces.has(node)) return;
     var o = optionsFor(node);
-    if (!refract && !o.fallback) return;
+    if ((!refract && !o.fallback) || (!o.phone && phone())) return;
     var s = { node: node, o: o, key: "", parts: null, rim: null };
     var cs = getComputedStyle(node);
     if (cs.position === "static") node.style.position = "relative";
