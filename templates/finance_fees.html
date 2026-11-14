@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% from "_finance.html" import money, empty with context %}
+{% block title %}Student fees{% endblock %}
+{% block content %}
+{# Student fees (finance.py fees): bill a student or a class, then each fee's payments, discounts and refunds. #}
+<div class="band slim"><div class="band-top"><h1>Student fees</h1>
+  <div class="acts"><a class="btn" href="/finance/reports/fees">Fees report</a></div></div>
+  <div class="figs">
+    <div class="fig"><b>{{ totals.net|gbp }}</b><span>Billed, after discounts</span></div>
+    <div class="fig"><b>{{ totals.received|gbp }}</b><span>Paid</span></div>
+    <div class="fig"><b>{{ totals.outstanding|gbp }}</b><span>Still owed</span></div>
+    <div class="fig{{ ' alert' if totals.overdue }}"><b>{{ totals.overdue|gbp }}</b><span>Overdue</span></div>
+  </div>
+  <details class="how"><summary>How this works</summary><div>
+    <p>Bill a fee to one student, or the same fee to everyone in a class. A fee can be split into monthly instalments, each with its own due date, and can have a discount taken off.</p>
+    <p>Open a fee to record a payment (part payments are fine), take more off as a discount or waiver, or pay money back. Nothing is ever deleted: a mistake is corrected with an opposite entry, and both stay in the fee’s history.</p>
+    <p>Students come from the classes. Fees are grouped into families by the Family ID on each student’s profile.</p>
+  </div></details>
+</div>
+{% if students %}
+<div class="g12">
+<div class="mod s6"><h2>Bill a student</h2>
+  <form method="post" action="/finance/fees/bill">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="field">Student<select name="student" required><option value="">Choose…</option>
+      {% for c in students|groupby("class_name") %}<optgroup label="{{ c.grouper or 'No class' }}">{% for s in c.list %}<option value="{{ s.key }}">{{ s.name }}{% if s.fid %} (family {{ s.fid }}){% endif %}</option>{% endfor %}</optgroup>{% endfor %}
+    </select></label>
+    <label class="field">What it’s for<input name="description" maxlength="120" required placeholder="For example, Autumn term fees" autocomplete="off"></label>
+    <div class="formrow">
+      <label class="field">Fee (£)<input name="amount" inputmode="decimal" required placeholder="0.00" autocomplete="off"></label>
+      <label class="field">Discount (£)<input name="discount" inputmode="decimal" placeholder="0.00" autocomplete="off"></label>
+    </div>
+    <div class="formrow">
+      <label class="field">Billed on<input type="date" name="issued" value="{{ today.isoformat() }}"></label>
+      <label class="field">Due by<input type="date" name="due" value="{{ today.isoformat() }}"></label>
+      <label class="field">Instalments<input name="instalments" inputmode="numeric" value="1" pattern="[0-9]*"></label>
+    </div>
+    <button class="btn primary">Bill the fee</button>
+  </form>
+</div>
+<div class="mod s6"><h2>Bill a whole class</h2>
+  <form method="post" action="/finance/fees/bill-class">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="field">Class<select name="class" required><option value="">Choose…</option>{% for id, name in classes %}<option value="{{ id }}">{{ name }}</option>{% endfor %}</select></label>
+    <label class="field">What it’s for<input name="description" maxlength="120" required placeholder="For example, Spring term fees" autocomplete="off"></label>
+    <div class="formrow">
+      <label class="field">Fee for each student (£)<input name="amount" inputmode="decimal" required placeholder="0.00" autocomplete="off"></label>
+      <label class="field">Discount each (£)<input name="discount" inputmode="decimal" placeholder="0.00" autocomplete="off"></label>
+    </div>
+    <div class="formrow">
+      <label class="field">Billed on<input type="date" name="issued" value="{{ today.isoformat() }}"></label>
+      <label class="field">Due by<input type="date" name="due" value="{{ today.isoformat() }}"></label>
+      <label class="field">Instalments<input name="instalments" inputmode="numeric" value="1" pattern="[0-9]*"></label>
+    </div>
+    <button class="btn primary">Bill everyone in the class</button>
+  </form>
+</div>
+</div>
+{% else %}
+<div class="mod line">{{ empty("No students yet", "Fees are billed to the students in your classes. Once an admin adds classes and students, they’ll be listed here.") }}</div>
+{% endif %}
+
+<div class="mod line">
+<div class="mod-h"><h2>Fees</h2>
+  <div class="fin-filters">
+    <nav class="seg" aria-label="Show">
+      {% for key, label in (("outstanding", "Still owed"), ("overdue", "Overdue"), ("all", "All")) %}<a class="segl" href="?show={{ key }}{{ '&view=family' if by_family }}"{{ ' aria-current="true"'|safe if show == key }}>{{ label }}</a>{% endfor %}
+    </nav>
+    <nav class="seg" aria-label="Group">
+      <a class="segl" href="?show={{ show }}"{{ ' aria-current="true"'|safe if not by_family }}>By fee</a><a class="segl" href="?show={{ show }}&amp;view=family"{{ ' aria-current="true"'|safe if by_family }}>By family</a>
+    </nav>
+  </div></div>
+{% if family %}<p class="sub">Family {{ family }}. <a href="/finance/fees?show={{ show }}">Show every family</a></p>{% endif %}
+{% if by_family %}
+  {% if families %}
+  <div class="tablewrap"><table class="tbl stackable fin-tbl">
+    <thead><tr><th scope="col">Family ID</th><th scope="col">Students</th><th scope="col" class="n">Billed</th><th scope="col" class="n">Paid</th><th scope="col" class="n">Still owed</th><th scope="col" class="n">Overdue</th></tr></thead>
+    <tbody>{% for f in families %}<tr><td class="lead"><a href="/finance/fees?family={{ f.family|urlencode }}&amp;show={{ show }}">{{ f.family }}</a></td><td data-label="Students">{{ f.students }}</td><td data-label="Billed" class="n">{{ f.net|gbp }}</td><td data-label="Paid" class="n">{{ f.received|gbp }}</td><td data-label="Still owed" class="n"><b>{{ f.outstanding|gbp }}</b></td><td data-label="Overdue" class="n">{{ f.overdue|gbp if f.overdue else "–" }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}{{ empty("Nothing to show", "No fees match.") }}{% endif %}
+{% elif rows %}
+  <div class="tablewrap"><table class="tbl stackable fin-tbl">
+    <thead><tr><th scope="col">Student</th><th scope="col">Fee</th><th scope="col">Class</th><th scope="col" class="n">Billed</th><th scope="col" class="n">Paid</th><th scope="col" class="n">Still owed</th><th scope="col">Due</th><th scope="col">Status</th></tr></thead>
+    <tbody>{% for i in rows %}<tr>
+      <td class="lead"><a href="/finance/fees/{{ i.id }}">{{ i.student_name }}</a>{% if i.family_id %}<span class="sub fin-who">Family {{ i.family_id }}</span>{% endif %}</td>
+      <td data-label="Fee">{{ i.description }}</td><td data-label="Class">{{ i.class_name }}</td>
+      <td data-label="Billed" class="n">{{ i.net|gbp }}</td><td data-label="Paid" class="n">{{ i.received|gbp }}</td>
+      <td data-label="Still owed" class="n"><b>{{ i.outstanding|gbp }}</b></td><td data-label="Due">{{ i.due_day|nice_day }}</td>
+      <td data-label="Status"><span class="pill {{ i.tone }}">{{ i.status_label }}</span></td></tr>{% endfor %}</tbody>
+  </table></div>
+{% else %}
+  {{ empty("Nothing to show", "No fees billed yet." if not totals.net else ("Every fee is paid. Choose All to see them." if show == "outstanding" else "No fees match.")) }}
+{% endif %}
+</div>
+{% endblock %}

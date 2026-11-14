@@ -1,0 +1,94 @@
+{# Parts shared by the Finance pages (finance.py). Built from Ilmi's own pieces: .seg for the period, .pill for
+   statuses, .tbl in .tablewrap, details.confirm for a correction. #}
+
+{# An amount with its sign in words as well as colour, so it reads without colour too. #}
+{% macro money(p, tone=false) -%}
+{%- if tone and p < 0 %}<span class="fin-neg">{{ p|gbp }}</span>{% elif tone and p > 0 %}<span class="fin-pos">{{ p|gbp }}</span>{% else %}{{ p|gbp }}{% endif -%}
+{%- endmacro %}
+
+{% macro change(pct, good_when_up=true) -%}
+{%- if pct is none %}<span class="fin-chg">No earlier figures</span>
+{%- else %}{% set up = pct > 0 %}{% set good = (up and good_when_up) or (not up and not good_when_up) %}
+<span class="fin-chg {{ 'flat' if pct == 0 else ('good' if good else 'bad') }}">{{ '▲' if up else ('▼' if pct < 0 else '■') }} {{ '%+.1f'|format(pct) }}%<span class="sr-only"> on the period before</span></span>
+{%- endif -%}
+{%- endmacro %}
+
+{# The period chooser: Month, Term, Year or a custom range, with the periods before and after. A plain GET form,
+   so it works without scripts. #}
+{% macro period_bar(period, path, prev_q, next_q, extra={}) -%}
+<div class="fin-period">
+  <form method="get" action="{{ path }}" class="seg" role="group" aria-label="Period">
+    {% for k, v in extra.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+    <input type="hidden" name="on" value="{{ period.start.isoformat() }}">
+    {% for key, label in (("month", "Month"), ("term", "Term"), ("year", "Year")) %}<button name="period" value="{{ key }}" aria-pressed="{{ 'true' if period.kind == key else 'false' }}">{{ label }}</button>{% endfor %}
+  </form>
+  <div class="fin-step">
+    <a class="btn sm" href="{{ path }}?{{ prev_q }}{% for k, v in extra.items() %}&amp;{{ k }}={{ v|urlencode }}{% endfor %}" aria-label="The period before">‹</a>
+    <b>{{ period.label }}</b>
+    <a class="btn sm" href="{{ path }}?{{ next_q }}{% for k, v in extra.items() %}&amp;{{ k }}={{ v|urlencode }}{% endfor %}" aria-label="The period after">›</a>
+  </div>
+  <details class="fin-custom"><summary class="btn sm">Choose dates</summary>
+    <form method="get" action="{{ path }}" class="inline-form">
+      {% for k, v in extra.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+      <input type="hidden" name="period" value="custom">
+      <label class="field">From<input type="date" name="start" value="{{ period.start.isoformat() }}" required></label>
+      <label class="field">To<input type="date" name="end" value="{{ period.end.isoformat() }}" required></label>
+      <button class="btn primary sm">Show</button>
+    </form>
+  </details>
+</div>
+{%- endmacro %}
+
+{% macro method_select(name="method") -%}
+<label class="field">Paid by<select name="{{ name }}">{% for k, label in methods %}<option value="{{ k }}">{{ label }}</option>{% endfor %}</select></label>
+{%- endmacro %}
+
+{% macro fund_select(funds, label="Fund") -%}
+<label class="field">{{ label }}<select name="fund">{% for f in funds if not f.archived %}<option value="{{ f.id }}">{{ f.name }}{{ " (restricted)" if f.restricted }}</option>{% endfor %}</select></label>
+{%- endmacro %}
+
+{# A correction: never a delete. Opens a small form for the reason, and records the opposite entry. #}
+{% macro correct(e, back) -%}
+{% if e.kind == "reversal" %}<span class="pill grey">Correction</span>
+{% elif e.reversed_by %}<span class="pill grey">Corrected</span>
+{% else %}
+<details class="confirm"><summary class="btn sm">Correct<span class="sr-only"> {{ e.memo }}</span></summary>
+<form method="post" action="/finance/entries/{{ e.id }}/reverse">
+  <p>This records the opposite entry. The original stays in the history.</p>
+  <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="back" value="{{ back }}">
+  <label class="field">Why?<input name="reason" maxlength="300" required autocomplete="off" placeholder="For example, entered twice"></label>
+  <label class="field">Date of the correction<input type="date" name="day" value="{{ e.day }}"></label>
+  <button class="btn sm danger solid">Record the correction</button>
+</form></details>
+{% endif %}
+{%- endmacro %}
+
+{# A plain bar chart of money in and out by month, drawn as SVG (no inline styles, so it meets the page's
+   policy). Each bar has a text equivalent in its title, and the figures are in the table beside it. #}
+{% macro bars(months, label) -%}
+{% set top = [1] + months|map(attribute="in")|list + months|map(attribute="out")|list %}
+{% set peak = top|max %}
+{% set w = 640 %}{% set h = 180 %}{% set n = months|length %}{% set slot = (w - 52) / (n if n else 1) %}
+<figure class="fin-chart">
+<svg viewBox="0 0 {{ w }} {{ h + 28 }}" role="img" aria-labelledby="{{ label|replace(' ', '-') }}-t">
+  <title id="{{ label|replace(' ', '-') }}-t">{{ label }}: {% for m in months %}{{ m.full }} in {{ m.in|gbp }}, out {{ m.out|gbp }}{{ "; " if not loop.last }}{% endfor %}</title>
+  <line x1="48" y1="{{ h }}" x2="{{ w }}" y2="{{ h }}" class="fin-axis"/>
+  <line x1="48" y1="{{ (h * 0.5)|round(1) }}" x2="{{ w }}" y2="{{ (h * 0.5)|round(1) }}" class="fin-grid"/>
+  <line x1="48" y1="8" x2="{{ w }}" y2="8" class="fin-grid"/>
+  {% for m in months %}
+  {% set x = 52 + loop.index0 * slot %}{% set bw = [slot * 0.32, 22]|min %}
+  {% set hi = (m.in / peak * (h - 12))|round(1) %}{% set ho = (m.out / peak * (h - 12))|round(1) %}
+  <rect x="{{ (x + slot / 2 - bw - 1)|round(1) }}" y="{{ (h - hi)|round(1) }}" width="{{ bw|round(1) }}" height="{{ hi }}" rx="3" class="fin-in"><title>{{ m.full }}: in {{ m.in|gbp }}</title></rect>
+  <rect x="{{ (x + slot / 2 + 1)|round(1) }}" y="{{ (h - ho)|round(1) }}" width="{{ bw|round(1) }}" height="{{ ho }}" rx="3" class="fin-out"><title>{{ m.full }}: out {{ m.out|gbp }}</title></rect>
+  <text x="{{ (x + slot / 2)|round(1) }}" y="{{ h + 18 }}" text-anchor="middle" class="fin-lab">{{ m.label }}</text>
+  {% endfor %}
+  <text x="44" y="14" text-anchor="end" class="fin-lab">£{{ "{:,}".format((peak / 100)|round|int) }}</text>
+  <text x="44" y="{{ h }}" text-anchor="end" class="fin-lab">0</text>
+</svg>
+<figcaption class="fin-key"><span class="k in"></span>Money in <span class="k out"></span>Money out </figcaption>
+</figure>
+{%- endmacro %}
+
+{% macro empty(title, text, href=none, button=none) -%}
+<div class="empty"><b>{{ title }}</b>{{ text }}{% if href %}<p><a class="btn primary" href="{{ href }}">{{ button }}</a></p>{% endif %}</div>
+{%- endmacro %}

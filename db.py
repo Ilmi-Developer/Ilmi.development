@@ -402,6 +402,119 @@ def _m23_finance(db, postgres):
     _allow_roles(db, postgres, "CHECK (role IN ('admin', 'head', 'teacher', 'finance'))")
 
 
+def _m24_finance_books(db, postgres):
+    # The school's books (see finance_books.py): a double-entry ledger. Money is whole pence, days are ISO dates
+    # (YYYY-MM-DD). Nothing here changes an earlier table, and nothing is ever deleted from these: a correction is a
+    # reversing entry, linked both ways. To undo this migration on a database that has no finance records yet, drop
+    # the fin_ tables and delete version 24 from schema_migrations.
+    t = _types(postgres)
+    db.execute(f"""CREATE TABLE fin_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at BIGINT NOT NULL,
+        updated_by {t['ref']} REFERENCES users (id) ON DELETE SET NULL)""")
+    # kind: asset, liability, fund, income or expense. grp: the line it is reported on (finance_books.GROUPS).
+    db.execute(f"""CREATE TABLE fin_accounts (
+        id {t['id']},
+        code TEXT NOT NULL UNIQUE,
+        name TEXT NOT NULL,
+        kind TEXT NOT NULL CHECK (kind IN ('asset', 'liability', 'fund', 'income', 'expense')),
+        grp TEXT NOT NULL,
+        system INTEGER NOT NULL DEFAULT 0,
+        archived INTEGER NOT NULL DEFAULT 0,
+        created_at BIGINT NOT NULL)""")
+    db.execute(f"""CREATE TABLE fin_funds (
+        id {t['id']},
+        name TEXT NOT NULL UNIQUE,
+        restricted INTEGER NOT NULL DEFAULT 0,
+        purpose TEXT NOT NULL DEFAULT '',
+        system INTEGER NOT NULL DEFAULT 0,
+        archived INTEGER NOT NULL DEFAULT 0,
+        created_at BIGINT NOT NULL)""")
+    db.execute(f"""CREATE TABLE fin_invoices (
+        id {t['id']},
+        student_sid TEXT NOT NULL DEFAULT '',
+        student_name TEXT NOT NULL,
+        class_name TEXT NOT NULL DEFAULT '',
+        family_id TEXT NOT NULL DEFAULT '',
+        description TEXT NOT NULL,
+        issued_day TEXT NOT NULL,
+        due_day TEXT NOT NULL,
+        created_by {t['ref']} REFERENCES users (id) ON DELETE SET NULL,
+        created_at BIGINT NOT NULL)""")
+    db.execute("CREATE INDEX fin_invoices_family ON fin_invoices (family_id)")
+    # One entry is one event (a fee billed, a payment, a bill, a correction); its lines always balance.
+    # invoice_id: the fee it belongs to. settles: the bill a payment pays. reverses / reversed_by: a correction.
+    db.execute(f"""CREATE TABLE fin_entries (
+        id {t['id']},
+        day TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        memo TEXT NOT NULL DEFAULT '',
+        party TEXT NOT NULL DEFAULT '',
+        method TEXT NOT NULL DEFAULT '',
+        invoice_id {t['ref']} REFERENCES fin_invoices (id),
+        settles {t['ref']} REFERENCES fin_entries (id),
+        reverses {t['ref']} REFERENCES fin_entries (id),
+        reversed_by {t['ref']} REFERENCES fin_entries (id),
+        reason TEXT NOT NULL DEFAULT '',
+        created_by {t['ref']} REFERENCES users (id) ON DELETE SET NULL,
+        created_at BIGINT NOT NULL)""")
+    db.execute("CREATE INDEX fin_entries_day ON fin_entries (day)")
+    db.execute("CREATE INDEX fin_entries_invoice ON fin_entries (invoice_id)")
+    db.execute(f"""CREATE TABLE fin_lines (
+        id {t['id']},
+        entry_id {t['ref']} NOT NULL REFERENCES fin_entries (id),
+        account_id {t['ref']} NOT NULL REFERENCES fin_accounts (id),
+        fund_id {t['ref']} NOT NULL REFERENCES fin_funds (id),
+        debit BIGINT NOT NULL DEFAULT 0 CHECK (debit >= 0),
+        credit BIGINT NOT NULL DEFAULT 0 CHECK (credit >= 0),
+        CHECK (debit = 0 OR credit = 0))""")
+    db.execute("CREATE INDEX fin_lines_entry ON fin_lines (entry_id)")
+    db.execute("CREATE INDEX fin_lines_account ON fin_lines (account_id)")
+    db.execute(f"""CREATE TABLE fin_budgets (
+        id {t['id']},
+        name TEXT NOT NULL,
+        start_day TEXT NOT NULL,
+        end_day TEXT NOT NULL,
+        created_by {t['ref']} REFERENCES users (id) ON DELETE SET NULL,
+        created_at BIGINT NOT NULL)""")
+    db.execute(f"""CREATE TABLE fin_budget_lines (
+        budget_id {t['ref']} NOT NULL REFERENCES fin_budgets (id),
+        account_id {t['ref']} NOT NULL REFERENCES fin_accounts (id),
+        amount BIGINT NOT NULL CHECK (amount >= 0),
+        PRIMARY KEY (budget_id, account_id))""")
+    # A bank or cash count checked against the books on a day: what the statement said and what the books said.
+    db.execute(f"""CREATE TABLE fin_reconciliations (
+        id {t['id']},
+        account_id {t['ref']} NOT NULL REFERENCES fin_accounts (id),
+        statement_day TEXT NOT NULL,
+        statement_balance BIGINT NOT NULL,
+        ledger_balance BIGINT NOT NULL,
+        note TEXT NOT NULL DEFAULT '',
+        created_by {t['ref']} REFERENCES users (id) ON DELETE SET NULL,
+        created_at BIGINT NOT NULL)""")
+    at = int(time.time())
+    # The standard accounts every school starts with (names, not figures).
+    accounts = (
+        ("1000", "Cash in hand", "asset", "cash"), ("1010", "Bank account", "asset", "cash"),
+        ("1100", "Fees owed by families", "asset", "receivables"), ("1200", "Equipment", "asset", "equipment"),
+        ("2000", "Unpaid bills", "liability", "payables"), ("2100", "Staff pay owed", "liability", "payroll"),
+        ("2200", "Other amounts owed", "liability", "other_liabilities"),
+        ("3000", "Funds brought forward", "fund", "funds"),
+        ("4000", "Tuition fees", "income", "tuition"), ("4010", "Fee discounts and waivers", "income", "tuition"),
+        ("4100", "Donations", "income", "donations"), ("4200", "Fundraising", "income", "fundraising"),
+        ("4300", "Grants", "income", "grants"), ("4900", "Other income", "income", "other_income"),
+        ("5000", "Teacher salaries and wages", "expense", "salaries"), ("5100", "Rent and premises", "expense", "premises"),
+        ("5200", "Utilities", "expense", "utilities"), ("5300", "Teaching materials", "expense", "materials"),
+        ("5400", "Administration", "expense", "admin"), ("5500", "Maintenance", "expense", "maintenance"),
+        ("5900", "Other expenses", "expense", "other_expenses"))
+    q = "INSERT INTO fin_accounts (code, name, kind, grp, system, created_at) VALUES (?, ?, ?, ?, 1, ?)"
+    for code, name, kind, grp in accounts:
+        db.execute(q.replace("?", "%s") if postgres else q, (code, name, kind, grp, at))
+    q = "INSERT INTO fin_funds (name, restricted, purpose, system, created_at) VALUES (?, 0, ?, 1, ?)"
+    db.execute(q.replace("?", "%s") if postgres else q, ("General fund", "Money the madrasah can spend on anything", at))
+
+
 def _c1_schools(db, postgres):
     t = _types(postgres)
     # The schools. A school's id names its database: the first school keeps the site's original tables, the
@@ -420,7 +533,8 @@ def _c1_schools(db, postgres):
 MIGRATIONS = [_m1_classrooms, _m2_accounts, _m3_tv_screens, _m4_tv_settings, _m5_house_points, _m6_help_requests,
               _m7_avatars, _m8_tutorial, _m9_tutorial_again, _m10_board_links, _m11_login_codes, _m12_stay_signed_in,
               _m13_presenter_shares, _m14_presenter_links, _m15_trusted_devices, _m16_head_teachers, _m17_dark_mode,
-              _m18_assistant, _m19_assistant_tokens, _m20_themes, _m21_site_settings, _m22_schools, _m23_finance]
+              _m18_assistant, _m19_assistant_tokens, _m20_themes, _m21_site_settings, _m22_schools, _m23_finance,
+              _m24_finance_books]
 # Run after MIGRATIONS on the control database only, and recorded in its `control_migrations`.
 CONTROL_MIGRATIONS = [_c1_schools]
 SCHEMA = re.compile(r"[a-z_][a-z0-9_]{0,62}")

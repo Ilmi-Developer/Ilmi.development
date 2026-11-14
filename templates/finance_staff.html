@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "_finance.html" import money, period_bar, method_select, fund_select, correct, empty with context %}
+{% block title %}Staff payments{% endblock %}
+{% block content %}
+{# Staff payments (finance.py staff): salaries and wages paid, and pay owed but not paid yet. #}
+<div class="band slim"><div class="band-top"><h1>Staff payments</h1></div>
+  <p class="lede">Salaries and wages for teachers and other staff.</p>
+  <details class="how"><summary>How this works</summary><div>
+    <p>Record pay as <b>paid now</b>, or as <b>owed</b> when it’s due but not paid yet (for example, wages for this month paid next month). Pay owed shows on the balance sheet until it’s paid.</p>
+    <p>Only Finance accounts see this page.</p>
+  </div></details>
+</div>
+<div class="mod line"><h2>Record staff pay</h2>
+  <form method="post" action="/finance/staff/pay">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="formrow">
+      <label class="field">Staff member<input name="party" list="staffnames" maxlength="120" required autocomplete="off"></label>
+      <datalist id="staffnames">{% for n in names %}<option value="{{ n }}">{% endfor %}</datalist>
+      <label class="field">Amount (£)<input name="amount" inputmode="decimal" required placeholder="0.00" autocomplete="off"></label>
+      <label class="field">Paid yet?<select name="paid"><option value="yes">Paid now</option><option value="no">Owed, not paid yet</option></select></label>
+    </div>
+    <div class="formrow">
+      {{ method_select() }}
+      {{ fund_select(funds, "Paid from fund") }}
+      <label class="field">Date<input type="date" name="day" value="{{ today.isoformat() }}"></label>
+      <label class="field">Note<input name="memo" maxlength="200" placeholder="For example, October salary" autocomplete="off"></label>
+    </div>
+    <button class="btn primary">Record pay</button>
+  </form>
+</div>
+{% if owed %}
+<div class="mod line"><h2>Pay owed</h2>
+<div class="tablewrap"><table class="tbl stackable fin-tbl">
+  <thead><tr><th scope="col">Staff member</th><th scope="col">Date</th><th scope="col" class="n">Owed</th><th scope="col"><span class="sr-only">Pay</span></th></tr></thead>
+  <tbody>{% for b in owed %}<tr><td class="lead">{{ b.party }}<span class="sub fin-who">{{ b.memo }}</span></td><td data-label="Date">{{ b.day|nice_day }}</td><td data-label="Owed" class="n"><b>{{ b.owed|gbp }}</b></td>
+    <td><details class="confirm"><summary class="btn sm primary">Pay<span class="sr-only"> {{ b.party }}</span></summary>
+      <form method="post" action="/finance/bills/{{ b.id }}/pay"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="back" value="staff">
+        <label class="field">Amount (£)<input name="amount" inputmode="decimal" value="{{ '%.2f'|format(b.owed / 100) }}" required></label>
+        {{ method_select() }}
+        <label class="field">Paid on<input type="date" name="day" value="{{ today.isoformat() }}"></label>
+        <button class="btn sm primary solid">Record payment</button></form></details></td></tr>{% endfor %}</tbody>
+</table></div></div>
+{% endif %}
+<div class="mod line"><div class="mod-h"><h2>Recorded</h2></div>
+{{ period_bar(period, "/finance/staff", prev_q, next_q) }}
+{% if people %}<div class="figs">{% for name, total in people[:6] %}<div class="fig quiet"><b>{{ total|gbp }}</b><span>{{ name }}</span></div>{% endfor %}</div>{% endif %}
+{% if rows %}
+<div class="tablewrap fin-gap"><table class="tbl stackable fin-tbl">
+  <thead><tr><th scope="col">Staff member</th><th scope="col">What</th><th scope="col">Date</th><th scope="col" class="n">Amount</th><th scope="col"><span class="sr-only">Correct</span></th></tr></thead>
+  <tbody>{% for e in rows %}<tr>
+    <td class="lead">{{ e.party }}</td><td data-label="What">{{ e.memo }}<span class="sub fin-who">{{ e.kind_label }}{% if e.method_label %} · {{ e.method_label }}{% endif %}</span></td>
+    <td data-label="Date">{{ e.day|nice_day }}</td><td data-label="Amount" class="n">{{ (e.amount if e.kind != "reversal" else -e.amount)|gbp }}</td>
+    <td>{{ correct(e, "staff") }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% else %}{{ empty("Nothing recorded in " ~ period.label, "Staff pay you record will be listed here.") }}{% endif %}
+</div>
+{% endblock %}

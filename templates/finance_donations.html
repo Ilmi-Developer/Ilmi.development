@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% from "_finance.html" import money, period_bar, method_select, correct, empty with context %}
+{% block title %}Donations & funds{% endblock %}
+{% block content %}
+{# Donations & funds (finance.py donations): gifts, fundraising and grants, and the funds money is kept in. #}
+<div class="band slim"><div class="band-top"><h1>Donations &amp; funds</h1></div>
+  <p class="lede">Gifts, fundraising and grants, and what each fund holds.</p>
+  <details class="how"><summary>How this works</summary><div>
+    <p>A <b>restricted fund</b> holds money given for one purpose only, such as a building appeal or a Zakat fund. It can only be spent on that purpose. Everything else goes in the <b>General fund</b>, which can be spent on anything.</p>
+    <p>When you record spending on Income &amp; expenses, choose the fund it comes from, so each fund’s balance stays right.</p>
+  </div></details>
+</div>
+<div class="g12">
+<div class="mod s7"><h2>Record a gift</h2>
+  <form method="post" action="/finance/donations">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="formrow">
+      <label class="field">Type<select name="account">{% for a in gift_accounts %}<option value="{{ a.id }}">{{ a.name }}</option>{% endfor %}</select></label>
+      <label class="field">Amount (£)<input name="amount" inputmode="decimal" required placeholder="0.00" autocomplete="off"></label>
+    </div>
+    <div class="formrow">
+      <label class="field">From<input name="party" maxlength="120" placeholder="Donor or funder (optional)" autocomplete="off"></label>
+      <label class="field">Fund<select name="fund">{% for f in funds if not f.archived %}<option value="{{ f.id }}">{{ f.name }}{{ " (restricted)" if f.restricted }}</option>{% endfor %}</select></label>
+    </div>
+    <div class="formrow">
+      {{ method_select() }}
+      <label class="field">Received on<input type="date" name="day" value="{{ today.isoformat() }}" max="{{ today.isoformat() }}"></label>
+    </div>
+    <label class="field">Note<input name="memo" maxlength="200" placeholder="Optional" autocomplete="off"></label>
+    <button class="btn primary">Record the gift</button>
+  </form>
+</div>
+<div class="mod s5"><h2>Funds</h2>
+  <div class="tablewrap"><table class="tbl fin-tbl">
+    <thead><tr><th scope="col">Fund</th><th scope="col" class="n">Holds today</th></tr></thead>
+    <tbody>{% for f in funds if not f.archived %}<tr><td class="lead">{{ f.name }} {% if f.restricted %}<span class="pill amber">Restricted</span>{% endif %}{% if f.purpose %}<span class="sub fin-who">{{ f.purpose }}</span>{% endif %}</td><td class="n">{{ money(f.balance, true) }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <details class="fin-add"><summary class="btn sm">Add a fund</summary>
+    <form method="post" action="/finance/funds">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <label class="field">Name<input name="name" maxlength="80" required placeholder="For example, Building appeal" autocomplete="off"></label>
+      <label class="field">Purpose<input name="purpose" maxlength="200" placeholder="What it can be spent on" autocomplete="off"></label>
+      <label class="field">Kind<select name="restricted"><option value="1">Restricted: one purpose only</option><option value="0">Unrestricted</option></select></label>
+      <button class="btn primary sm">Add fund</button>
+    </form>
+  </details>
+</div>
+</div>
+<div class="mod line"><div class="mod-h"><h2>Gifts recorded</h2></div>
+{{ period_bar(period, "/finance/donations", prev_q, next_q) }}
+{% if rows %}
+<div class="tablewrap"><table class="tbl stackable fin-tbl">
+  <thead><tr><th scope="col">From</th><th scope="col">Type</th><th scope="col">Fund</th><th scope="col">Date</th><th scope="col" class="n">Amount</th><th scope="col"><span class="sr-only">Correct</span></th></tr></thead>
+  <tbody>{% for e in rows %}<tr>
+    <td class="lead">{{ e.party or "Anonymous" }}<span class="sub fin-who">{{ e.memo }}</span></td><td data-label="Type">{{ e.what }}</td><td data-label="Fund">{{ e.fund }}</td>
+    <td data-label="Date">{{ e.day|nice_day }}</td><td data-label="Amount" class="n">{{ money(e.effect, true) }}</td><td>{{ correct(e, "donations") }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% else %}{{ empty("Nothing recorded in " ~ period.label, "Donations, fundraising and grants will be listed here.") }}{% endif %}
+</div>
+{% endblock %}

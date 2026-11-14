@@ -99,6 +99,13 @@ ACTIONS = {
     "site.title": "Changed the site title",
     "school.created": "Added a school", "school.renamed": "Renamed a school", "school.opened": "Opened a school",
     "school.office": "Set a school's admin account",
+    "finance.billed": "Billed a fee", "finance.payment": "Recorded a fee payment",
+    "finance.discount": "Gave a fee discount or waiver", "finance.refund": "Recorded a fee refund",
+    "finance.corrected": "Corrected a finance entry", "finance.money_in": "Recorded money in",
+    "finance.money_out": "Recorded money out", "finance.bill_paid": "Paid a bill", "finance.staff": "Recorded a staff payment",
+    "finance.donation": "Recorded a donation", "finance.fund": "Added a fund", "finance.budget": "Saved a budget",
+    "finance.settings": "Changed the finance settings", "finance.opening": "Recorded opening balances",
+    "finance.reconciled": "Checked the books against a statement", "finance.exported": "Exported a finance report",
 }
 
 

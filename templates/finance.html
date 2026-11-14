@@ -1,13 +1,40 @@
 {% extends "base.html" %}
-{% from "_icons.html" import icon %}
+{% from "_finance.html" import money, period_bar, bars, empty with context %}
 {% block title %}Finance{% endblock %}
 {% block content %}
-{# The Finance account's page (finance.py). Empty for now; finance features are built here from the same parts as the
-   rest of Ilmi: this band, cards (.mod), figures (.figs), rounded tables (.tablewrap) and pop-ups. #}
-<div class="band slim"><div class="band-top"><h1>Finance</h1></div></div>
-<div class="mod fin-empty">
-  <span class="fin-ic" aria-hidden="true">{{ icon("sheet") }}</span>
-  <h2>Nothing here yet</h2>
-  <p class="sub">This is where your school’s finance tools will be. They’re on their way.</p>
+{# Finance overview (finance.py page): the period's headline figures first, then the trend and the latest entries. #}
+<div class="band slim"><div class="band-top"><h1>Finance</h1>
+  <div class="acts"><a class="btn" href="/finance/reports">Reports</a><a class="btn primary" href="/finance/fees">Bill or record a fee</a></div></div>
+  <p class="lede">The madrasah’s money for {{ period.label }}.</p>
+  {{ period_bar(period, "/finance", prev_q, next_q) }}
+  <div class="figs fin-figs">
+    <div class="fig"><b>{{ data.income|gbp }}</b><span>Total income</span></div>
+    <div class="fig"><b>{{ data.spending|gbp }}</b><span>Total spending</span></div>
+    <div class="fig{{ ' alert' if data.net < 0 }}"><b>{{ data.net|gbp }}</b><span>{{ "Surplus" if data.net >= 0 else "Deficit" }}</span></div>
+    <div class="fig{{ ' alert' if data.overdue }}"><b>{{ data.outstanding|gbp }}</b><span>Fees still owed{% if data.overdue %}, {{ data.overdue|gbp }} overdue{% endif %}</span></div>
+    <div class="fig"><b>{{ "%d%%"|format(data.collection) if data.collection is not none else "–" }}</b><span>Fees collected{% if data.collection is none %} (no fees billed){% endif %}</span></div>
+    <div class="fig"><b>{{ data.cash|gbp }}</b><span>Cash and bank{% if data.last_bank %}{% if data.last_bank.statement_balance == data.last_bank.ledger_balance %}, bank checked {{ data.last_bank.statement_day|nice_day }}{% else %}, bank didn’t match on {{ data.last_bank.statement_day|nice_day }}{% endif %}{% else %}, not checked against a bank statement{% endif %}</span></div>
+  </div>
+  <details class="how"><summary>How these are worked out</summary><div>
+    <p><b>Income</b> and <b>spending</b> count fees when they are billed and bills when they are due, whether or not the money has moved yet. The cash flow report shows only money that actually moved.</p>
+    <p><b>Fees collected</b> is how much of the fees billed in this period has been paid so far, after discounts.</p>
+    <p><b>Cash and bank</b> is what the books say you hold today. Check it against your bank statement on Settings so you know it’s right.</p>
+  </div></details>
 </div>
+{% if not data.has_entries %}
+<div class="mod line">{{ empty("Nothing recorded yet", "Start with what the madrasah had on the day you begin, then bill fees and record money in and out.", "/finance/settings#opening", "Enter opening balances") }}</div>
+{% else %}
+{% if not data.has_opening %}<p class="notice fin-tip" role="note">No opening balances yet, so cash and the balance sheet only count what’s been recorded here. <a href="/finance/settings#opening">Enter opening balances</a></p>{% endif %}
+<div class="g12">
+  <div class="mod s7"><div class="mod-h"><h2>Money in and out</h2><span class="cap">Last 12 months</span></div>
+    {{ bars(data.months, "Money in and out by month") }}
+  </div>
+  <div class="mod s5"><div class="mod-h"><h2>Latest</h2><a class="btn sm" href="/finance/money">All money in and out</a></div>
+    <div class="tablewrap"><table class="tbl stackable fin-tbl">
+      <thead><tr><th scope="col">What</th><th scope="col">Date</th><th scope="col" class="n">Amount</th></tr></thead>
+      <tbody>{% for e in data.recent %}<tr><td class="lead">{{ e.memo or e.kind_label }}<span class="sub fin-who">{{ e.party }}{% if e.reversed_by %} · corrected{% endif %}</span></td><td data-label="Date">{{ e.day|nice_day }}</td><td data-label="Amount" class="n">{{ money(e.effect if e.effect else e.cash, true) if (e.effect or e.cash) else e.amount|gbp }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </div>
+</div>
+{% endif %}
 {% endblock %}

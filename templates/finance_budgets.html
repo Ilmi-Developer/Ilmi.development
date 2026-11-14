@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% from "_finance.html" import money, empty with context %}
+{% block title %}Budgets{% endblock %}
+{% block content %}
+{# Budgets (finance.py budgets): plan each line for a year, a term or a month, then see it against what happened. #}
+<div class="band slim"><div class="band-top"><h1>Budgets</h1>{% if data %}<div class="acts"><a class="btn" href="/finance/reports/budget?budget={{ data.id }}">Budget vs actual report</a></div>{% endif %}</div>
+  <p class="lede">Plan what you expect to come in and go out, then see how it’s going.</p>
+</div>
+{% if budgets %}
+<form method="get" action="/finance/budgets" class="inline-form fin-gap"><label class="field">Budget<select name="budget">{% for b in budgets %}<option value="{{ b.id }}"{{ " selected" if data and b.id == data.id }}>{{ b.name }}</option>{% endfor %}</select></label><button class="btn sm">Open</button></form>
+{% endif %}
+{% if data %}
+<div class="mod line"><div class="mod-h"><h2>{{ data.name }}</h2><span class="cap">{{ data.start|nice_day }} to {{ data.end|nice_day }}{% if data.elapsed < 100 %} · {{ data.elapsed }}% of the way through{% endif %}</span></div>
+  <div class="figs">
+    <div class="fig"><b>{{ data.totals.income.actual|gbp }}</b><span>Income so far, of {{ data.totals.income.budget|gbp }} planned</span></div>
+    <div class="fig{{ ' alert' if data.totals.expense.actual > data.totals.expense.budget }}"><b>{{ data.totals.expense.actual|gbp }}</b><span>Spent so far, of {{ data.totals.expense.budget|gbp }} planned</span></div>
+  </div>
+  <form method="post" action="/finance/budgets/{{ data.id }}" class="fin-gap">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="tablewrap"><table class="tbl stackable fin-tbl">
+      <thead><tr><th scope="col">Category</th><th scope="col" class="n">Budget (£)</th><th scope="col" class="n">Actual</th><th scope="col">Progress</th></tr></thead>
+      <tbody>{% set rows = data.rows|map(attribute="account_id")|list %}
+      {% for a in accounts %}{% set x = (data.rows|selectattr("account_id", "equalto", a.id)|list + [none])|first %}
+      {% set plan = data.planned.get(a.id, 0) %}{% set act = x.actual if x else 0 %}
+      <tr{{ ' class="fin-alert"'|safe if x and x.attention }}><td class="lead">{{ a.name }} <span class="cap">{{ "income" if a.kind == "income" else "spending" }}</span>{% if x and x.over %} <span class="pill red">Over budget</span>{% endif %}</td>
+        <td data-label="Budget (£)" class="n"><input class="fin-amt" name="a{{ a.id }}" inputmode="decimal" value="{{ '%.2f'|format(plan / 100) if plan else '' }}" placeholder="0.00" aria-label="Budget for {{ a.name }}"></td>
+        <td data-label="Actual" class="n">{{ act|gbp }}</td>
+        <td data-label="Progress">{% if plan %}{% set pct = (act * 100 / plan)|round|int %}<span class="fin-meter{{ ' over' if pct > 100 and a.kind == 'expense' }}"><meter min="0" max="100" value="{{ [pct, 100]|min }}">{{ pct }}%</meter> {{ pct }}%</span>{% else %}<span class="cap">No budget</span>{% endif %}</td></tr>
+      {% endfor %}</tbody>
+    </table></div>
+    <p class="fin-gap"><button class="btn primary">Save the budget</button></p>
+  </form>
+</div>
+{% elif not budgets %}
+<div class="mod line">{{ empty("No budget yet", "Make one below for the financial year, a term or a month.") }}</div>
+{% endif %}
+<div class="mod line"><details class="fin-add"{{ " open" if not budgets }}><summary class="btn">Make a new budget</summary>
+  <form method="post" action="/finance/budgets" class="fin-gap">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="formrow">
+      <label class="field">Name<input name="name" maxlength="80" required value="{{ year.label }}" autocomplete="off"></label>
+      <label class="field">From<input type="date" name="start" value="{{ year.start.isoformat() }}" required></label>
+      <label class="field">To<input type="date" name="end" value="{{ year.end.isoformat() }}" required></label>
+    </div>
+    <div class="tablewrap"><table class="tbl stackable fin-tbl"><thead><tr><th scope="col">Category</th><th scope="col" class="n">Budget (£)</th></tr></thead>
+      <tbody>{% for a in accounts %}<tr><td class="lead">{{ a.name }} <span class="cap">{{ "income" if a.kind == "income" else "spending" }}</span></td><td data-label="Budget (£)" class="n"><input class="fin-amt" name="a{{ a.id }}" inputmode="decimal" placeholder="0.00" aria-label="Budget for {{ a.name }}"></td></tr>{% endfor %}</tbody></table></div>
+    <p class="fin-gap"><button class="btn primary">Make the budget</button></p>
+  </form>
+</details></div>
+{% endblock %}

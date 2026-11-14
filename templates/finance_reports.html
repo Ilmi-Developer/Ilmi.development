@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Financial reports{% endblock %}
+{% block content %}
+{# Financial reports (finance.py reports): choose one. Charity reports show only when Settings says the madrasah is
+   a charity. #}
+<div class="band slim"><div class="band-top"><h1>Financial reports</h1></div>
+  <p class="lede">Every report is worked out from what’s recorded here, so they always agree with each other. Each one can be printed or downloaded as PDF, Excel or CSV.</p>
+</div>
+{% if not has_entries %}<p class="notice fin-tip" role="note">Nothing is recorded yet, so the reports will be empty. <a href="/finance/settings#opening">Start with opening balances</a></p>{% endif %}
+<div class="fin-cards">
+{% for key, name, about in reports %}
+  <a class="mod fin-card" href="/finance/reports/{{ key }}"><h2>{{ name }}</h2><p class="sub">{{ about }}</p>{% if key == "income-expenditure" %}<span class="pill blue">Start here</span>{% elif key in ("sofa", "receipts-payments") %}<span class="pill amber">Charity</span>{% endif %}</a>
+{% endfor %}
+</div>
+{% if not settings.is_charity %}<p class="sub fin-gap">Charity statements (the SoFA and receipts and payments) show here once <a href="/finance/settings">Settings</a> says the madrasah is a registered charity.</p>{% endif %}
+{% endblock %}
