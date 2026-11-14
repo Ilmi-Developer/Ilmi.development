@@ -281,6 +281,9 @@ html{overflow-x:hidden;overflow-x:clip}
 .band.in .hq-ar .hl{animation:w-swash 1s cubic-bezier(.5,0,.2,1) 1.9s both}
 .band.in .band-t .hl{animation:w-swash 1.1s cubic-bezier(.5,0,.2,1) 1.6s both}
 .bwash{animation:w-drift 26s ease-in-out infinite alternate}
+/* Out of sight, a wash's drift waits (welcome.js); the hero's bloom has long finished by then. */
+.bwash.idle,.bmist.idle,.iswoosh.idle{animation-play-state:paused}
+.hwash.idle{animation-play-state:running,paused}
 .bmist{animation:w-drift 20s ease-in-out -6s infinite alternate-reverse}
 .band.in .band-sprig .ink path{animation-delay:.8s;animation-duration:2s}
 /* The preview: the house bars grow, the dock rises into place and the figures count up (welcome.js). */
@@ -358,8 +361,13 @@ html{overflow-x:hidden;overflow-x:clip}
 .motion .hero>.cue{position:absolute;z-index:1;left:50%;bottom:10px;translate:-50% 0;display:flex;flex-direction:column;align-items:center;gap:10px;
  font:600 .6875rem/1 var(--font);letter-spacing:.24em;text-transform:uppercase;color:var(--mute);opacity:calc(1 - var(--h,0) * 5);
  animation:w-fade 1s ease 2.6s both}
-.cue i{display:block;width:1px;height:46px;background:linear-gradient(var(--ink-2),var(--ink-2)) 0 -18px/1px 18px no-repeat,var(--line-2);animation:w-cue 2.2s cubic-bezier(.6,0,.3,1) 3s infinite}
-@keyframes w-cue{from{background-position:0 -18px}to{background-position:0 46px}}
+/* The cue's line: a short dark stroke runs down a pale track. The stroke is a layer of its own moved by transform, so
+   it plays without repainting the page, and it stops once the cue has faded out (welcome.js .idle). */
+.cue i{position:relative;display:block;width:1px;height:46px;overflow:hidden;background:var(--line-2)}
+.cue i::before{content:"";position:absolute;left:0;top:0;width:1px;height:18px;background:var(--ink-2);transform:translateY(-18px);
+ animation:w-cue 2.2s cubic-bezier(.6,0,.3,1) 3s infinite}
+@keyframes w-cue{from{transform:translateY(-18px)}to{transform:translateY(46px)}}
+.cue.idle i::before{animation-play-state:paused}
 /* The olive and its wash open together: one clip on the backdrop, which welcome.js gives its progress directly (a
    pseudo-element inheriting it was left behind in Safari, so the card never reached the full width). The wash is a
    little larger than the backdrop, so its slow drift never shows an edge inside the clip. */
@@ -543,7 +551,7 @@ html{overflow-x:hidden;overflow-x:clip}
 @media (max-width:959.98px),(pointer:coarse){
  .hwash{animation:w-fade 1.4s ease both}
  .hw2{animation-delay:.3s}
- .bwash,.bmist,.iswoosh,.cue i{animation:none}
+ .bwash,.bmist,.iswoosh,.cue i::before{animation:none}
  @keyframes w-rise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
  @keyframes w-splash{from{opacity:0;scale:.5}70%{scale:1.03}to{scale:1}}
  .js .rv:not(.band){transition:opacity .8s var(--ease-out),transform .9s var(--ease-out)}

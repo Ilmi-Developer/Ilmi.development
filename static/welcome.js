@@ -49,7 +49,10 @@
   }
   function setAll(list, name, v) { for (var i = 0; i < list.length; i++) set(list[i], name, v); }
   function list(root, sel) { return root ? [].slice.call(root.querySelectorAll(sel)) : []; }
-  var USES = ".bback,.band-in,.f-track,li .art,.f-bar i,.i-splash,.mock-3d,.vcard,.c-big,.art-skyline,.art-grass";
+  // Which progress each part reads in welcome.css, so a scroll writes each value only where it is used: a value
+  // nothing reads would still restyle the element it is written on, on every frame.
+  var USES_IN = ".bback,.band-in,.mock-3d,.art-skyline,.art-grass", USES_P = ".f-track,li .art,.f-bar i,.i-splash",
+    USES_T = ".vcard,.c-big";
 
   // Wraps each word of [data-words] in a span that knows its place (--i) and the count (--n), keeping <em> and the
   // like as they are. Screen readers still read the sentence whole.
@@ -152,9 +155,11 @@
     var feats = document.querySelector(".feats"), track = feats && feats.querySelector(".f-track");
     var bar = document.querySelector(".sprog i"), heroParts = list(hero, ".hero-art,.hero-text,.cue");
     var scrubs = list(document, "[data-scrub],[data-pin]").map(function (el) {
-      return {el: el, parts: [el].concat(list(el, USES)), words: list(el, "[data-words]"), pin: el.hasAttribute("data-pin"),
-        steps: +el.getAttribute("data-steps") || 0, top: 0, h: 0};
+      var pin = el.hasAttribute("data-pin");
+      return {el: el, inParts: list(el, USES_IN), tParts: list(el, USES_T), pParts: pin ? list(el, USES_P) : [],
+        words: list(el, "[data-words]"), pin: pin, steps: +el.getAttribute("data-steps") || 0, top: 0, h: 0};
     });
+    var cue = hero && hero.querySelector(".cue"), cueAway = false;
     var vh = 0, lastY = -1, ticking = false, heroH = 1, docMax = 1;
 
     // The gallery is as tall as the distance its track has to travel sideways, so a turn of the wheel moves it as
@@ -182,17 +187,20 @@
       if (y === lastY && !force) return;
       if (bar) set(bar, "--doc", clamp(y / docMax));
       if (nav) navAt(y, lastY, vh);
-      setAll(heroParts, "--h", clamp(y / Math.max(1, heroH)));
+      var h = clamp(y / Math.max(1, heroH));
+      setAll(heroParts, "--h", h);
+      // The scroll cue's line stops once the cue has faded out.
+      if (cue && (h >= .2) !== cueAway) cue.classList.toggle("idle", cueAway = !cueAway);
       scrubs.forEach(function (s) {
         var top = s.top - y, bottom = top + s.h;
         if (bottom < -vh || top > vh * 2) return;
         var a = clamp((vh - top) / vh);
-        setAll(s.parts, "--in", a);
-        setAll(s.parts, "--t", clamp((vh - top) / (vh + s.h)));
-        setAll(s.words, "--iw", a);
+        setAll(s.inParts, "--in", a);
+        setAll(s.tParts, "--t", clamp((vh - top) / (vh + s.h)));
+        if (!s.pin) setAll(s.words, "--iw", a);
         if (s.pin) {
           var p = clamp(-top / Math.max(1, s.h - vh));
-          setAll(s.parts, "--p", p);
+          setAll(s.pParts, "--p", p);
           setAll(s.words, "--pw", p);
           if (s.steps) {
             var step = String(Math.min(s.steps - 1, Math.floor(p * s.steps)));
@@ -203,6 +211,15 @@
       lastY = y;
     }
     function queue() { if (!ticking) { ticking = true; requestAnimationFrame(function () { update(false); }); } }
+
+    // The washes drift for as long as the page is open; while one is out of sight its drift waits (welcome.css
+    // .idle), and it carries on from where it was when it comes back into view.
+    if ("IntersectionObserver" in window) {
+      var drifts = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) { en.target.classList.toggle("idle", !en.isIntersecting); });
+      }, {rootMargin: "200px 0px"});
+      list(document, ".hwash,.bwash,.bmist,.iswoosh").forEach(function (el) { drifts.observe(el); });
+    }
 
     addEventListener("scroll", queue, {passive: true});
     addEventListener("resize", measure);

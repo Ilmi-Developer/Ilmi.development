@@ -327,6 +327,13 @@ touch screens (`(max-width: 959.98px), (pointer: coarse)`, the same query in `we
 washes don't drift, things rise in without blur, and the start page's glass is left off. Parts still rise in as they
 arrive, and the menu still slips away and back.
 
+On computers the start page keeps every effect and is drawn the same, but does less work for it. The scroll cue's
+line moves by transform (the GPU plays it without repainting the page) and stops once the cue has faded; the washes'
+endless drift waits while a wash is out of sight and carries on when it returns; the scroll writes each progress
+value only on the elements that read it; and each glass surface's displacement map is drawn once into a bitmap,
+so the filter doesn't redraw an SVG with a blur in it on every frame. Nothing is given a layer of its own for speed:
+text and ink lines on a layer of their own are anti-aliased a shade differently.
+
 ## Administration
 
 Manage users leads with the accounts and an "Invite staff" button that jumps

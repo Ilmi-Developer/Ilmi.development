@@ -12,7 +12,7 @@
 /* Student-facing display, in Ilmi's olive and cream. Every slide is a still from an Islamic place or story (the Kaaba in the Prophet's time,
    Masjid an-Nabawi, Al-Aqsa, Cave Hira, Cave Thawr, the Ark, the parting of the sea, the split moon) that keeps moving
    while it is on: washing and trees in the wind, water, light. On the Presenter the class's students ride through by name. Slides change every
-   30 seconds with a crossfade and a slow push in, so the screen never cuts. Everything is sized in vh for a 16:9 TV. */
+   30 seconds on a TV and every 5 seconds on the Presenter, with a crossfade and a slow push in, so the screen never cuts. Everything is sized in vh for a 16:9 TV. */
 :root{--navy:#3b4524;--ink:#22231b;--mute:#5d5b48;--gold:#f5c542;--gold2:#d99a00;--silver:#dfe6ee;--silver2:#9fb0c2;--bronze:#efaa72;--bronze2:#b86a2e;
  --makkah:#e9a400;--aqsa:#2a9fe6;--madinah:#1fae72;color-scheme:dark}
 *{box-sizing:border-box}
@@ -297,6 +297,8 @@ var path=location.pathname.replace(/\/+$/,""),LIVE=/^\/present\/([\w.-]+)$/.exec
  VIEW="",URL=path==="/tv"?"/api/tv":path+"/data";
 if(LIVE)try{VIEW=sessionStorage.getItem(LK)||""}catch(e){}
 var CLASSY=PRESENT; // the class's own slides, with its students riding through
+if(PRESENT)SLIDE_MS=5000; // every account's Presenter moves on every 5 seconds; TV screens keep 30
+var MAXPAGES=Math.max(1,Math.floor(SLIDE_MS/5000)); // each page of a list is on for at least five seconds
 /* The brand pill shows the site title the server put there (tv.page), or Ilmi; Presenter puts the class above it. */
 var SITE=$("brand").textContent;
 /* Test hooks for previews: ?slide=<id> keeps one slide on, ?focus=qaidah or memo plays only those. */
@@ -652,13 +654,13 @@ function ranks(bands,empty){if(!bands.length)return '<div class="empty">'+empty+
   +b.who.map(function(w){return '<span class="chip '+esc(w.house||"")+'"><span class="pn">'+esc(w.name)+'</span>'+(w.class?'<span class="pcl">'+esc(w.class)+'</span>':'')+'</span>'}).join("")+'</div></div>'}).join("")+'</div></div>'}
 /* If the bands don't fit, the board stays on first place for a good while (reading slowly down it if it is taller
    than the board), then glides on until the book passes are in view, stops, and glides slowly through the rest,
-   reaching the bottom 29 seconds in. */
+   reaching the bottom a second before the slide ends (29 seconds in on a TV). */
 function fitRanks(el){var box=el.querySelector(".ranks"),inner=box&&box.firstChild;if(!box||RM)return;var view=box.clientHeight,over=inner.scrollHeight-view;if(over<=2)return;
- var R=inner.querySelectorAll(".rk"),t2=R[1]?R[1].offsetTop:inner.scrollHeight,b2=R[1]?t2+R[1].offsetHeight:t2,end=29000,K=[],
+ var R=inner.querySelectorAll(".rk"),t2=R[1]?R[1].offsetTop:inner.scrollHeight,b2=R[1]?t2+R[1].offsetHeight:t2,end=29000,sc=(SLIDE_MS-1000)/end,K=[],
   at=function(t,y,ease){K.push({offset:t/end,transform:"translateY(-"+y+"px)",easing:ease||"linear"})},glide="cubic-bezier(.45,0,.55,1)";
  var a1=Math.max(0,Math.min(t2-view,over)),s2=b2-view<=a1?a1:Math.min(t2,over);if(s2>=over)s2=Math.max(a1,Math.min(b2-view,over));
  at(0,0);at(3000,0,"ease-in-out");at(11000,a1,glide);at(13500,s2);at(19000,s2,"ease-in-out");at(end,over);
- inner.animate(K,{duration:end,fill:"both"})}
+ inner.animate(K,{duration:end*sc,fill:"both"})}
 /* The houses' logos, as simple black silhouettes: the Kaaba for Makkah, Masjid an-Nabawi for Madinah, the Dome of the Rock for Al-Aqsa. */
 var LOGO={
  "Makkah":'<path d="M14 34 L46 25 L88 32 L58 42Z M14 36 L57 44 V92 L14 84Z M59 44 L88 34 V81 L59 92Z" fill="#111"/><path d="M14 47 L57 55 L88 45" stroke="#fff" stroke-width="3" fill="none"/><path d="M28 86 V66 H40 V88" stroke="#fff" stroke-width="2.4" fill="none"/><path d="M6 94 H94" stroke="#111" stroke-width="4" stroke-linecap="round"/>',
@@ -714,7 +716,7 @@ function rankRows(steps){var R=[];(steps||[]).forEach(function(s){s.who.forEach(
 function rankList(s){var R=rankRows(s.steps());if(!R.length)return '<div class="empty">'+esc(s.empty)+'<small>Who will be first?</small></div>';
  return '<div class="rlist"></div>'}
 var RPAGE=36; // at most three columns of twelve on a page
-function fillRanks(el,s){var box=el.querySelector(".rlist");if(!box)return;var R=rankRows(s.steps()),top=R[0].n,pages=Math.ceil(R.length/RPAGE),per=Math.ceil(R.length/pages),i=0,pg=el.querySelector(".pg");
+function fillRanks(el,s){var box=el.querySelector(".rlist");if(!box)return;var R=rankRows(s.steps()),top=R[0].n,pages=Math.min(MAXPAGES,Math.ceil(R.length/RPAGE)),per=Math.ceil(R.length/pages),i=0,pg=el.querySelector(".pg");
  function draw(){var P=R.slice(i*per,i*per+per),n=P.length,cols=n<=7?1:n<=16?2:3,rows=Math.ceil(n/cols),g=document.createElement("div");g.className="rpage";
   g.style.setProperty("--rc",cols);g.style.setProperty("--rr",rows);
   g.innerHTML=P.map(function(r,k){return '<div class="rrow r'+r.place+'" style="animation-delay:'+(.4+k*.05)+'s"><span class="rpl">'+ord(r.place)+'</span><span class="rnm '+esc(r.house||"")+'">'+(s.bar?'<i class="bar" style="width:'+(r.n/top*100).toFixed(1)+'%;animation-delay:'+(.6+k*.05)+'s"></i>':'')+'<b>'+esc(r.name)+'</b></span><span class="rv">'+s.val(r.n)+'</span></div>'}).join("");
@@ -773,11 +775,11 @@ function build(s){s.w=typeof s.world==="string"?s.world:s.world[(s.turn=(s.turn|
  var body=s.glance?glance():s.list&&s.steps?rankList(s):s.steps?podium(s.steps(),s.unit,s.empty,s.fmt,s.stars):s.ranks?ranks(s.ranks(),s.empty):s.board?houseBoard(s.board(),s.unit):s.wins?winCards(s.wins()):'<div class="cycle"></div>';
  el.innerHTML='<div class="scene">'+w.html()+'</div><div class="carriers"></div><div class="content"><div class="title"><h2>'+esc(s.title)+'<span class="pg"></span></h2>'+(s.stage?'<span class="stage">'+esc(typeof s.stage==="function"?s.stage():s.stage)+'</span>':'')+'<p>'+esc(s.sub())+'</p></div>'+body+'</div>';
  return el}
-/* A list takes turns a page at a time so everyone is seen within the slide's 30 seconds:
-   up to six pages, each at least five seconds, as many names on a page as that needs.
+/* A list takes turns a page at a time so everyone is seen within the slide's time:
+   up to six pages, each at least five seconds (so one page on the Presenter's 5-second slides), as many names on a page as that needs.
    Stars of the week are all on one page (one per class), as big as fits. */
 function cycle(el,s){var L=s.list(),box=el.querySelector(".cycle");if(!L.length){box.innerHTML='<div class="empty">'+esc(s.empty)+'<small>Keep going!</small></div>';return}
- var pages=s.one?1:Math.min(L.length,6),per=Math.ceil(L.length/pages),i=0,pg=el.querySelector(".pg");pages=Math.ceil(L.length/per);
+ var pages=s.one?1:Math.min(L.length,6,MAXPAGES),per=Math.ceil(L.length/pages),i=0,pg=el.querySelector(".pg");pages=Math.ceil(L.length/per);
  var cols=per===4?2:per<=3?per:per<=9?3:per<=16?4:per<=20?5:6,size=per===1?12:per<=2?8.4:per<=4?7:per<=6?6.4:per<=9?5.8:per<=16?5.2:4;
  function draw(){var P=L.slice(i*per,i*per+per),g=document.createElement("div");g.className="names"+(per===1?" solo":"");
   g.style.gridTemplateColumns=per===1?"minmax(0,64vw)":"repeat("+Math.min(cols,P.length)+",minmax(0,"+(per<=2?40:per===4?38:per<=9?28:Math.floor(88/cols))+"vw))";g.style.fontSize=size+"vh";

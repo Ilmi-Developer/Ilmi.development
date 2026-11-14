@@ -152,7 +152,30 @@
     var key = w + "x" + h + "@" + r;
     if (key === s.key) return;
     s.key = key;
-    s.parts.image.setAttribute("href", mapFor(w, h, r, s.o));
+    var svg = mapFor(w, h, r, s.o);
+    s.parts.image.setAttribute("href", svg);
+    flatten(s, key, svg, w, h);
+  }
+
+  // The map as drawn by the SVG above is a picture with a blur in it, which the browser may draw again each time the
+  // filter runs: on every frame while anything behind the glass moves. So once it has loaded it is drawn once into a
+  // bitmap at the screen's resolution, the same pixels, and the filter reads that instead. If the bitmap can't be
+  // made the SVG stays.
+  function flatten(s, key, svg, w, h) {
+    var img = new Image();
+    img.onload = function () {
+      if (s.key !== key) return;
+      try {
+        var ratio = Math.min(3, window.devicePixelRatio || 1);
+        var canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(w * ratio));
+        canvas.height = Math.max(1, Math.round(h * ratio));
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        var png = canvas.toDataURL("image/png");
+        if (s.key === key && png.length > 22) s.parts.image.setAttribute("href", png);
+      } catch (e) { /* the SVG map stays */ }
+    };
+    img.src = svg;
   }
 
   var resizes = typeof ResizeObserver === "function" ? new ResizeObserver(function (entries) {
