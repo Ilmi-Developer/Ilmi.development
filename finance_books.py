@@ -962,7 +962,28 @@ def overview(tx, period, today):
     for m in months_between(_add_months(date(last.year, last.month, 1), -11), last):
         t = income_expenditure(tx, m)
         months.append({"label": m.label[:3], "full": m.label, "in": t["total_income"], "out": t["total_spending"]})
+    # The dashboard's other cards: where money came from and went, what needs attention, funds and the budget.
+    bills = unpaid_bills(tx)
+    owed_fees = [i for i in fees if i["outstanding"] > 0]
+    overdue = [i for i in owed_fees if i["status"] == "overdue"]
+    statuses = {k: 0 for k in ("paid", "part", "unpaid", "overdue")}
+    for i in in_period:
+        if i["status"] in statuses:
+            statuses[i["status"]] += 1
+    live = [b for b in budgets(tx) if b["start_day"] <= period.end.isoformat() and b["end_day"] >= period.start.isoformat()]
+    budget = budget_vs_actual(tx, live[0]["id"]) if live else None
     return {"income": ie["total_income"], "spending": ie["total_spending"], "net": ie["net"],
+            "sources": sorted(({"label": x["label"], "amount": x["total"]} for x in ie["income"] if x["total"] > 0),
+                              key=lambda x: -x["amount"]),
+            "uses": sorted(({"label": x["label"], "amount": x["total"]} for x in ie["spending"] if x["total"] > 0),
+                           key=lambda x: -x["amount"]),
+            "overdue_count": len(overdue), "overdue_families": len({i["family_id"] or i["student_name"] for i in overdue}),
+            "owed_count": len(owed_fees), "statuses": statuses, "collected": collected,
+            "bills": sum(b["owed"] for b in bills if b["kind"] == "bill"), "bills_count": sum(1 for b in bills if b["kind"] == "bill"),
+            "pay_owed": sum(b["owed"] for b in bills if b["kind"] == "staff_owed"),
+            "pay_owed_count": sum(1 for b in bills if b["kind"] == "staff_owed"),
+            "funds": [f for f in fund_balances(tx, min(today, period.end)) if f["balance"] or not f["archived"]],
+            "budget": budget, "over_budget": sum(1 for r in budget["rows"] if r["over"]) if budget else 0,
             "outstanding": sum(i["outstanding"] for i in fees if i["outstanding"] > 0),
             "overdue": sum(i["outstanding"] for i in fees if i["status"] == "overdue"),
             "collection": round(collected * 100 / net_billed) if net_billed > 0 else None, "billed": net_billed,

@@ -1921,6 +1921,11 @@ class DashboardTests:
         self.assertIn("finance.exported", [r["action"] for r in self.query("SELECT action FROM audit_log")])
         page = client.get("/finance/reports/balance-sheet").get_data(as_text=True)
         self.assertIn("Assets less liabilities equal the funds", page)
+        # The overview as a dashboard: what needs attention, where money came from and went, and the funds.
+        dash = html.unescape(client.get("/finance?period=year&on=2026-10-01").get_data(as_text=True))
+        for part in ("Needs attention", "Fees collected", "Where it came from", "Where it went", "Building appeal",
+                     "£350.00", "Still owed", "Staff pay owed", "£600.00", "No budget"):
+            self.assertIn(part, dash)
 
     def test_finance_periods_and_boundaries(self):
         books = self.fin_books()

@@ -2,39 +2,94 @@
 {% from "_finance.html" import money, period_bar, bars, empty with context %}
 {% block title %}Finance{% endblock %}
 {% block content %}
-{# Finance overview (finance.py page): the period's headline figures first, then the trend and the latest entries. #}
+{# Finance overview (finance.py page), laid out like the main dashboard's Overview: the headline figures in the band,
+   then Needs attention as tiles, then cards with thin bars. Most important first, details one click away. #}
+{% macro track(value, top, tone="") -%}
+<svg class="fin-tr{{ ' ' ~ tone if tone }}" viewBox="0 0 100 4" preserveAspectRatio="none" aria-hidden="true"><rect class="bg" width="100" height="4" rx="2"/><rect width="{{ ([value / top * 100, 100]|min if top > 0 else 0)|round(1) }}" height="4" rx="2"/></svg>
+{%- endmacro %}
 <div class="band slim"><div class="band-top"><h1>Finance</h1>
   <div class="acts"><a class="btn" href="/finance/reports">Reports</a><a class="btn primary" href="/finance/fees">Bill or record a fee</a></div></div>
   <p class="lede">The madrasah’s money for {{ period.label }}.</p>
   {{ period_bar(period, "/finance", prev_q, next_q) }}
   <div class="figs fin-figs">
-    <div class="fig"><b>{{ data.income|gbp }}</b><span>Total income</span></div>
-    <div class="fig"><b>{{ data.spending|gbp }}</b><span>Total spending</span></div>
+    <div class="fig"><b>{{ data.income|gbp }}</b><span>Income</span></div>
+    <div class="fig"><b>{{ data.spending|gbp }}</b><span>Spending</span></div>
     <div class="fig{{ ' alert' if data.net < 0 }}"><b>{{ data.net|gbp }}</b><span>{{ "Surplus" if data.net >= 0 else "Deficit" }}</span></div>
-    <div class="fig{{ ' alert' if data.overdue }}"><b>{{ data.outstanding|gbp }}</b><span>Fees still owed{% if data.overdue %}, {{ data.overdue|gbp }} overdue{% endif %}</span></div>
-    <div class="fig"><b>{{ "%d%%"|format(data.collection) if data.collection is not none else "–" }}</b><span>Fees collected{% if data.collection is none %} (no fees billed){% endif %}</span></div>
-    <div class="fig"><b>{{ data.cash|gbp }}</b><span>Cash and bank{% if data.last_bank %}{% if data.last_bank.statement_balance == data.last_bank.ledger_balance %}, bank checked {{ data.last_bank.statement_day|nice_day }}{% else %}, bank didn’t match on {{ data.last_bank.statement_day|nice_day }}{% endif %}{% else %}, not checked against a bank statement{% endif %}</span></div>
+    <div class="fig"><b>{{ data.cash|gbp }}</b><span>Cash and bank today</span></div>
   </div>
-  <details class="how"><summary>How these are worked out</summary><div>
-    <p><b>Income</b> and <b>spending</b> count fees when they are billed and bills when they are due, whether or not the money has moved yet. The cash flow report shows only money that actually moved.</p>
-    <p><b>Fees collected</b> is how much of the fees billed in this period has been paid so far, after discounts.</p>
-    <p><b>Cash and bank</b> is what the books say you hold today. Check it against your bank statement on Settings so you know it’s right.</p>
-  </div></details>
 </div>
 {% if not data.has_entries %}
 <div class="mod line">{{ empty("Nothing recorded yet", "Start with what the madrasah had on the day you begin, then bill fees and record money in and out.", "/finance/settings#opening", "Enter opening balances") }}</div>
 {% else %}
 {% if not data.has_opening %}<p class="notice fin-tip" role="note">No opening balances yet, so cash and the balance sheet only count what’s been recorded here. <a href="/finance/settings#opening">Enter opening balances</a></p>{% endif %}
-<div class="g12">
-  <div class="mod s7"><div class="mod-h"><h2>Money in and out</h2><span class="cap">Last 12 months</span></div>
+
+<div class="mod line"><div class="mod-h"><h2>Needs attention</h2></div>
+<div class="fin-agrid">
+  <section class="fin-ag"><h3>Fees <small>all periods</small></h3><div class="fin-ag2">
+    <a class="fin-at {{ 'bad' if data.overdue else 'zero' }}" href="/finance/fees?show=overdue"><b>{{ data.overdue|gbp }}</b><span class="an">Overdue</span><small>{{ data.overdue_count }} {{ "fee" if data.overdue_count == 1 else "fees" }}, {{ data.overdue_families }} {{ "family" if data.overdue_families == 1 else "families" }}</small></a>
+    <a class="fin-at {{ 'warn' if data.outstanding else 'zero' }}" href="/finance/fees?show=outstanding"><b>{{ data.outstanding|gbp }}</b><span class="an">Still owed</span><small>{{ data.owed_count }} {{ "fee" if data.owed_count == 1 else "fees" }} not fully paid</small></a>
+  </div></section>
+  <section class="fin-ag"><h3>To pay <small>today</small></h3><div class="fin-ag2">
+    <a class="fin-at {{ 'warn' if data.bills else 'zero' }}" href="/finance/money"><b>{{ data.bills|gbp }}</b><span class="an">Unpaid bills</span><small>{{ data.bills_count }} {{ "bill" if data.bills_count == 1 else "bills" }}</small></a>
+    <a class="fin-at {{ 'warn' if data.pay_owed else 'zero' }}" href="/finance/staff"><b>{{ data.pay_owed|gbp }}</b><span class="an">Staff pay owed</span><small>{{ data.pay_owed_count }} {{ "payment" if data.pay_owed_count == 1 else "payments" }}</small></a>
+  </div></section>
+  <section class="fin-ag"><h3>Budget{% if data.budget %} <small>{{ data.budget.name }}</small>{% endif %}</h3><div class="fin-ag2">
+    {% if data.budget %}{% set b = data.budget.totals.expense %}
+    <a class="fin-at {{ 'bad' if data.over_budget else 'ok' }}" href="/finance/reports/budget?budget={{ data.budget.id }}"><b>{{ data.over_budget }}</b><span class="an">{{ "Line" if data.over_budget == 1 else "Lines" }} over budget</span><small>of {{ data.budget.rows|selectattr("kind", "equalto", "expense")|list|length }} spending lines</small></a>
+    <a class="fin-at {{ 'bad' if b.actual > b.budget else '' }}" href="/finance/budgets?budget={{ data.budget.id }}"><b>{{ "%d%%"|format((b.actual * 100 / b.budget)|round|int) if b.budget else "–" }}</b><span class="an">Of spending budget used</span><small>{{ data.budget.elapsed }}% of the time gone</small></a>
+    {% else %}
+    <a class="fin-at zero" href="/finance/budgets"><b>–</b><span class="an">No budget</span><small>Make one for this year</small></a>
+    {% endif %}
+  </div></section>
+</div></div>
+
+<div class="g12 fin-dash">
+  <div class="mod s8"><div class="mod-h"><h2>Money in and out</h2><span class="cap">Last 12 months</span></div>
     {{ bars(data.months, "Money in and out by month") }}
   </div>
-  <div class="mod s5"><div class="mod-h"><h2>Latest</h2><a class="btn sm" href="/finance/money">All money in and out</a></div>
-    <div class="tablewrap"><table class="tbl stackable fin-tbl">
-      <thead><tr><th scope="col">What</th><th scope="col">Date</th><th scope="col" class="n">Amount</th></tr></thead>
-      <tbody>{% for e in data.recent %}<tr><td class="lead">{{ e.memo or e.kind_label }}<span class="sub fin-who">{{ e.party }}{% if e.reversed_by %} · corrected{% endif %}</span></td><td data-label="Date">{{ e.day|nice_day }}</td><td data-label="Amount" class="n">{{ money(e.effect if e.effect else e.cash, true) if (e.effect or e.cash) else e.amount|gbp }}</td></tr>{% endfor %}</tbody>
-    </table></div>
+  <div class="mod s4"><div class="mod-h"><h2>Fees collected</h2><a class="btn sm" href="/finance/reports/fees">Fees report</a></div>
+    {% if data.billed > 0 %}
+    <p class="fin-big"><b>{{ data.collection }}%</b><span>of {{ data.billed|gbp }} billed in {{ period.label }}</span></p>
+    {{ track(data.collected, data.billed, "ok big") }}
+    <ul class="fin-legend">
+      <li><span class="pill green">Paid</span><b>{{ data.statuses.paid }}</b></li>
+      <li><span class="pill amber">Part paid</span><b>{{ data.statuses.part }}</b></li>
+      <li><span class="pill blue">Not paid yet</span><b>{{ data.statuses.unpaid }}</b></li>
+      <li><span class="pill red">Overdue</span><b>{{ data.statuses.overdue }}</b></li>
+    </ul>
+    <p class="cap">Fees billed in this period, after discounts. Counts are fees, not families.</p>
+    {% else %}<p class="sub">No fees billed in {{ period.label }}.</p>{% endif %}
   </div>
 </div>
+
+<div class="g12 fin-dash">
+  <div class="mod s4"><div class="mod-h"><h2>Where it came from</h2><a class="btn sm" href="/finance/reports/income-expenditure?{{ q }}">Details</a></div>
+    {% if data.sources %}{% set top = data.sources[0].amount %}
+    <ul class="fin-rows">{% for x in data.sources %}<li><span>{{ x.label }}</span><b>{{ x.amount|gbp }}</b>{{ track(x.amount, top) }}</li>{% endfor %}</ul>
+    {% else %}<p class="sub">No income in {{ period.label }}.</p>{% endif %}
+  </div>
+  <div class="mod s4"><div class="mod-h"><h2>Where it went</h2><a class="btn sm" href="/finance/reports/income-expenditure?{{ q }}">Details</a></div>
+    {% if data.uses %}{% set top = data.uses[0].amount %}
+    <ul class="fin-rows">{% for x in data.uses %}<li><span>{{ x.label }}</span><b>{{ x.amount|gbp }}</b>{{ track(x.amount, top, "out") }}</li>{% endfor %}</ul>
+    {% else %}<p class="sub">No spending in {{ period.label }}.</p>{% endif %}
+  </div>
+  <div class="mod s4"><div class="mod-h"><h2>Funds</h2><a class="btn sm" href="/finance/donations">Donations &amp; funds</a></div>
+    {% set top = ([1] + data.funds|map(attribute="balance")|list)|max %}
+    <ul class="fin-rows">{% for f in data.funds %}<li><span>{{ f.name }}{% if f.restricted %} <span class="pill amber">Restricted</span>{% endif %}</span><b>{{ money(f.balance, f.balance < 0) }}</b>{{ track([f.balance, 0]|max, top) }}</li>{% endfor %}</ul>
+    <p class="cap">Cash and bank {{ data.cash|gbp }}{% if data.last_bank %}{% if data.last_bank.statement_balance == data.last_bank.ledger_balance %}, matched the bank statement on {{ data.last_bank.statement_day|nice_day }}{% else %}, didn’t match the bank on {{ data.last_bank.statement_day|nice_day }}{% endif %}{% else %}, not yet checked against a bank statement{% endif %}.</p>
+  </div>
+</div>
+
+<div class="mod line"><div class="mod-h"><h2>Latest</h2><a class="btn sm" href="/finance/money">All money in and out</a></div>
+  <div class="tablewrap"><table class="tbl stackable fin-tbl">
+    <thead><tr><th scope="col">What</th><th scope="col">Type</th><th scope="col">Date</th><th scope="col" class="n">Amount</th></tr></thead>
+    <tbody>{% for e in data.recent %}<tr><td class="lead">{{ e.memo or e.kind_label }}<span class="sub fin-who">{{ e.party }}{% if e.reversed_by %} · corrected{% endif %}</span></td><td data-label="Type">{{ e.kind_label }}</td><td data-label="Date">{{ e.day|nice_day }}</td><td data-label="Amount" class="n">{{ money(e.effect if e.effect else e.cash, true) if (e.effect or e.cash) else e.amount|gbp }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+<details class="how fin-gap"><summary>How these are worked out</summary><div>
+  <p><b>Income</b> and <b>spending</b> count fees when they are billed and bills when they are due, whether or not the money has moved yet. The cash flow report shows only money that actually moved.</p>
+  <p><b>Fees collected</b> is how much of the fees billed in this period has been paid so far, after discounts. <b>Needs attention</b> counts every fee and bill still open, whatever the period.</p>
+  <p><b>Funds</b> show what each fund holds today. Equipment bought from a fund still counts in it, as something the madrasah owns.</p>
+</div></details>
 {% endif %}
 {% endblock %}
