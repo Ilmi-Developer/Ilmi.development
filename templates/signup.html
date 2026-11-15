@@ -1,0 +1,44 @@
+{% extends "_public.html" %}
+{# Signing a madrasah up (billing.py). Nothing is made by this page: the next one shows the price and has the button. #}
+{% block title %}Get started{% endblock %}
+{% block head %}<script src="/pricing.js" defer></script>{% endblock %}
+{% block main_attrs %} data-config="{{ calc }}"{% endblock %}
+{% block content %}
+<div class="su">
+  <div>
+    <h1>Set up your madrasah</h1>
+    <p class="su-lede">Tell us who you are and how many students you have. You’ll see the exact price on the next page before anything is charged.</p>
+    {% if error %}<p class="su-msg bad" role="alert">{{ error }}</p>{% endif %}
+    <div class="su-card">
+    <form method="post" action="/signup" class="su-form">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <div class="su-hp" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div>
+      <label class="su-f">Madrasah’s name<input name="school" value="{{ form.school or '' }}" maxlength="{{ name_max }}" autocomplete="organization" required></label>
+      <div class="su-row">
+        <label class="su-f">Your name<input name="name" value="{{ form.name or '' }}" maxlength="80" autocomplete="name" required></label>
+        <label class="su-f">Your email<input type="email" name="email" value="{{ form.email or '' }}" maxlength="254" autocomplete="email" spellcheck="false" required></label>
+      </div>
+      <div class="su-row">
+        <label class="su-f">Active students<input id="su-students" type="number" name="students" inputmode="numeric" min="1" max="100000" value="{{ students }}" required><small>Students currently enrolled. Staff accounts are free.</small></label>
+        <label class="su-f" id="su-billing-f">Pay<select id="su-billing" name="billing"><option value="monthly"{{ " selected" if billing == "monthly" }}>Monthly</option><option value="annual"{{ " selected" if billing == "annual" }}>Annually ({{ months_free }} months free)</option></select><small>Only for paid plans. Free up to {{ free }} students.</small></label>
+      </div>
+      {% if code_on %}<label class="su-f">Access code <small>Optional. Leave empty unless Ilmi gave you one.</small><input name="code" value="" maxlength="100" autocomplete="off" spellcheck="false"></label>{% endif %}
+      <label class="su-terms"><input type="checkbox" name="terms" value="1" required>
+        <span>I have read and agree to Ilmi’s <a href="/terms" target="_blank" rel="noopener">Terms and Conditions</a> (version {{ terms_version }}), including the data processing terms, the limits on liability, and how subscriptions renew and are cancelled. I confirm that I am authorised to accept them for this madrasah, and that the madrasah is entitled to share its students’ and staff’s details with Ilmi.</span></label>
+      <button class="wbtn">Continue<svg class="arr" viewBox="0 0 20 12" aria-hidden="true" focusable="false"><path d="M1 6h17M13 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </form>
+    </div>
+    <p class="su-fine">Already have an account? <a class="tl" href="/login">Sign in</a>.</p>
+  </div>
+  <aside class="su-side" aria-live="polite">
+    <h2>Your price</h2>
+    <p class="p-total"><b id="su-total">–</b> <span id="su-per"></span></p>
+    <p class="p-sub" id="su-sub">Free up to {{ free }} students. After that, a small amount per student that falls as you grow.</p>
+    <ol>
+      <li>Check the price on the next page{% if payments_on %} and pay securely with Stripe if your plan is paid{% endif %}.</li>
+      <li>Choose your password.</li>
+      <li>Make Ilmi yours: your look, your houses, the parts you use, and your students from a CSV or Excel file.</li>
+    </ol>
+  </aside>
+</div>
+{% endblock %}

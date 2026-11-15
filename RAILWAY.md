@@ -318,8 +318,40 @@ does one whose tab has been quiet for 12 hours, or whose teacher has been taken 
 | `ASSISTANT_PROVIDER` | Optional: `gemini`, `cloudflare` or `anthropic`, when more than one is set. |
 | `ASSISTANT_DAILY_TOKENS` | Each teacher's and HeadTeacher's daily Ask Ilmi allowance in tokens. Default `100000`; `0` turns it off. Admins have no daily allowance. |
 | `SUPPORT_EMAIL` | The school office address staff should write to for password help, for example `office@example.org`. The password pages show an **Email** button for it. Optional; without it they say to ask an administrator. |
+| `STRIPE_SECRET_KEY` | Your Stripe secret key (`sk_test_…` while trying it, `sk_live_…` to take real payments). Without it nothing is ever charged: free and test sign-ups work, paid ones say payment isn't available yet. See [Pricing, sign-up and Stripe](#pricing-sign-up-and-stripe). |
+| `STRIPE_WEBHOOK_SECRET` | The signing secret (`whsec_…`) of the Stripe webhook endpoint that points at `/stripe/webhook`. |
+| `SIGNUP_TEST_CODE` | Optional. A long random code (12 characters or more) that, typed on the sign-up form, skips payment and makes a test school that is never charged. Unset, there is no such code. |
+| `SIGNUPS` | `off` closes sign-up. Optional; on by default. |
+| `PRICING_JSON` | Optional. A JSON object replacing any key of `pricing.DEFAULTS` (bands, minimum charge, annual months free, cards). A value that doesn't make sense is ignored and the built-in prices are used. |
+| `SALES_EMAIL` | Where **Contact Us** on the pricing page writes to. Optional; defaults to `SUPPORT_EMAIL`. |
+| `LEGAL_NAME`, `LEGAL_ADDRESS` | Who "we" are in the Terms and Conditions at `/terms`. Without them the terms say only "Ilmi". |
 
 `DASHBOARD_USERNAME` is no longer used and can be deleted.
+
+## Pricing, sign-up and Stripe
+
+`/pricing` shows the prices and a calculator; **Get Started** leads to `/signup`, then to Stripe's hosted checkout
+for a paid size, and then to **School setup** (look, houses, options, links, student upload) at the admin's first
+sign-in. Prices live in one place, `pricing.py`, and the amount charged is always the one the page quoted. Card
+details never reach this server.
+
+To turn payments on:
+
+1. In Stripe (Developers → API keys) copy the secret key into `STRIPE_SECRET_KEY`. Start with the test-mode key.
+2. In Stripe (Developers → Webhooks) add an endpoint at `https://<your site>/stripe/webhook` listening for
+   `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted` and
+   `invoice.upcoming`. Copy its signing secret into `STRIPE_WEBHOOK_SECRET`.
+3. Make sure `PUBLIC_URL` is the site's real address: Stripe sends the browser back to it.
+4. Sign up with Stripe's test card `4242 4242 4242 4242` and check the school appears on **Schools**.
+5. To go live, swap both values for the live-mode key and a live-mode webhook's secret.
+
+The developer's **Schools** page shows whether payments are live, in test mode or off, and for each school its
+plan, **Recalculate from active students**, **Cancel subscription** (now or at the end of the paid period) and
+**Suspend school**. Only current students are counted, each Student ID once; teachers and admins are never charged.
+
+The Terms and Conditions at `/terms` are a starting draft. Have a solicitor review them before taking real payments,
+and set `LEGAL_NAME` and `LEGAL_ADDRESS`. When the wording changes, change `TERMS_VERSION` in `billing.py`: each
+sign-up records the version it agreed to.
 
 ## Email
 

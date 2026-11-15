@@ -94,12 +94,14 @@
     {{ nl("/", "home", "Overview") }}
     {% if all_classes %}{{ nl("/#record", "pen", "Record") }}{% endif %}
     {{ nl("/#classes", "grid", "Classes") }}
-    {% if all_classes %}{{ nl("/#house-points", "pie", "House points") }}
+    {% set sc = school_cfg() %}
+    {% if all_classes and sc.points_on %}{{ nl("/#house-points", "pie", "House points") }}{% endif %}
+    {% if all_classes %}
     {{ nl("/#rankings", "trophy", "Rankings") }}
     {% endif %}
     {# Teachers and HeadTeachers open one class's Presenter; admins have the Presenter page (TV screens) below. #}
-    {% if user.role != "admin" %}{{ nl("/#presenter", "presenter", "Presenter") }}{% endif %}
-    {% if config.ASSISTANT_ENABLED %}{{ nl("/#ask", "rehal", "Ask Ilmi") }}{% endif %}
+    {% if user.role != "admin" and sc.modules.presenter %}{{ nl("/#presenter", "presenter", "Presenter") }}{% endif %}
+    {% if config.ASSISTANT_ENABLED and sc.modules.assistant %}{{ nl("/#ask", "rehal", "Ask Ilmi") }}{% endif %}
     {% if user.role == "admin" %}
     <div class="navh" id="adminh">Administration</div>
     {% call grp("users", "idcard", "User management") %}
@@ -111,20 +113,24 @@
     {{ nl("/admin/history", "history", "Class history", here.startswith("/admin/history"), sub=True) }}
     {% endcall %}
     {% call grp("data", "db", "Data handling") %}
-    {{ nl("/admin/house-points", "pie", "Counted coins", here == "/admin/house-points", sub=True) }}
+    {% if sc.points_on %}{{ nl("/admin/house-points", "pie", "Counted coins", here == "/admin/house-points", sub=True) }}{% endif %}
     {{ nl("/admin/export", "sheet", "Spreadsheet", here == "/admin/export", sub=True) }}
     {{ nl("/admin/import", "upload", "Import", here.startswith("/admin/import"), sub=True) }}
     {% endcall %}
     {{ nl("/admin/faqs", "faq", "FAQs", here == "/admin/faqs") }}
-    {% if config.ASSISTANT_ENABLED %}{{ nl("/admin/requests", "faq", "Assistant requests", here == "/admin/requests") }}{% endif %}
-    {{ nl("/admin/tv", "tv", "Presenter", here == "/admin/tv") }}
+    {% if config.ASSISTANT_ENABLED and sc.modules.assistant %}{{ nl("/admin/requests", "faq", "Assistant requests", here == "/admin/requests") }}{% endif %}
+    {% if sc.modules.presenter %}{{ nl("/admin/tv", "tv", "Presenter", here == "/admin/tv") }}{% endif %}
+    {{ nl("/admin/setup", "settings", "School setup", here.startswith("/admin/setup")) }}
     {% endif %}
     {% endif %}
     {# Links to the school's other sites sit at the foot of the menu, just above the signed-in name. #}
+    {# Each school's own (School setup, school_config.py); the developer's own pages belong to no school. #}
+    {% set menu_links = school_cfg().links if user.role != "developer" else [] %}
+    {% if menu_links %}
     {% call grp("links", "link", "Links", "j2jb") %}
-    {{ ext("https://journey2jannah.com", "book", "Journey2Jannah") }}
-    {{ ext("https://flickpermanentmakeupacademy.com/login/", "play", "FlickLearning") }}
+    {% for l in menu_links %}{{ ext(l.url, "link", l.label) }}{% endfor %}
     {% endcall %}
+    {% endif %}
   </nav>
   <div class="me">
     <div class="who">{{ avatar(user.id, user.name, user.avatar_at, 38) }}<div class="wt"><b>{{ user.name }}</b><span>{{ role_name(user.role) }}</span></div></div>

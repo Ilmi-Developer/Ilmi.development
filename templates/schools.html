@@ -16,7 +16,8 @@
     </div>
   </details>
   <a class="btn primary" href="#new">Add a school</a>
-</div></div></div>
+</div></div>
+<p class="sch-pay">Sign-up payments: {% if payments_on %}{{ "live" if payments_live else "Stripe test mode (no real charges)" }}{% else %}off (no Stripe key), so only free and test sign-ups work{% endif %}. Test code: {{ "set" if test_code_on else "not set" }}. <a href="/pricing">Pricing page</a></p></div>
 {% if link %}
 <div class="panel linkbox" role="status">
   <p><b>Send this link to {{ link_for }}</b>{% if not mail_enabled %} (email isn't set up yet){% else %} (the email couldn't be sent){% endif %}. It works once and expires in {{ invite_hours }} hours.</p>
@@ -32,6 +33,7 @@
   {% elif s.office %}<p class="sch-o" title="Admin: {{ s.office|join(", ") }}">Admin: {{ s.office|join(", ") }}</p>
   {% elif s.invited %}<p class="sch-o" title="Admin invited, not signed in yet: {{ s.invited|join(", ") }}">Admin invited: {{ s.invited|join(", ") }}</p>
   {% else %}<p class="sch-o is-warn"><a class="sch-set" href="#manage-{{ s.id }}">Set the admin account</a></p>{% endif %}
+  <p class="sch-b">{% if s.bill.suspended %}<span class="pill warn">Suspended</span>{% endif %}{% if s.bill.sub %}<span class="pill{{ ' grey' if s.bill.sub.ended }}">{{ s.bill.sub.plan_name }}{% if s.bill.sub.price %} · {{ s.bill.sub.price }}{% endif %}</span>{% if s.bill.sub.status != "active" or s.bill.sub.cancel_at_period_end %}<span class="pill {{ 'grey' if s.bill.sub.ended else 'warn' }}">{{ "Ends " ~ (s.bill.sub.current_period_end|when) if s.bill.sub.cancel_at_period_end and not s.bill.sub.ended and s.bill.sub.current_period_end else s.bill.sub.status_name }}</span>{% endif %}{% else %}<span class="pill grey">No subscription</span>{% endif %}</p>
   <dl class="sch-f"><div><dt>Classes</dt><dd{{ ' class="is-zero"'|safe if not s.classes }}>{{ s.classes }}</dd></div><div><dt>Students</dt><dd{{ ' class="is-zero"'|safe if not s.students }}>{{ s.students }}</dd></div><div><dt>Staff</dt><dd{{ ' class="is-zero"'|safe if not s.staff }}>{{ s.staff }}</dd></div></dl>
 </li>
 {% endfor %}
@@ -89,6 +91,44 @@
       <label class="field">Shown under Ilmi on this school’s pages, TV screens and emails<input name="name" value="{{ name_draft if m_open and name_draft is defined else s.name }}" maxlength="{{ name_max }}" autocomplete="off" required></label>
       <button class="btn">Save name</button>
     </form>
+  </section>
+  {# The school's subscription (billing.py): what it is on, and the developer's controls over it. #}
+  <section class="sch-sec" aria-labelledby="subt-{{ s.id }}">
+    <h3 class="sch-h" id="subt-{{ s.id }}">Subscription</h3>
+    {% if s.bill.sub %}{% set b = s.bill.sub %}
+    <dl class="sch-sub">
+      <div><dt>Plan</dt><dd>{{ b.plan_name }}{% if b.price %}, {{ b.price }}{% endif %}</dd></div>
+      <div><dt>Status</dt><dd>{{ b.status_name }}{% if b.cancel_at_period_end and not b.ended %}, ending at the end of the paid period{% endif %}</dd></div>
+      <div><dt>Billed for</dt><dd>{{ b.students }} student{{ "s" if b.students != 1 }} (it has {{ s.students }} now)</dd></div>
+      {% if b.current_period_end %}<div><dt>{{ "Paid until" if b.cancel_at_period_end or b.ended else "Renews" }}</dt><dd>{{ b.current_period_end|when }}</dd></div>{% endif %}
+      {% if b.terms_version %}<div><dt>Terms</dt><dd>Version {{ b.terms_version }}, accepted by {{ b.terms_accepted_by }} on {{ b.terms_accepted_at|when }}</dd></div>{% endif %}
+    </dl>
+    <form method="post" action="/schools/{{ s.id }}/subscription/sync"><input type="hidden" name="csrf" value="{{ csrf }}">
+      <button class="btn">Recalculate from active students</button>
+      <p class="hint after">Counts its current students and, on a paid plan, moves the price from its next renewal. Nothing is charged now.</p></form>
+    {% if b.can_cancel %}
+    <form method="post" action="/schools/{{ s.id }}/subscription/cancel" class="sch-danger"><input type="hidden" name="csrf" value="{{ csrf }}">
+      <label class="field">Cancel its subscription<select name="when"><option value="period_end">At the end of the period it has paid for</option><option value="now">Now</option></select></label>
+      <label class="check"><input type="checkbox" name="confirm" value="1" required>Yes, cancel {{ s.name }}’s subscription</label>
+      <button class="btn danger">Cancel subscription</button>
+      <p class="hint after">Cancelling stops future charges. It doesn’t refund anything or lock the school: suspend it for that.</p></form>
+    {% endif %}
+    {% else %}
+    <p class="sub">You added this school yourself, so it has no subscription on Ilmi and is never charged here.</p>
+    {% endif %}
+  </section>
+  <section class="sch-sec" aria-labelledby="sust-{{ s.id }}">
+    <h3 class="sch-h" id="sust-{{ s.id }}">{{ "Suspended" if s.bill.suspended else "Suspend this school" }}</h3>
+    {% if s.bill.suspended %}
+    <p class="sub">Suspended on {{ s.bill.suspended_at|when }}. Reason: {{ s.bill.suspended_reason }}. Its staff can’t sign in and its TV and Presenter links show a notice. You can still open it.</p>
+    <form method="post" action="/schools/{{ s.id }}/unsuspend"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn primary">Lift the suspension</button></form>
+    {% else %}
+    <form method="post" action="/schools/{{ s.id }}/suspend"><input type="hidden" name="csrf" value="{{ csrf }}">
+      <label class="field">Reason (only you see this)<input name="reason" maxlength="300" autocomplete="off"></label>
+      <label class="check"><input type="checkbox" name="confirm" value="1" required>Yes, lock {{ s.name }}’s staff out</label>
+      <button class="btn danger">Suspend school</button>
+      <p class="hint after">Everyone at the school is signed out and can’t sign in, and its TV and Presenter links stop, until you lift it. Nothing is deleted, and its subscription carries on unless you cancel that too.</p></form>
+    {% endif %}
   </section>
   </div>
 </div>

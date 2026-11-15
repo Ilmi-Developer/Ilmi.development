@@ -2705,6 +2705,11 @@ html:not([data-logo]) .ws .tablewrap,html:not([data-logo]) .ws .sheetwrap{box-sh
 @media (prefers-reduced-motion:no-preference){.hpd .hpx,.hpd .hpr,.hpd .hpday{animation:hp-in .32s cubic-bezier(.2,.8,.2,1) both}.hpd .hpr{animation-delay:.06s}.hpd .hpday{animation-delay:calc(.1s + var(--i,0) * .04s)}}
 @keyframes hp-in{from{opacity:0;transform:translateY(6px)}}
 @media (max-width:420px){.hpx-c li{padding:6px 8px}.hpday li{grid-template-columns:minmax(0,1fr) auto}.hpday .t{display:none}}
+
+/* A school without houses, or one that doesn't count house points (School setup, school_config.py): the server marks
+   <html>, and the columns, fields and figures for them step out. Nothing is deleted; turning them back on shows them. */
+.no-houses .hsc,.no-houses .qhouses,.no-houses .qhead .qfh+.qfh,.no-houses td[data-label="House"],.no-houses .qhs{display:none!important}
+.no-hp .hpo{display:none!important}
 </style></head><body>
 <a class="skip" href="#main">Skip to main content</a>
 <div class="shell">
@@ -2724,7 +2729,7 @@ html:not([data-logo]) .ws .tablewrap,html:not([data-logo]) .ws .sheetwrap{box-sh
   <button class="nav" id="nA" type="button" hidden title="Ask Ilmi’s assistant about the site, the syllabus or Islam"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.8C9.6 5.2 6.4 4.8 3.5 5.6v8.6c2.9-.8 6.1-.4 8.5 1.2 2.4-1.6 5.6-2 8.5-1.2V5.6c-2.9-.8-6.1-.4-8.5 1.2z"/><path d="M12 6.8v8.6"/><path d="m7 16.8 10 3.7M17 16.8 7 20.5"/></svg>Ask Ilmi</button>
   <button class="nav" id="nU" type="button"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 9 12 4.5 21.5 9 12 13.5z"/><path d="M6.5 11.2v4.3c1.5 1.5 3.4 2.2 5.5 2.2s4-.7 5.5-2.2v-4.3"/><path d="M21.5 9v5"/></svg>Students</button>
   <div id="adminNav"></div>
-  <div class="ngrp j2jb" data-g="links"><button type="button" class="nav ngh" aria-expanded="true" aria-controls="ng-links"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.1 1.1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1.1-1.1"/></svg><span class="ngt">Links</span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6.5 9.5 5.5 5.5 5.5-5.5"/></svg></button><div class="ngb" id="ng-links"><div class="ngf"><div class="ngi"><a class="nav nsub" href="https://journey2jannah.com" target="_blank" rel="noopener noreferrer"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20v3H6.5"/></svg><span translate="no">Journey2Jannah</span><span class="ext" aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a><a class="nav nsub" href="https://flickpermanentmakeupacademy.com/login/" target="_blank" rel="noopener noreferrer"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m10.2 8.8 5 3.2-5 3.2z"/></svg><span translate="no">FlickLearning</span><span class="ext" aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a></div></div></div></div>
+  <!--LINKS--><div class="ngrp j2jb" data-g="links"><button type="button" class="nav ngh" aria-expanded="true" aria-controls="ng-links"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.1 1.1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1.1-1.1"/></svg><span class="ngt">Links</span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6.5 9.5 5.5 5.5 5.5-5.5"/></svg></button><div class="ngb" id="ng-links"><div class="ngf"><div class="ngi"><a class="nav nsub" href="https://journey2jannah.com" target="_blank" rel="noopener noreferrer"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20v3H6.5"/></svg><span translate="no">Journey2Jannah</span><span class="ext" aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a><a class="nav nsub" href="https://flickpermanentmakeupacademy.com/login/" target="_blank" rel="noopener noreferrer"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m10.2 8.8 5 3.2-5 3.2z"/></svg><span translate="no">FlickLearning</span><span class="ext" aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a></div></div></div></div><!--/LINKS-->
  </nav>
  <div class="me" id="me" hidden></div>
  </div>
@@ -2749,12 +2754,12 @@ html:not([data-logo]) .ws .tablewrap,html:not([data-logo]) .ws .sheetwrap{box-sh
 <section id="vL" class="ws hide" aria-labelledby="ttl"><div id="dirW"></div>
  <details class="up" id="up"><summary>Upload students from a CSV file</summary>
   <p class="sub">One row per student, with the column names in the first row. Uploading an updated list never adds anyone twice.</p>
-  <details class="how"><summary>How this works</summary><div><p>Each student goes into the classroom of their Quran and Memorisation teacher, and classrooms that don't exist yet are created. Students are recognised by their Student ID, so uploading an updated list moves students with all of their records, updates changed details and never adds anyone twice. An optional <b>House</b> column (Makkah, Al-Aqsa or Madinah) sets each student's house.</p><p>Your own column names are fine: the preview shows which column was taken for each detail and lets you change it.</p></div></details>
+  <details class="how"><summary>How this works</summary><div><p>Each student goes into the classroom of their Quran and Memorisation teacher, and classrooms that don't exist yet are created. Students are recognised by their Student ID, so uploading an updated list moves students with all of their records, updates changed details and never adds anyone twice. <span class="hsc">An optional <b>House</b> column (<span id="hsNames">Makkah, Al-Aqsa or Madinah</span>) sets each student's house.</span></p><p>Your own column names are fine: the preview shows which column was taken for each detail and lets you change it.</p></div></details>
   <div class="ex">Student ID,Student Name,Gender,School Year Group,Current Teacher [Quran and Memorisation],Current Teacher [Islamic Studies]
 ST001,Aisha Khan,Female,Year 3,Yr3-A-QM-Br Ahmed,Yr3-A-AI-Sr Maryam
 ST002,Yusuf Ali,Male,Year 4,Yr4-B-QM-Sr Zainab,Yr4-B-AI-Br Idris</div>
   <p class="sub uptpl">Not sure which columns to use? <a class="btn sm" href="/admin/import-template/students.csv" download>Download template</a> Fill it in with one student on each row and upload it here.</p>
-  <div class="pf"><label>CSV file<input type="file" id="csvF" accept=".csv,text/csv"></label><label>First class day for new classrooms<input type="date" id="csvD"></label></div>
+  <div class="pf"><label>CSV or Excel file<input type="file" id="csvF" accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label><label>First class day for new classrooms<input type="date" id="csvD"></label></div>
   <div id="csvP" aria-live="polite"></div>
  </details></section>
 <section id="vU" class="ws hide" aria-labelledby="ttl"><div id="stuW"></div></section>
@@ -2890,10 +2895,23 @@ function fix(a,old){var mv=old&&old.join()!==LEVELS.join();a.forEach(function(s)
  if(!s.ml)s.ml=[];if(!s.fl)s.fl=[];TOK.forEach(function(k){if(!s[k[0]])s[k[0]]=[]});s.passes=s.passes||0;s.merits=s.merits||0;s.qa=s.qa||0;if(!s.tests)s.tests=[];if(!s.hp)s.hp=[];if(!s.bp)s.bp=[];if(!s.sw)s.sw=[];s.target=Math.min(Math.max(s.target||1,1),NB)});return a}
 /* Houses and their tokens. Each token is [field, css class, name, points]; the field holds the times it was given.
    Keep the points in step with TOKEN_POINTS in server.py. */
-var HOUSES=["Makkah","Al-Aqsa","Madinah"],TOK=[["tg","g","Green",5],["tb","b","Blue",20],["tr","r","Red",50]];
+/* Each school has its own houses (School setup): the server hands them over in ME.houses, none when the school
+   has no houses, and ME.hp says whether house points are counted. Opened as a file, Ilmi's own three. */
+var HOUSES=window.ME&&ME.houses&&ME.houses.slice?ME.houses.slice():["Makkah","Al-Aqsa","Madinah"],HON=HOUSES.length>0,HPON=HON&&!(window.ME&&ME.hp===false),
+ HCOL=["var(--makkah)","var(--aqsa)","var(--madinah)","#8b5fb0","#c0563b","#2e8f96"],TOK=[["tg","g","Green",5],["tb","b","Blue",20],["tr","r","Red",50]];
 /* The house as written in a CSV, matched loosely ("makka", "Al Aqsa", "Medina"). Anything else is "". */
-function normHouse(v){var k=String(v||"").toLowerCase().replace(/[^a-z]/g,"");
- if(/^(makkah?|mecca|makah)$/.test(k))return "Makkah";if(/^(masjid)?(al)?aqsa$/.test(k))return "Al-Aqsa";if(/^(madinah?|medina)$/.test(k))return "Madinah";return ""}
+function normHouse(v){var raw=String(v||""),k=raw.toLowerCase().replace(/[^a-z]/g,""),g="";
+ if(/^(makkah?|mecca|makah)$/.test(k))g="Makkah";else if(/^(masjid)?(al)?aqsa$/.test(k))g="Al-Aqsa";else if(/^(madinah?|medina)$/.test(k))g="Madinah";
+ if(g&&HOUSES.indexOf(g)>=0)return g;
+ /* The school's own names, however they are spaced or capitalised. */
+ var n=raw.toLowerCase().replace(/[^a-z0-9\u00c0-\uffff]/g,"");if(!n)return "";
+ for(var i=0;i<HOUSES.length;i++)if(HOUSES[i].toLowerCase().replace(/[^a-z0-9\u00c0-\uffff]/g,"")===n)return HOUSES[i];return ""}
+/* A house's colour goes by its place in the list. The pages mark a house with its name as a class (hdot Makkah), so
+   for names of the school's own the same rules are written here from the list. */
+(function(){if(!window.ME||!ME.houses)return;var css="",esc1=function(t){return window.CSS&&CSS.escape?CSS.escape(t):t.replace(/[^\w-]/g,"\\$&")};
+ HOUSES.forEach(function(h,i){var T=h.split(/\s+/).filter(Boolean),c=HCOL[i%HCOL.length],sel=function(pre){return "."+esc1(pre+T[0])+T.slice(1).map(function(t){return "."+esc1(t)}).join("")};
+  css+=".hdot"+sel("")+"{background:"+c+"}.house"+sel("")+" .tr i{background:"+c+"}.hcol"+sel("")+" .hbar i{background:"+c+"}.sxh"+sel("h-")+" i{background:"+c+"}"});
+ var st=document.createElement("style");st.textContent=css;document.head.appendChild(st)})();
 function hp(s){return TOK.reduce(function(t,k){return t+(s[k[0]]||[]).length*k[3]},0)}
 function houseTotals(A){var T={};HOUSES.forEach(function(h){T[h]=0});A.forEach(function(s){if(T[s.house]!==undefined)T[s.house]+=hp(s)});return T}
 var PRIZE=5;
@@ -2942,7 +2960,7 @@ function fromHash(h){if(!h)return null;if(h==="classes")return ["L"];
  /* From Account: "Retake the tutorial" (the Tutorial, near the end). */
  if(h==="tour"){TOURQ=true;return ["M"]}
  /* From the Import page: Classes with "Upload students from a CSV file" open. */
- if(h==="upload-students"&&!STAFF){setTimeout(function(){var u=$("up");if(u){u.open=true;u.scrollIntoView({block:"start"})}},0);return ["L"]}if(h==="students")return ["U"];if(h==="house-points")return [TEACHER?"M":"H"];if(h==="rankings")return [TEACHER?"M":"K"];if(h==="record")return [TEACHER?"M":"R"];
+ if(h==="upload-students"&&!STAFF){setTimeout(function(){var u=$("up");if(u){u.open=true;u.scrollIntoView({block:"start"})}},0);return ["L"]}if(h==="students")return ["U"];if(h==="house-points")return [TEACHER||!HPON?"M":"H"];if(h==="rankings")return [TEACHER?"M":"K"];if(h==="record")return [TEACHER?"M":"R"];
  /* From an admin page's menu: Presenter's class picker over the overview. */
  if(h==="presenter"){setTimeout(presenter,0);return ["M"]}
  /* From an admin page's Search (or Ctrl+K there): the search over the overview. */
@@ -3223,7 +3241,7 @@ function refill(el,html){var a=document.activeElement,key=null;
  el.innerHTML=html;
  if(key){var n=el.querySelector(key);if(n)n.focus()}}
 var DMODE="";
-function details(s){return [["Student ID",s.sid],["Family ID",s.fid],["Date of birth",dobText(s.dob)],["Year group",s.sy],["Gender",s.gender],["House",s.house],["Arabic and Islamic Studies Class",s.ist],["Quran level",s.qa?qaLab(s.qa):""]].map(function(x){return '<dt>'+x[0]+'</dt><dd>'+esc(x[1]||"Not recorded")+'</dd>'}).join("")}
+function details(s){return [["Student ID",s.sid],["Family ID",s.fid],["Date of birth",dobText(s.dob)],["Year group",s.sy],["Gender",s.gender]].concat(HON?[["House",s.house]]:[]).concat([["Arabic and Islamic Studies Class",s.ist],["Quran level",s.qa?qaLab(s.qa):""]]).map(function(x){return '<dt>'+x[0]+'</dt><dd>'+esc(x[1]||"Not recorded")+'</dd>'}).join("")}
 /* Details, history, rename and remove from a student's Memo profile. */
 document.addEventListener("click",function(e){var bt=e.target.closest("[data-a]");if(!bt||!bt.closest("#drwB"))return;var a=bt.dataset.a,i=+bt.dataset.i,s=S[i],c=CID;if(!s)return;
  var nm=fn(s);
@@ -3445,7 +3463,7 @@ function lanes(){var A=S.slice().sort(function(a,b){return (nod(a)?0:b.target)-(
  $("lanes").style.setProperty("--rows",Math.max(1,Math.ceil(A.length/2)));$("lanes").innerHTML=A.length?A.map(function(s){var n=nod(s);return '<li><span class="ln">'+esc(s.name)+'</span><span class="lt"><i style="width:'+(n?0:s.target/top*100)+'%;background:'+lc(s.target)+'"></i></span><b'+(n?' class="z"':'')+'>'+esc(ct(s))+'</b></li>'}).join(""):'<li class="empty"><b>No students yet</b></li>'}
 /* A student's full record in the drawer. */
 function student(i){var s=S[i];if(!s)return;var q=qavg(s),E=events().filter(function(e){return e.i===i});
- drawer(s.name,'<div class="dfigs"><div><b>'+esc(ct(s))+'</b><span>Current target</span></div><div><b>'+s.passes+'</b><span>Passes</span></div><div><b>'+s.merits+'</b><span>Merits</span></div><div><b>'+s.fl.length+'</b><span>Fails</span></div><div><b>'+hp(s)+'</b><span>House points</span></div><div><b>'+(q?q:"–")+'</b><span>Quran average out of 5</span></div></div>'
+ drawer(s.name,'<div class="dfigs"><div><b>'+esc(ct(s))+'</b><span>Current target</span></div><div><b>'+s.passes+'</b><span>Passes</span></div><div><b>'+s.merits+'</b><span>Merits</span></div><div><b>'+s.fl.length+'</b><span>Fails</span></div><div class="hpo"><b>'+hp(s)+'</b><span>House points</span></div><div><b>'+(q?q:"–")+'</b><span>Quran average out of 5</span></div></div>'
   +'<p>'+(s.warn?wl(s.warn)+' ':'')+(late(s)?'<span class="pill red">'+(s.passes?'No pass in 3+ weeks':'No passes yet')+'</span>':'<span class="pill">Last pass: '+since(s).toLowerCase()+'</span>')+'</p>'
   +'<h3>Details</h3><dl class="ddl">'+details(s)+'</dl>'
   +'<h3>Passes and fails</h3>'+(E.length?'<ul class="feed">'+E.map(function(e){return '<li><span class="d">'+ds(e.t)+'</span><span class="x'+(e.f?' fail':'')+'">'+esc(e.x)+'</span></li>'}).join("")+'</ul>':'<p class="none">Nothing recorded yet.</p>'))}
@@ -3498,7 +3516,7 @@ function mLadder(g,col){if(g.len>16)return '<span class="mbar" aria-hidden="true
  var h="";for(var k=0;k<g.len;k++)h+='<i'+(k<g.pos?' class="d" style="background:'+col+'"':k===g.pos?' class="c" style="border-color:'+col+'"':'')+'></i>';return '<span class="mlad" aria-hidden="true">'+h+'</span>'}
 /* One card per student: a coloured top holding their level, target and last pass, and their name below. The colour
    is the student's house when one is set, otherwise one calm placeholder colour. */
-var MHC={Makkah:"var(--makkah)","Al-Aqsa":"var(--aqsa)",Madinah:"var(--madinah)"};
+var MHC={};HOUSES.forEach(function(h,i){MHC[h]=HCOL[i%HCOL.length]});
 function mCard(s,i){var n=nod(s),g=mGrp(s.target),col=lc(s.target),juz=s.target>BL,t=mLast(s),lt=mLate(s),
   lvl=n?'<span class="mnd">No data yet</span>':chip(col,juz?g.name:"L"+(lv(s.target)+1)),
   tg=n?'':s.target>=NB?'<span class="mtg"><b>Quran complete</b></span>':'<span class="mtg"><b title="'+esc(bl(s.target))+'">'+esc(juz?bl(s.target):"T"+(g.pos+1))+'</b><small>'+(g.pos+1)+' of '+g.len+'</small>'+mLadder(g,col)+'</span>',
@@ -3587,9 +3605,9 @@ function qDate(k){var p=k.split("-");return new Date(+p[0],+p[1]-1,+p[2],12)}
    the house goes and the name takes its room, with the box on the right. */
 /* On a phone the day's box sits in the middle of the screen, under the date: names on the left (wrapping onto a
    second line when long), the house on the right. */
-function qGeo(W,f,n){if(W<600){var bw=Math.round(Math.min(84,Math.max(64,W*.2))),nw=Math.floor((W-bw)/2),hw=W-bw-nw;
+function qGeo(W,f,n){if(W<600){var bw=Math.round(Math.min(84,Math.max(64,W*.2))),nw=HON?Math.floor((W-bw)/2):W-bw,hw=W-bw-nw;
   return {lo:0,hi:0,phone:1,w:bw,nameW:nw,houseW:hw,x:function(k){return k<0?k*bw:k===0?nw:nw+bw+hw+(k-1)*bw}}}
- var side=W<540?1:W<860?2:3,nameW=Math.round(Math.min(230,Math.max(side===1?96:130,W*.19))),houseW=Math.round(Math.min(150,Math.max(side===1?72:96,W*.12))),
+ var side=W<540?1:W<860?2:3,nameW=Math.round(Math.min(230,Math.max(side===1?96:130,W*.19))),houseW=HON?Math.round(Math.min(150,Math.max(side===1?72:96,W*.12))):0,
   w=(W-nameW-houseW)/(2*side+1),lo=Math.min(f,Math.max(side,2*side-(n-1-f))),hi=Math.min(n-1-f,2*side-lo);
  return {lo:lo,hi:hi,w:w,nameW:nameW,houseW:houseW,x:function(k){return k<=0?(k+lo)*w+(k===0?nameW:0):lo*w+nameW+w+houseW+(k-1)*w}}}
 function qOp(k,G){if(k<-G.lo||k>G.hi)return 0;var a=Math.abs(k);return a===0?1:1-a*(.24/Math.max(G.lo,G.hi,1))}
@@ -4024,14 +4042,14 @@ function sxLt(D){if(!D.tests.length)return {sum:"No level tests in this period."
   h:'<ul class="sxlt">'+A.map(function(t){return '<li><span class="sxd">'+esc(qlab(t.d))+'</span><span class="sxn">'+esc(tLab(t))+'<small>'+(t.k==="q"?"Quran":"Memorisation")+'</small></span>'+(t.sc!=null?'<span class="sxsc" style="background:'+QC[t.sc]+'">'+t.sc+'/5</span>':'<span></span>')+'<span class="sxok'+(t.ok?'':' no')+'">'+(t.ok?"Passed":"Not yet")+'</span></li>'}).join("")+'</ul>'}}
 
 function sxRw(D){var s=D.s,tot=D.tok.reduce(function(a,b){return a+b},0),w=s.warn||0;
- var bar=tot?'<div class="sxst" role="img" aria-label="House points by colour">'+TOK.map(function(k,i){return D.tok[i]?'<i class="sxbf" style="--i:'+i+';flex:'+D.tok[i]*k[3]+';background:var(--tok-'+k[1]+')" data-tip="'+esc(k[2]+" tokens: "+D.tok[i]+" × "+k[3]+" points")+'"></i>':''}).join("")+'</div>'+sxLeg(TOK.filter(function(k,i){return D.tok[i]}).map(function(k){var i=TOK.indexOf(k);return ["var(--tok-"+k[1]+")",k[2]+" × "+D.tok[i]]})):'<p class="sxcap">No house points in this period.</p>';
- return {sum:fn(D.s)+" earned "+plural(D.ml.length,"merit")+" and "+D.hp+" house points"+(s.house?" for "+s.house:"")+(w?". Current: "+WL[w]+".":", with no warning at the moment."),
-  h:'<div class="sxrwd"><div><b>'+D.ml.length+'</b><span>Merits</span></div><div><b>'+D.hp+'</b><span>House points</span></div><div class="'+(w?"w"+w:"")+'"><b>'+(w?WL[w]:"None")+'</b><span>Warning now</span></div></div>'+bar}}
+ var bar=tot?'<div class="sxst" role="img" aria-label="House points by colour">'+TOK.map(function(k,i){return D.tok[i]?'<i class="sxbf" style="--i:'+i+';flex:'+D.tok[i]*k[3]+';background:var(--tok-'+k[1]+')" data-tip="'+esc(k[2]+" tokens: "+D.tok[i]+" × "+k[3]+" points")+'"></i>':''}).join("")+'</div>'+sxLeg(TOK.filter(function(k,i){return D.tok[i]}).map(function(k){var i=TOK.indexOf(k);return ["var(--tok-"+k[1]+")",k[2]+" × "+D.tok[i]]})):HPON?'<p class="sxcap">No house points in this period.</p>':'';
+ return {sum:fn(D.s)+" earned "+plural(D.ml.length,"merit")+(HPON?" and "+D.hp+" house points"+(s.house?" for "+s.house:""):"")+(w?". Current: "+WL[w]+".":", with no warning at the moment."),
+  h:'<div class="sxrwd"><div><b>'+D.ml.length+'</b><span>Merits</span></div><div class="hpo"><b>'+D.hp+'</b><span>House points</span></div><div class="'+(w?"w"+w:"")+'"><b>'+(w?WL[w]:"None")+'</b><span>Warning now</span></div></div>'+bar}}
 var SXC={qd:sxQd,qm:sxQm,qx:sxQx,at:sxAt,mp:sxMp,bk:sxBk,sc:sxSc,lt:sxLt,rw:sxRw};
 /* The six numbers at the top of the tile and the printed page. */
 function sxFigs(D){var s=D.s;return [["Quran average",D.avg||"–",D.avg?"out of 5":"no scores","co"],["Attendance",D.att===null?"–":D.att+"%",D.days.length?plural(D.days.length,"class day"):"no days yet","mi"],
  ["Current target",ct(s),nod(s)?"":"memorisation","sk"],["Memo passes",D.log.length,D.fl.length?D.fl.length+" not passed yet":"tests passed","la"],
- ["Merits",D.ml.length,"this period","bu"],["House points",D.hp,s.house||"no house","pe"]]}
+ ["Merits",D.ml.length,"this period","bu"]].concat(HPON?[["House points",D.hp,s.house||"no house","pe"]]:[])}
 function sxFigHtml(D){return '<div class="sxfig">'+sxFigs(D).map(function(f,i){return '<div class="sxf '+f[3]+'" style="--i:'+i+'"><span>'+f[0]+'</span><b>'+esc(String(f[1]))+'</b><small>'+esc(f[2])+'</small></div>'}).join("")+'</div>'}
 function sxCards(D,print){var on=SXI.filter(function(x){return SX.on.indexOf(x[0])>=0});
  if(!on.length)return '<p class="sxempty">No charts chosen.</p>';
@@ -4079,7 +4097,7 @@ function sxPrint(ix){var P=$("prt");if(!P){P=document.createElement("div");P.id=
 function addStudent(){if(!CID)return;
  drawer("Add a student",'<form class="addf" id="naF" novalidate><p class="cap">Adds a student to '+esc(cname(ST[CID].name))+'. They are saved with the class record straight away.</p>'
   +'<label>Name<input id="naN" maxlength="60" autocomplete="off" required></label>'
-  +'<label>House<select id="naH"><option value="">Not set yet</option>'+HOUSES.map(function(h){return '<option>'+h+'</option>'}).join("")+'</select></label>'
+  +'<label class="hsc">House<select id="naH"><option value="">Not set yet</option>'+HOUSES.map(function(h){return '<option>'+h+'</option>'}).join("")+'</select></label>'
   +'<label>Student ID<input id="naI" maxlength="40" autocomplete="off"></label>'
   +'<p class="naerr" id="naE" role="alert"></p><div class="acts"><button type="submit" class="btn p">Add student</button></div></form>');
  $("naN").focus();fillSid("naI")}
@@ -4148,7 +4166,7 @@ function render(){
    STAFF: either of them, who can't add or remove students or classrooms. */
 var TEACHER=!!(window.ME&&ME.role!=="admin"&&ME.role!=="head"),HEAD=!!(window.ME&&ME.role==="head"),STAFF=TEACHER||HEAD;
 /* HeadTeachers record level tests and book passes, but only admins give house points (the server refuses theirs too). */
-if(HEAD)HPOFF=1;
+if(HEAD||!HPON)HPOFF=1;
 /* Only admins add and remove students, on the Students page; teachers and HeadTeachers can't (the server refuses it too). */
 function addBtn(){return STAFF?'<span>An admin adds students to your class.</span>':'<button type="button" class="btn sm" data-open="U">Add students on the Students page</button>'}
 $("qAdd").hidden=true;$("addRow").hidden=true
@@ -4227,7 +4245,7 @@ function cname(n){n=String(n||"");if(CNM.hasOwnProperty(n))return CNM[n];var g=/
 function head(){var n=CID?ST[CID]:null;$("sName").textContent=n?n.name:"";
  $("ttl").textContent=n?cname(n.name):PAGE==="R"?"Record":PAGE==="L"?(TEACHER?"Your classes":"Classes"):PAGE==="U"?(TEACHER?"Your students":"Students"):PAGE==="H"?"House points":PAGE==="K"?"Rankings":PAGE==="A"?"Ask Ilmi":TEACHER?"Class overview":"School overview";$("swc").hidden=!n||CIDS.length<2;$("crumb").hidden=!n;$("crumbL").textContent=TEACHER?"Your classes":"Classes";$("crumbC").textContent=n?cname(n.name):"";hello();
  // The Presenter (the TV's scenes for one class) is served by the Railway server, in this tab.
- $("nB").hidden=!window.RAILWAY||!STAFF;
+ $("nB").hidden=!window.RAILWAY||!STAFF||!!(window.ME&&ME.mods&&ME.mods.presenter===false);$("nH").hidden=!HPON||$("nH").hidden;
  $("nA").hidden=!(window.RAILWAY&&window.ME&&ME.assistant);
  document.title=(n?cname(n.name)+" · ":PAGE==="R"?"Record · ":"")+(PAGE==="L"?"Classes · ":"")+(PAGE==="U"?"Students · ":"")+(PAGE==="H"?"House points · ":"")+(PAGE==="K"?"Rankings · ":"")+(PAGE==="A"?"Ask Ilmi · ":"")+"Ilmi"}
 function setClass(c){if(c!==LASTC){LASTC=c;try{localStorage.setItem("mysafar.lastClass",c)}catch(e){}}if(c!==CID){QF="";QX={};QMN=-1;MS=-1;MM="";MD=""}CID=c;S=ST[c].S;FCD=ST[c].fcd;$("fcd").value=FCD;EXP={};head();render()}
@@ -4302,7 +4320,7 @@ function attnBox(K){
  return '<div class="mod line attn'+foldCls("attn")+'" data-fold="attn"><div class="mod-h">'+ovT("A","Needs attention")+foldBtn("attn","Needs attention")+'</div><div class="agrid">'
   +AGP.map(function(g){return '<section class="ag"><h3>'+g[0]+(g[1]?' <small>'+g[1]+'</small>':'')+'</h3><div class="ag2">'+AGR.slice(g[2],g[2]+2).map(tile).join("")+'</div></section>'}).join("")+'</div></div>'}
 function latest(A,n){var E=[];A.forEach(function(o){o.s.log.forEach(function(t,k){E.push({t:t,s:o.s,c:o.c,x:pl(o.s,k)})})});return E.sort(function(a,b){return b.t-a.t}).slice(0,n)}
-function houseBoard(all){var T=window.HOUSE_TOTALS||houseTotals(all),V=HOUSES.map(function(h){return T[h]||0}),top=Math.max(1,Math.max.apply(null,V)),O=HOUSES.slice().sort(function(a,b){return (T[b]||0)-(T[a]||0)}),lead=(T[O[0]]||0)>(T[O[1]]||0)?O[0]:null;
+function houseBoard(all){if(!HPON)return "";var T=window.HOUSE_TOTALS||houseTotals(all),V=HOUSES.map(function(h){return T[h]||0}),top=Math.max(1,Math.max.apply(null,V)),O=HOUSES.slice().sort(function(a,b){return (T[b]||0)-(T[a]||0)}),lead=(T[O[0]]||0)>(T[O[1]]||0)?O[0]:null;
  return '<div class="mod gold hb"><div class="mod-h">'+ovT("H","House points")+'</div><div class="houses">'+O.map(function(h){var v=T[h]||0;return '<div class="house '+h+'"><span class="hn"><span class="hdot '+h+'"></span>'+h+(h===lead?' <span class="pill lead">Leading</span>':'')+'</span><span class="pts">'+v+'</span><div class="tr"><i style="width:'+(v/top*100)+'%"></i></div></div>'}).join("")+'</div></div>'}
 function classRows(per){return CIDS.map(function(c){var L=ST[c].S,n=L.length,p=sumOf(L,function(s){return rpPass(s,per)}),m=sumOf(L,function(s){return rpMerit(s,per)});
  return {name:cname(ST[c].name),open:c,v:n?Math.round((p+m)/n*10)/10:0,sub:plural(p,"pass","passes")+", "+plural(m,"merit")+", "+plural(n,"student")}})}
@@ -4497,8 +4515,8 @@ var FILTIC='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor
 /* Filters, behind one button: QM class, AI class, year group, house, gender, and students missing a detail. Each
    lists only what the students have, A to Z. Filters in use show as chips under the search, each with a cross.
    Whatever is chosen, the list stays in name order. */
-var SFM=[["sid","Student ID"],["fid","Family ID"],["dob","date of birth"],["sy","year group"],["gender","gender"],["house","house"],["ist","AI class"]],
- SFK=["st","c","ist","sy","house","gender","miss"],SFL={st:"Show",c:"QM class",ist:"AI class",sy:"Year group",house:"House",gender:"Gender",miss:"Missing"};
+var SFM=[["sid","Student ID"],["fid","Family ID"],["dob","date of birth"],["sy","year group"],["gender","gender"]].concat(HON?[["house","house"]]:[]).concat([["ist","AI class"]]),
+ SFK=["st","c","ist","sy"].concat(HON?["house"]:[]).concat(["gender","miss"]),SFL={st:"Show",c:"QM class",ist:"AI class",sy:"Year group",house:"House",gender:"Gender",miss:"Missing"};
 function yrKey(v){var m=/(\d+)/.exec(v||"");return /reception/i.test(v)?0:m?+m[1]:99}
 function sfGet(k){return k==="c"?SC:SF[k]}
 function sfSet(k,v){if(k==="c")SC=v;else SF[k]=v}
@@ -4532,7 +4550,7 @@ function stuRows(){var q=nkey(SQ),all=stuAll(),A=all.filter(function(o){return s
  $("stuN").textContent=fon?A.length+" of "+plural(tot,who)+" match":plural(tot,who)+(CIDS.length<2||ex?"":" in "+plural(CIDS.length,"class","classes"));
  if(!A.length){$("stuL").innerHTML='<div class="empty"><b>'+(fon?'No '+who+' matches':ex?'No ex students':'No students yet')+'</b>'+(fon?'Check the spelling, or clear the filters.':ex?'Students you remove are kept here with all of their records, and can be returned.':'<button type="button" class="btn sm p" id="stuA2">Add a student</button>')+'</div>';return}
  var p=pager("stu",A.length,SPG);
- $("stuL").innerHTML='<div class="tablewrap soft"><table class="tbl stackable stul"><thead><tr><th scope="col">Student</th><th scope="col">QM class</th><th scope="col">AI class</th><th scope="col">Year group</th><th scope="col">Student ID</th><th scope="col">Family ID</th><th scope="col">House</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>'
+ $("stuL").innerHTML='<div class="tablewrap soft"><table class="tbl stackable stul"><thead><tr><th scope="col">Student</th><th scope="col">QM class</th><th scope="col">AI class</th><th scope="col">Year group</th><th scope="col">Student ID</th><th scope="col">Family ID</th><th scope="col" class="hsc">House</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>'
   +A.slice(p*SPG,(p+1)*SPG).map(function(o){var s=o.s;return '<tr data-c="'+esc(o.c)+'" data-i="'+stuL(o.c).indexOf(s)+'"'+(s===SNEW?' class="snew"':'')+'><td class="lead"><button type="button" class="spo" aria-label="Open '+esc(s.name)+'\'s profile"><b>'+qhl(s.name,q)+'</b></button>'+(ex&&s.left?'<span class="sleft">Last day '+esc(dobText(s.left,1))+'</span>':'')+'</td>'
    +'<td data-label="QM class" class="sm"><span class="pfx">QM </span>'+opener(o.c,esc(cname(ST[o.c].name)))+'</td>'
    +'<td data-label="AI class" class="sm ai"><span class="pfx">AI </span>'+(s.ist?esc(cname(s.ist)):'<span class="zero">Not set</span>')+'</td>'
@@ -4544,7 +4562,7 @@ function stuRows(){var q=nkey(SQ),all=stuAll(),A=all.filter(function(o){return s
   +'</tbody></table></div>'+pagerHtml("stu",A.length,SPG,"students");
  var nw=$("stuL").querySelector("tr.snew");SNEW=null;
  if(nw){nw.classList.remove("snew");if(nw.scrollIntoView)nw.scrollIntoView({block:"center"});if(!QM.matches&&nw.animate)nw.animate([{backgroundColor:"#edf3ee",boxShadow:"inset 2px 0 0 #4e7d5b"},{backgroundColor:"rgba(237,243,238,0)",boxShadow:"inset 2px 0 0 rgba(78,125,91,0)"}],{duration:1200,easing:"ease-out"})}}
-var SPF=[["name","Name"],["sid","Student ID"],["fid","Family ID"],["dob","Date of birth"],["gender","Gender"],["sy","Year group"],["house","House"],["ist","Arabic and Islamic Studies Class"]];
+var SPF=[["name","Name"],["sid","Student ID"],["fid","Family ID"],["dob","Date of birth"],["gender","Gender"],["sy","Year group"]].concat(HON?[["house","House"]]:[]).concat([["ist","Arabic and Islamic Studies Class"]]);
 function yrs(a,b){var L=[];for(var n=a;n<=b;n++)L.push("Year "+n);return L}
 function opts(L,v,none){var A=L.slice();if(v&&A.indexOf(v)<0)A.unshift(v);return '<option value="">'+none+'</option>'+A.map(function(x){return '<option'+(x===v?' selected':'')+'>'+esc(x)+'</option>'}).join("")}
 function isoDay(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
@@ -4567,7 +4585,7 @@ function stuForm(s,c){var AIL=aiClasses(),ist=s.ist||"";if(ist&&AIL.indexOf(ist)
   +'<div class="spdob"><label>Date of birth<input id="spdob" type="date" max="'+isoDay(new Date())+'" value="'+esc(s.dob||"")+'"></label><button type="button" class="lk" id="spdobX"'+(s.dob?'':' hidden')+'>Clear date of birth</button></div>'
   +'<label>Gender<select id="spgender">'+opts(["Female","Male"],s.gender||"","Not recorded")+'</select></label>'
   +'<label>Year group<select id="spsy">'+opts(["Reception"].concat(yrs(1,13)),s.sy||"","Not recorded")+'</select></label>'
-  +'<label>House<select id="sphouse">'+opts(HOUSES,s.house||"","Not set yet")+'</select></label>'
+  +'<label class="hsc">House<select id="sphouse">'+opts(HOUSES,s.house||"","Not set yet")+'</select></label>'
   +'</div>'}
 /* The form's values, tidied, or an error shown under it. me is the student being changed (none when adding). */
 function stuVals(me,err,L){var v={},dup=null,to=$("spcls").value;SPF.forEach(function(f){v[f[0]]=$("sp"+f[0]).value.replace(/\s+/g," ").trim()});
@@ -4873,9 +4891,16 @@ window.addEventListener("hashchange",function(){var h=(location.hash||"").slice(
 $("delC").onclick=function(){var c=CID;if(!c)return;
  ask("Delete "+cname(ST[c].name)+" with its "+plural(ST[c].S.length,"student")+" and all of their records? This can't be undone. Type DELETE to confirm.","Delete classroom",function(v){
   if(v.toUpperCase()!=="DELETE"){toast("Type DELETE to delete the classroom",1);return}if(!ST[c])return;var n=cname(ST[c].name);dropC(c);unpersist(c);go("M");toast(n+" deleted")},"DELETE",1)};
-$("csvD").value=dk(Date.now());
+$("csvD").value=dk(Date.now());if($("hsNames")&&HON)$("hsNames").textContent=HOUSES.length>1?HOUSES.slice(0,-1).join(", ")+" or "+HOUSES[HOUSES.length-1]:HOUSES[0];
 $("csvF").onchange=function(){var f=this.files&&this.files[0];if(!f)return;
- var r=new FileReader();r.onload=function(){readCSV(String(r.result),f.name)};r.onerror=function(){toast("That file couldn't be read",1)};r.readAsText(f)};
+ var r=new FileReader();r.onerror=function(){toast("That file couldn't be read",1)};
+ /* An Excel workbook is turned into CSV by the server (its first sheet), then read like any CSV: same preview, same checks. */
+ if(/\.xlsx$/i.test(f.name)){if(!window.RAILWAY||!window.ME){toast("Excel files need the online dashboard. Save the list as CSV instead.",1);return}
+  if(f.size>1400000){toast("That file is too large. Save the list as CSV, or split it.",1);return}
+  r.onload=function(){var b=String(r.result),i=b.indexOf(",");fetch("/api/students/xlsx",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json","X-Dashboard-Request":"1"},body:JSON.stringify({file:b.slice(i+1)})})
+   .then(function(x){return x.json().then(function(d){if(!x.ok||!d.csv)throw new Error(d.error||"That file couldn't be read");readCSV(d.csv,f.name)})})
+   .catch(function(e){toast(e&&e.message?e.message:"That file couldn't be read",1)})};r.readAsDataURL(f);return}
+ r.onload=function(){readCSV(String(r.result),f.name)};r.readAsText(f)};
 $("csvP").addEventListener("click",function(e){if(e.target.id==="csvGo")importCSV();if(e.target.id==="csvX")clearCSV()});
 $("csvP").addEventListener("change",function(e){var k=e.target.getAttribute("data-col");if(k)mapCSV(k,e.target.value)});
 
@@ -5008,7 +5033,7 @@ function planCSV(){var M=CSV.M,F=["name","year"].concat(["sid","fid","dob","gend
   var key=nkey(o.sid)+"|"+nkey(o.name)+"|"+nkey(o.teacher);if(seen[key]){dup++;return}seen[key]=1;rows.push(o);
   if(o.sid)(byFileId[nkey(o.sid)]=byFileId[nkey(o.sid)]||[]).push(o)});
  if(badDob)notes.push(plural(badDob,"date of birth","dates of birth")+" couldn't be read, so "+(badDob>1?"they are":"it is")+" left as "+(badDob>1?"they are":"it is")+". Write dates day first, like 12/03/2015.");
- Object.keys(badHouse).forEach(function(v){notes.push('House "'+v+'" ('+badHouse[v]+(badHouse[v]>1?' students':' student')+') isn\'t Makkah, Al-Aqsa or Madinah, so their house is left as it is.')});
+ Object.keys(badHouse).forEach(function(v){notes.push('House "'+v+'" ('+badHouse[v]+(badHouse[v]>1?' students':' student')+') isn\'t '+(HOUSES.length>1?HOUSES.slice(0,-1).join(", ")+" or "+HOUSES[HOUSES.length-1]:HOUSES.join(""))+', so their house is left as it is.')});
  Object.keys(byFileId).forEach(function(k){var L=byFileId[k];if(L.length<2)return;var names={};L.forEach(function(o){names[nkey(o.name)]=1});
   if(Object.keys(names).length>1){notes.push("Student ID "+L[0].sid+" is used for "+L.map(function(o){return o.name}).join(", ")+". These students are matched by name instead.");L.forEach(function(o){o.sid=""})}
   else{notes.push(L[0].name+" ("+L[0].sid+") is listed under "+L.length+" teachers. Only the first, "+L[0].teacher+", is used.");L.slice(1).forEach(function(o){o.skip=1})}});

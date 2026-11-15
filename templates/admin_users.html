@@ -25,7 +25,7 @@
     <div class="formrow">
       <label class="field">Name<input name="name" maxlength="80" autocomplete="off" required></label>
       <label class="field">Email<input type="email" name="email" maxlength="254" autocomplete="off" spellcheck="false" required></label>
-      <label class="field">Role<select name="role"><option value="teacher">Teacher</option><option value="head">HeadTeacher</option><option value="admin">Admin</option><option value="finance">Finance</option></select></label>
+      <label class="field">Role<select name="role"><option value="teacher">Teacher</option><option value="head">HeadTeacher</option><option value="admin">Admin</option>{% if school_cfg().modules.finance %}<option value="finance">Finance</option>{% endif %}</select></label>
     </div>
     {% if rooms %}
     <fieldset><legend>Classrooms (for teachers)</legend>

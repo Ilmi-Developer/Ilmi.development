@@ -3927,7 +3927,411 @@ class SchoolTests:
         self.assertEqual([to for to, _, _ in mailer.sent], ["first@example.com", "office@riverside.example"])
 
 
-class SQLiteTest(SchoolTests, AssistantTests, DashboardTests, unittest.TestCase):
+class FakeStripe:
+    """Stands in for billing.Stripe: records each call and answers as Stripe would."""
+    enabled = True
+    live = False
+
+    def __init__(self):
+        self.calls = []
+        self.session = {"id": "cs_test_1", "url": "https://checkout.stripe.com/c/pay/cs_test_1"}
+        self.subscription = {"id": "sub_1", "status": "active", "cancel_at_period_end": False,
+                             "items": {"data": [{"id": "si_1", "current_period_end": 1900000000,
+                                                 "price": {"product": "prod_1"}}]}}
+
+    def call(self, method, path, params=None, idempotency_key=None):
+        self.calls.append((method, path, params))
+        if path == "/v1/checkout/sessions":
+            self.session["client_reference_id"] = params["client_reference_id"]
+            return dict(self.session)
+        if path.startswith("/v1/checkout/sessions/"):
+            return dict(self.session, mode="subscription", status="complete", payment_status="paid",
+                        customer="cus_1", subscription="sub_1")
+        if path.startswith("/v1/subscriptions/"):
+            if method == "DELETE":
+                return dict(self.subscription, status="canceled", canceled_at=1800000000)
+            if params and params.get("cancel_at_period_end"):
+                return dict(self.subscription, cancel_at_period_end=True)
+            return dict(self.subscription)
+        raise AssertionError(path)
+
+
+class BillingTests:
+    """Pricing, sign-up, Stripe, School setup and the developer's controls (pricing.py, billing.py, school_setup.py)."""
+    CODE = "a-long-test-code-123"
+
+    def billing_app(self, **config):
+        self.stripe = FakeStripe()
+        self.mail = FakeMailer()
+        return self.school_app(name="billing", STRIPE=self.stripe, STRIPE_WEBHOOK_SECRET="whsec_test", MAILER=self.mail,
+                               SIGNUP_TEST_CODE=self.CODE, LOGIN_CODES=False, **config)
+
+    def sign_up(self, client, students=150, billing="monthly", terms=True, code="", email="founder@example.org"):
+        page = client.get("/signup")
+        data = {"csrf": csrf_of(page), "school": "Al-Noor Madrasah", "name": "Ustadha Maryam", "email": email,
+                "students": str(students), "billing": billing, "code": code}
+        if terms:
+            data["terms"] = "1"
+        return client.post("/signup", data=data)
+
+    def go(self, client, review_url):
+        page = client.get(review_url)
+        return page, client.post(review_url + "/go", data={"csrf": csrf_of(page)})
+
+    def control(self, app, sql, params=()):
+        with app.config["DB"].control.transaction() as tx:
+            return [dict(r) for r in tx.execute(sql, params).fetchall()]
+
+    def signed(self, payload, secret="whsec_test", at=None):
+        import hashlib
+        import hmac as _hmac
+        at = int(at or time.time())
+        mac = _hmac.new(secret.encode(), f"{at}.".encode() + payload, hashlib.sha256).hexdigest()
+        return {"Stripe-Signature": f"t={at},v1={mac},v0=ignored", "Content-Type": "application/json"}
+
+    def test_graduated_pricing_matches_the_brief(self):
+        import pricing
+        cfg = pricing.load("")
+        q = pricing.quote(cfg, 150)
+        self.assertEqual([(l["count"], l["pence"]) for l in q["lines"]], [(20, 0), (30, 30), (50, 25), (50, 20)])
+        self.assertEqual((q["monthly"], q["charge"], q["minimum_applied"]), (3150, 3150, False))
+        self.assertTrue(pricing.quote(cfg, 20)["free"])
+        small = pricing.quote(cfg, 21)  # 30p, lifted to the £10 minimum
+        self.assertEqual((small["subtotal"], small["monthly"], small["minimum_applied"]), (30, 1000, True))
+        self.assertEqual(pricing.quote(cfg, 55)["monthly"], 1025)
+        year = pricing.quote(cfg, 150, annual=True)
+        self.assertEqual((year["charge"], year["saving"], year["period"]), (31500, 6300, "year"))
+        self.assertEqual(pricing.quote(cfg, 750)["monthly"], 900 + 1250 + 2000 + 3000 + 4200)
+        self.assertTrue(pricing.quote(cfg, 751)["custom"])
+        self.assertEqual(pricing.quote(cfg, 751)["charge"], 0)
+        # Never a flat rate: one more student costs that student's band rate and nothing else.
+        for n in (50, 100, 200, 400):
+            self.assertEqual(pricing.quote(cfg, n + 1)["subtotal"] - pricing.quote(cfg, n)["subtotal"], pricing.rate_for(cfg, n + 1))
+        cards = {c["key"]: c for c in pricing.cards(cfg)}
+        self.assertEqual((cards["small"]["price"], cards["growing"]["price"], cards["large"]["price"]), ("£0.30", "£0.15", "Custom"))
+        # PRICING_JSON changes the numbers without a code change; nonsense falls back to the defaults.
+        changed = pricing.load(json.dumps({"minimum_monthly_pence": 0, "annual_months_free": 1}))
+        self.assertEqual((pricing.quote(changed, 21)["monthly"], pricing.quote(changed, 150, True)["charge"]), (30, 3150 * 11))
+        self.assertEqual(pricing.load('{"bands": [{"upto": 5, "pence": -1}]}'), pricing.load(""))
+        self.assertEqual(pricing.load("not json"), pricing.load(""))
+
+    def test_pricing_page_and_its_tab_are_public(self):
+        app = self.billing_app()
+        client = app.test_client()
+        welcome = client.get("/welcome").get_data(as_text=True)
+        self.assertIn('<a class="keep" href="/pricing">Pricing</a>', welcome)
+        page = client.get("/pricing")
+        text = page.get_data(as_text=True)
+        self.assertEqual(page.status_code, 200)
+        self.assertIn("script-src 'self'", page.headers["Content-Security-Policy"])
+        self.assertEqual(text.count('<li class="p-card'), 4)
+        self.assertEqual(text.count("Most popular"), 1)
+        for part in ("Get Started Free", "Small Madrasah", "Growing Madrasah", "Large Madrasah", "Contact Us", "£31.50",
+                     'data-config="{&#34;symbol&#34;', "751 and more", 'aria-current="page">Pricing'):
+            self.assertIn(part, text)
+        config = json.loads(html.unescape(re.search(r'data-config="([^"]+)"', text).group(1)))
+        self.assertEqual((config["minimum"], config["monthsFree"], config["max"], config["free"]), (1000, 2, 750, 20))
+        self.assertEqual(client.get("/pricing.css").mimetype, "text/css")
+        self.assertIn("ilmiQuote", client.get("/pricing.js").get_data(as_text=True))
+        terms = client.get("/terms").get_data(as_text=True)
+        for part in ("Terms and Conditions", "Limits on liability", "data protection", "England and Wales", "£0.30 each"):
+            self.assertIn(part, terms)
+
+    def test_sign_up_needs_the_terms_and_refuses_what_it_cannot_price(self):
+        app = self.billing_app()
+        client = app.test_client()
+        refused = self.sign_up(client, terms=False)
+        self.assertEqual(refused.status_code, 400)
+        self.assertIn("Tick the box to agree", refused.get_data(as_text=True))
+        self.assertIn("quotation", self.sign_up(client, students=751).get_data(as_text=True))
+        self.assertIn("can’t be used for a new madrasah", self.sign_up(client, email=ADMIN[0]).get_data(as_text=True))
+        self.assertIn("isn’t right", self.sign_up(client, code="wrong-code").get_data(as_text=True))
+        self.assertEqual(self.control(app, "SELECT COUNT(*) AS n FROM signups")[0]["n"], 0)
+        self.assertEqual(len(app.config["DB"].all()), 1)
+        # Without a Stripe key a paid plan can't be started, so nothing unpaid is ever made.
+        closed = self.school_app(name="nostripe")
+        self.assertIn("payment isn’t switched on", self.sign_up(closed.test_client()).get_data(as_text=True))
+        shut = self.school_app(name="shut", SIGNUP_OPEN=False).test_client()
+        self.assertIn("Sign-up opens soon", shut.get("/signup").get_data(as_text=True))
+        self.assertIn("Sign-up opens soon", shut.post("/signup", data={"school": "X"}).get_data(as_text=True))
+
+    def test_free_sign_up_makes_a_school_and_emails_the_invite(self):
+        app = self.billing_app()
+        client = app.test_client()
+        sent = self.sign_up(client, students=18)
+        self.assertEqual(sent.status_code, 303)
+        review, made = self.go(client, sent.headers["Location"])
+        self.assertIn("Create my madrasah", review.get_data(as_text=True))
+        self.assertEqual(self.stripe.calls, [])
+        # A free school is finished from the email, so nobody can make one in someone else's name.
+        self.assertIn("Check your email", made.get_data(as_text=True))
+        schools_now = app.config["DB"].all()
+        self.assertEqual([s["name"] for s in schools_now], ["First school", "Al-Noor Madrasah"])
+        sub = self.control(app, "SELECT * FROM subscriptions")[0]
+        self.assertEqual((sub["plan"], sub["status"], sub["students"], sub["amount_pence"], sub["terms_accepted_by"]),
+                         ("free", "active", 18, 0, "founder@example.org"))
+        signup = self.control(app, "SELECT * FROM signups")[0]
+        self.assertEqual((signup["status"], signup["school_id"]), ("done", sub["school_id"]))
+        self.assertTrue(signup["terms_version"] and signup["terms_accepted_at"] and signup["ip"])
+        # Pressing the button again makes nothing more.
+        self.assertEqual(client.get(sent.headers["Location"]).status_code, 303)
+        self.assertEqual(len(app.config["DB"].all()), 2)
+        # The invite leads to a password, and the first sign-in to School setup.
+        link = self.mail.link()
+        page = client.get(link)
+        chosen = client.post(link, data={"csrf": csrf_of(page), "password": "olive paper ink 2026", "confirm": "olive paper ink 2026"})
+        self.assertEqual(chosen.status_code, 302)
+        self.assertEqual(client.get("/").headers["Location"], "/admin/setup")
+        setup = client.get("/admin/setup")
+        self.assertIn("Welcome to Ilmi", setup.get_data(as_text=True))
+        done = client.post("/admin/setup/finish", data={"csrf": csrf_of(setup), "to": "upload"})
+        self.assertEqual(done.headers["Location"], "/#classes")
+        self.assertEqual(client.get("/").status_code, 200)
+
+    def test_paid_sign_up_goes_through_stripe_once(self):
+        app = self.billing_app()
+        client = app.test_client()
+        sent = self.sign_up(client, students=150, billing="annual")
+        review, paid = self.go(client, sent.headers["Location"])
+        self.assertIn("Pay £315.00 with Stripe", review.get_data(as_text=True))
+        self.assertIn("https://checkout.stripe.com", review.headers["Content-Security-Policy"])
+        self.assertEqual((paid.status_code, paid.headers["Location"]), (303, self.stripe.session["url"]))
+        method, path, params = self.stripe.calls[0]
+        item = params["line_items"][0]["price_data"]
+        self.assertEqual((method, path, params["mode"], params["customer_email"]), ("POST", "/v1/checkout/sessions", "subscription", "founder@example.org"))
+        self.assertEqual((item["unit_amount"], item["currency"], item["recurring"]["interval"]), (31500, "gbp", "year"))
+        self.assertIn("{CHECKOUT_SESSION_ID}", params["success_url"])
+        # Nothing exists until Stripe says it is paid.
+        self.assertEqual(len(app.config["DB"].all()), 1)
+        token = sent.headers["Location"].rsplit("/", 1)[1]
+        # Somebody else's session id on the address counts for nothing.
+        self.assertEqual(client.get(f"/signup/{token}/done?session_id=cs_other").status_code, 202)
+        self.assertEqual(len(app.config["DB"].all()), 1)
+        # Stripe's webhook arrives first: a bad signature is refused, a good one makes the school.
+        event = json.dumps({"id": "evt_1", "type": "checkout.session.completed", "data": {"object": dict(
+            self.stripe.session, mode="subscription", status="complete", payment_status="paid", customer="cus_1",
+            subscription="sub_1")}}).encode()
+        self.assertEqual(client.post("/stripe/webhook", data=event, headers=self.signed(event, "whsec_wrong")).status_code, 400)
+        self.assertEqual(client.post("/stripe/webhook", data=event, headers=self.signed(event, at=time.time() - 3600)).status_code, 400)
+        self.assertEqual(len(app.config["DB"].all()), 1)
+        self.assertEqual(client.post("/stripe/webhook", data=event, headers=self.signed(event)).status_code, 200)
+        again = client.post("/stripe/webhook", data=event, headers=self.signed(event))
+        self.assertEqual(again.get_json(), {"received": True, "repeat": True})
+        self.assertEqual(len(app.config["DB"].all()), 2)
+        sub = self.control(app, "SELECT * FROM subscriptions")[0]
+        self.assertEqual((sub["plan"], sub["billing"], sub["amount_pence"], sub["stripe_customer"], sub["stripe_subscription"]),
+                         ("paid", "annual", 31500, "cus_1", "sub_1"))
+        # The browser comes back after the webhook: no second school, and straight on to choosing a password.
+        back = client.get(f"/signup/{token}/done?session_id=cs_test_1")
+        self.assertEqual(back.status_code, 303)
+        self.assertIn("/invite/2.", back.headers["Location"])
+        self.assertEqual(len(app.config["DB"].all()), 2)
+        self.assertEqual(client.get("/invite/" + back.headers["Location"].split("/invite/")[1]).status_code, 200)
+        self.assertEqual(client.get(self.mail.link()).status_code, 200)  # the emailed link still works too
+        # Stripe says the subscription ended; the developer's tile shows it.
+        ended = json.dumps({"id": "evt_2", "type": "customer.subscription.deleted", "data": {"object": dict(self.stripe.subscription)}}).encode()
+        self.assertEqual(client.post("/stripe/webhook", data=ended, headers=self.signed(ended)).status_code, 200)
+        self.assertEqual(self.control(app, "SELECT status FROM subscriptions")[0]["status"], "canceled")
+
+    def test_browser_returning_from_stripe_makes_the_school_without_the_webhook(self):
+        app = self.billing_app()
+        client = app.test_client()
+        sent = self.sign_up(client, students=60)
+        self.go(client, sent.headers["Location"])
+        back = client.get(sent.headers["Location"] + "/done?session_id=cs_test_1")
+        self.assertEqual(back.status_code, 303)
+        self.assertIn("/invite/2.", back.headers["Location"])
+        sub = self.control(app, "SELECT * FROM subscriptions")[0]
+        self.assertEqual((sub["amount_pence"], sub["stripe_subscription"]), (900 + 250, "sub_1"))
+
+    def test_test_code_skips_payment(self):
+        app = self.billing_app()
+        client = app.test_client()
+        sent = self.sign_up(client, students=300, code=self.CODE)
+        review, made = self.go(client, sent.headers["Location"])
+        self.assertIn("Test, never charged", review.get_data(as_text=True))
+        self.assertEqual(made.status_code, 303)
+        self.assertIn("/invite/2.", made.headers["Location"])
+        self.assertEqual(self.stripe.calls, [])
+        self.assertEqual(self.control(app, "SELECT plan, amount_pence FROM subscriptions"), [{"plan": "test", "amount_pence": 0}])
+        # A code shorter than 12 characters is ignored at startup, so a guessable one can't be set by mistake.
+        weak = self.school_app(name="weak", SIGNUP_TEST_CODE="1234")
+        self.assertIn("isn’t right", self.sign_up(weak.test_client(), code="1234").get_data(as_text=True))
+
+    def make_school(self, app, students=18, code=""):
+        """Signs a school up and signs its admin in. Returns (school_id, the admin's client)."""
+        client = app.test_client()
+        sent = self.sign_up(client, students=students, code=code)
+        self.go(client, sent.headers["Location"])
+        link = self.mail.link()
+        page = client.get(link)
+        client.post(link, data={"csrf": csrf_of(page), "password": "olive paper ink 2026", "confirm": "olive paper ink 2026"})
+        setup = client.get("/admin/setup")
+        client.post("/admin/setup/finish", data={"csrf": csrf_of(setup)})
+        return self.control(app, "SELECT school_id FROM subscriptions")[0]["school_id"], client
+
+    def test_developer_suspends_a_school_and_lifts_it(self):
+        app = self.billing_app()
+        school_id, admin = self.make_school(app)
+        self.assertEqual(admin.get("/").status_code, 200)
+        developer = self.sign_in(*DEVELOPER, app=app)
+        tiles = developer.get("/schools").get_data(as_text=True)
+        for part in ("Suspend school", "Recalculate from active students", "Cancel subscription", "Stripe test mode", ">Free<"):
+            self.assertIn(part, tiles)
+        token = csrf_of(developer.get("/schools"))
+        unsure = developer.post(f"/schools/{school_id}/suspend", data={"csrf": token, "reason": "Unpaid"})
+        self.assertEqual(unsure.status_code, 400)
+        self.assertEqual(admin.get("/").status_code, 200)
+        done = developer.post(f"/schools/{school_id}/suspend", data={"csrf": token, "reason": "Unpaid", "confirm": "1"})
+        self.assertIn("is suspended", done.get_data(as_text=True))
+        self.assertIn("Reason: Unpaid", done.get_data(as_text=True))
+        # Its staff are signed out, and signing in again only reaches the notice.
+        self.assertEqual(admin.get("/").headers["Location"], "/welcome")
+        again = self.sign_in("founder@example.org", "olive paper ink 2026", app=app)
+        blocked = again.get("/")
+        self.assertEqual(blocked.status_code, 403)
+        self.assertIn("This account is suspended", blocked.get_data(as_text=True))
+        self.assertEqual(again.get("/api/classes", headers=self.headers).status_code, 403)
+        self.assertEqual(again.get("/pricing").status_code, 200)
+        # The first school is untouched, and the developer can still open the suspended one.
+        self.assertEqual(self.client.get("/").status_code, 200)
+        self.open_school(developer, school_id)
+        self.assertEqual(developer.get("/").status_code, 200)
+        lifted = developer.post(f"/schools/{school_id}/unsuspend", data={"csrf": token})
+        self.assertIn("no longer suspended", lifted.get_data(as_text=True))
+        self.assertEqual(again.get("/").status_code, 200)
+        # Only the developer has these buttons.
+        self.assertEqual(again.post(f"/schools/{school_id}/suspend", data={"csrf": csrf_of(again.get("/account")), "confirm": "1"}).status_code, 404)
+
+    def test_developer_cancels_and_recalculates_a_subscription(self):
+        app = self.billing_app()
+        client = app.test_client()
+        sent = self.sign_up(client, students=60)
+        self.go(client, sent.headers["Location"])
+        client.get(sent.headers["Location"] + "/done?session_id=cs_test_1")
+        school_id = self.control(app, "SELECT school_id FROM subscriptions")[0]["school_id"]
+        # 120 current students in two classes, one of them enrolled in both, and one who has left.
+        def student(i):
+            return self.student(f"Student {i}", sid=f"ST{i}")
+        with app.config["DB"].get(school_id).transaction() as tx:
+            a = dict(self.state, S=[student(i) for i in range(70)], X=[dict(student(900), left="2026-10-01")])
+            b = dict(self.state, name="Yr4-B", S=[student(i) for i in range(69, 120)])
+            tx.execute("INSERT INTO classrooms VALUES ('a', ?, 1)", (json.dumps(a),))
+            tx.execute("INSERT INTO classrooms VALUES ('b', ?, 1)", (json.dumps(b),))
+        with app.test_request_context():
+            import billing
+            self.assertEqual(billing.active_students(school_id), 120)
+        developer = self.sign_in(*DEVELOPER, app=app)
+        token = csrf_of(developer.get("/schools"))
+        self.stripe.calls.clear()
+        synced = developer.post(f"/schools/{school_id}/subscription/sync", data={"csrf": token})
+        self.assertIn("has 120 active students. From its next renewal it pays £25.50", synced.get_data(as_text=True))
+        update = self.stripe.calls[-1]
+        self.assertEqual((update[0], update[1], update[2]["proration_behavior"]), ("POST", "/v1/subscriptions/sub_1", "none"))
+        self.assertEqual(update[2]["items"][0]["price_data"], {"currency": "gbp", "product": "prod_1", "unit_amount": 2550,
+                                                              "recurring": {"interval": "month"}})
+        self.assertEqual(update[2]["items"][0]["id"], "si_1")
+        self.assertEqual(self.control(app, "SELECT students, amount_pence FROM subscriptions"), [{"students": 120, "amount_pence": 2550}])
+        later = developer.post(f"/schools/{school_id}/subscription/cancel", data={"csrf": token, "when": "period_end", "confirm": "1"})
+        self.assertIn("ends when the period it has paid for does", later.get_data(as_text=True))
+        self.assertEqual(self.stripe.calls[-1], ("POST", "/v1/subscriptions/sub_1", {"cancel_at_period_end": True}))
+        self.assertEqual(self.control(app, "SELECT status, cancel_at_period_end FROM subscriptions"), [{"status": "active", "cancel_at_period_end": 1}])
+        now = developer.post(f"/schools/{school_id}/subscription/cancel", data={"csrf": token, "when": "now", "confirm": "1"})
+        self.assertIn("cancelled as of now", now.get_data(as_text=True))
+        self.assertEqual(self.stripe.calls[-1][:2], ("DELETE", "/v1/subscriptions/sub_1"))
+        self.assertEqual(self.control(app, "SELECT status FROM subscriptions")[0]["status"], "canceled")
+        # Cancelling doesn't lock the school.
+        self.assertFalse(self.control(app, "SELECT suspended_at FROM schools WHERE id = ?", (school_id,))[0]["suspended_at"])
+
+    def test_school_setup_changes_houses_parts_and_links(self):
+        app = self.billing_app()
+        school_id, admin = self.make_school(app)
+        me = self.me(admin)
+        self.assertEqual((me["houses"], me["hp"]), (["Makkah", "Al-Aqsa", "Madinah"], True))
+        home = admin.get("/").get_data(as_text=True)
+        self.assertNotIn("journey2jannah", home)  # a new school starts with no links of another school's
+        self.assertIn("journey2jannah", self.client.get("/").get_data(as_text=True))  # the first school keeps its own
+        with app.config["DB"].get(school_id).transaction() as tx:
+            state = dict(self.state, S=[dict(self.student("Aisha"), house="Makkah"), dict(self.student("Bilal"), house="Madinah")])
+            tx.execute("INSERT INTO classrooms VALUES ('a', ?, 1)", (json.dumps(state),))
+            tx.execute("INSERT INTO house_points (house, coin, n, note, given_at) VALUES ('Makkah', 'tg', 2, 'x', 1)")
+
+        def save(step, data):
+            page = admin.get(f"/admin/setup?step={step}")
+            return admin.post(f"/admin/setup/{step}", data=dict(data, csrf=csrf_of(page), then="stay"))
+        bad = save("houses", {"houses_on": "1", "house_points": "1", "house": ["Red", "red", ""]})
+        self.assertIn("Two houses are both called", bad.get_data(as_text=True))
+        self.assertEqual(save("houses", {"houses_on": "1", "house_points": "1", "house": ["Red", "Blue Team", "Green", "Gold"]}).status_code, 303)
+        me = self.me(admin)
+        self.assertEqual(me["houses"], ["Red", "Blue Team", "Green", "Gold"])
+        with app.config["DB"].get(school_id).transaction() as tx:
+            saved = json.loads(tx.execute("SELECT json FROM classrooms").fetchone()["json"])
+            coins = [dict(r) for r in tx.execute("SELECT house FROM house_points").fetchall()]
+        self.assertEqual([s["house"] for s in saved["S"]], ["Red", "Green"])
+        self.assertEqual(coins, [{"house": "Red"}])
+        self.assertEqual(admin.get("/api/houses").get_json(), {"Red": 10, "Blue Team": 0, "Green": 0, "Gold": 0})
+        # The new names are what a save may carry; the old ones are refused.
+        ok = dict(saved, S=[dict(saved["S"][0], house="Blue Team")] + saved["S"][1:])
+        self.assertEqual(admin.put("/api/classes/a", json={"json": json.dumps(ok), "revision": 2}, headers=self.headers).status_code, 200)
+        old = dict(saved, S=[dict(saved["S"][0], house="Makkah")] + saved["S"][1:])
+        self.assertEqual(admin.put("/api/classes/a", json={"json": json.dumps(old), "revision": 3}, headers=self.headers).status_code, 400)
+        # Houses off: gone from the dashboard, nothing deleted, and saving still works.
+        save("houses", {"houses_on": "0"})
+        me = self.me(admin)
+        self.assertEqual((me["houses"], me["hp"]), ([], False))
+        self.assertIn('class="has-dock no-houses no-hp', admin.get("/").get_data(as_text=True))
+        self.assertEqual(admin.get("/admin/house-points").status_code, 404)
+        self.assertEqual(admin.put("/api/classes/a", json={"json": json.dumps(ok), "revision": 3}, headers=self.headers).status_code, 200)
+        save("houses", {"houses_on": "1", "house": ["Red", "Blue Team", "Green", "Gold"]})  # houses, but no points
+        me = self.me(admin)
+        self.assertEqual((len(me["houses"]), me["hp"]), (4, False))
+        # Parts of Ilmi a school leaves out.
+        self.assertEqual(admin.get("/admin/tv").status_code, 200)
+        save("options", {"module_finance": "1", "module_volunteers": "1"})
+        self.assertEqual(admin.get("/admin/tv").status_code, 404)
+        self.assertEqual(admin.get("/tv").status_code, 404)
+        self.assertEqual(self.me(admin)["mods"], {"finance": True, "presenter": False, "volunteers": True, "assistant": False})
+        self.assertEqual(self.client.get("/admin/tv").status_code, 200)  # another school's choice changes nothing here
+        # Links.
+        self.assertIn("needs a web address", save("links", {"label": ["Site"], "url": ["javascript:alert(1)"]}).get_data(as_text=True))
+        save("links", {"label": ["Our <site>", ""], "url": ["alnoor.example.org/a?b=1&c=2", ""]})
+        home = admin.get("/").get_data(as_text=True)
+        self.assertIn('href="https://alnoor.example.org/a?b=1&amp;c=2" target="_blank" rel="noopener noreferrer"', home)
+        self.assertIn("Our &lt;site&gt;", home)
+        self.assertIn("Our &lt;site&gt;", admin.get("/admin/users").get_data(as_text=True))
+        # The look new accounts start with.
+        save("look", {"theme": "coral"})
+        page = admin.get("/admin/users")
+        admin.post("/admin/users/invite", data={"csrf": csrf_of(page), "name": "Sr Zainab", "email": "zainab@example.org", "role": "teacher"})
+        with app.config["DB"].get(school_id).transaction() as tx:
+            self.assertEqual({r["theme"] for r in tx.execute("SELECT theme FROM users WHERE developer = 0").fetchall()}, {"coral"})
+
+    def test_excel_student_lists_become_csv_for_the_uploader(self):
+        from openpyxl import Workbook
+        from datetime import date as day
+        book = Workbook()
+        sheet = book.active
+        sheet.append(["Student ID", "Student Name", "Current Teacher [Quran and Memorisation]", "Date of birth", "Year"])
+        sheet.append(["ST001", "Aisha, Khan", "Yr3-A-QM-Br Ahmed", day(2015, 3, 12), 3.0])
+        sheet.append([None, None, None, None, None])
+        sheet.append(["ST002", "Yusuf Ali", "Yr4-B-QM-Sr Zainab", None, 4])
+        out = io.BytesIO()
+        book.save(out)
+        import base64
+        sent = self.client.post("/api/students/xlsx", json={"file": base64.b64encode(out.getvalue()).decode()}, headers=self.headers)
+        self.assertEqual(sent.status_code, 200)
+        self.assertEqual(sent.get_json()["csv"].split("\n")[:3], [
+            "Student ID,Student Name,Current Teacher [Quran and Memorisation],Date of birth,Year",
+            'ST001,"Aisha, Khan",Yr3-A-QM-Br Ahmed,12/03/2015,3', "ST002,Yusuf Ali,Yr4-B-QM-Sr Zainab,,4"])
+        bad = self.client.post("/api/students/xlsx", json={"file": base64.b64encode(b"not a workbook").decode()}, headers=self.headers)
+        self.assertEqual(bad.status_code, 400)
+        self.assertIn("Excel", bad.get_json()["error"])
+        self.add_user("t@example.com")
+        teacher = self.sign_in("t@example.com", "teacher-password-1")
+        self.assertEqual(teacher.post("/api/students/xlsx", json={"file": ""}, headers=self.headers).status_code, 403)
+
+
+class SQLiteTest(BillingTests, SchoolTests, AssistantTests, DashboardTests, unittest.TestCase):
     def database_url(self):
         return ""
 
@@ -3951,7 +4355,7 @@ class SQLiteTest(SchoolTests, AssistantTests, DashboardTests, unittest.TestCase)
 
 
 @unittest.skipUnless(os.environ.get("TEST_DATABASE_URL"), "set TEST_DATABASE_URL to test PostgreSQL")
-class PostgresTest(SchoolTests, AssistantTests, DashboardTests, unittest.TestCase):
+class PostgresTest(BillingTests, SchoolTests, AssistantTests, DashboardTests, unittest.TestCase):
     def database_url(self):
         url = os.environ["TEST_DATABASE_URL"]
         schema = "test_" + uuid.uuid4().hex

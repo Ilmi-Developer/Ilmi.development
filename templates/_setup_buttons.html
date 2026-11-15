@@ -1,0 +1,6 @@
+<div class="st-acts">
+  {% if prev %}<a class="btn" href="/admin/setup?step={{ prev }}">Back</a>{% endif %}
+  <span class="sp"></span>
+  {% if first_time %}<button class="btn primary" name="then" value="next">Save and continue</button>
+  {% else %}<button class="btn" name="then" value="next">Save and go to the next page</button><button class="btn primary" name="then" value="stay">Save</button>{% endif %}
+</div>

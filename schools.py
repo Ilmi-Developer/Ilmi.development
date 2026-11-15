@@ -399,11 +399,17 @@ def summary(school):
 
 
 def schools_page(status=200, **context):
-    tiles = [summary(row) for row in router().all()]
+    import billing  # it imports this module
+    facts = billing.info()
+    none = {"suspended": False, "suspended_at": None, "suspended_reason": "", "sub": None}
+    tiles = [dict(summary(row), bill=facts.get(row["id"], none)) for row in router().all()]
     context.setdefault("manage_open", None)
     # A problem with a pop-up's form is said inside that pop-up, which stays open, and not behind it as well.
     if context.get("error") and (context.get("new_open") or context["manage_open"]):
         context["pop_error"] = context.pop("error")
+    context.setdefault("payments_on", billing.stripe().enabled)
+    context.setdefault("payments_live", billing.stripe().live)
+    context.setdefault("test_code_on", bool(current_app.config.get("SIGNUP_TEST_CODE")))
     return auth.page("schools.html", status, schools=tiles, name_max=NAME_MAX, invite_hours=auth.INVITE_TTL // auth.HOUR,
                      opened=g.developer["school_id"], **context)
 

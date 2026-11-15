@@ -1,0 +1,25 @@
+{% extends "_public.html" %}
+{# What happens next for a sign-up whose browser isn't taken straight on (billing._after). #}
+{% block title %}{{ {"email": "Check your email", "waiting": "Confirming your payment", "expired": "This sign-up has expired", "problem": "We need to finish this by hand"}[state] }}{% endblock %}
+{% block head %}{% if state == "waiting" %}<meta http-equiv="refresh" content="4">{% endif %}{% endblock %}
+{% block content %}
+<div class="su one"><div class="su-card">
+  {% if state == "email" %}
+  <h1>Check your email</h1>
+  <p class="su-lede">{{ row.school_name }} is ready. We’ve sent a link to <b>{{ row.email }}</b> to choose your password. It works once and expires in 72 hours.</p>
+  <p class="su-fine">Nothing arrived? Look in junk, then use <a class="tl" href="/forgot">Forgotten your password?</a> with the same email to get a new link.</p>
+  {% elif state == "waiting" %}
+  <h1>Confirming your payment</h1>
+  <p class="su-lede">This takes a few seconds. The page checks again by itself; you don’t need to pay again.</p>
+  <p><a class="wbtn ghost" href="/signup/{{ token }}/done">Check now</a></p>
+  <p class="su-fine">If you closed Stripe’s page before paying, <a class="tl" href="/signup/{{ token }}">go back to the price</a>. Nothing has been charged.</p>
+  {% elif state == "problem" %}
+  <h1>We need to finish this by hand</h1>
+  <p class="su-lede">Your sign-up went through, but your madrasah couldn’t be made automatically, usually because the email address got an Ilmi account elsewhere in the meantime. {% if contact %}Email <a class="tl" href="mailto:{{ contact }}">{{ contact }}</a> and we’ll put it right, including any payment.{% else %}Contact us and we’ll put it right, including any payment.{% endif %}</p>
+  {% else %}
+  <h1>This sign-up has expired</h1>
+  <p class="su-lede">Sign-up links last 24 hours, and prices are checked again at the last step. Nothing was charged.</p>
+  <p><a class="wbtn" href="/signup?students={{ row.students }}">Start again</a></p>
+  {% endif %}
+</div></div>
+{% endblock %}

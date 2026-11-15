@@ -1,0 +1,45 @@
+{% extends "_public.html" %}
+{# The price for this sign-up, worked out by the server (pricing.quote), and the one button that goes ahead. #}
+{% block title %}Check and confirm{% endblock %}
+{% block content %}
+<div class="su">
+  <div>
+    <h1>Check and confirm</h1>
+    <p class="su-lede">{% if row.plan == "paid" %}Payment is taken on Stripe’s secure page. Ilmi never sees your card details.{% elif row.plan == "test" %}This is a test madrasah made with an access code. Nothing is charged.{% else %}Your madrasah is within the free allowance, so there is nothing to pay.{% endif %}</p>
+    {% if error %}<p class="su-msg bad" role="alert">{{ error }}</p>{% endif %}
+    <div class="su-card">
+      {% if row.plan == "test" %}<span class="su-test">Test, never charged</span>{% elif test_mode and row.plan == "paid" %}<span class="su-test">Stripe test mode</span>{% endif %}
+      <dl class="su-dl">
+        <dt>Madrasah</dt><dd>{{ row.school_name }}</dd>
+        <dt>Admin</dt><dd>{{ row.admin_name }}, {{ row.email }}</dd>
+        <dt>Active students</dt><dd>{{ row.students }}</dd>
+        {% if row.plan == "paid" %}<dt>Billing</dt><dd>{{ "Annual" if row.billing == "annual" else "Monthly" }}, renewing until cancelled</dd>{% endif %}
+      </dl>
+      <form method="post" action="/signup/{{ token }}/go">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <button class="wbtn">{{ "Pay " ~ money(quote.charge, true) ~ " with Stripe" if row.plan == "paid" else "Create my madrasah" }}<svg class="arr" viewBox="0 0 20 12" aria-hidden="true" focusable="false"><path d="M1 6h17M13 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </form>
+      <p class="su-fine">You agreed to the <a class="tl" href="/terms" target="_blank" rel="noopener">Terms and Conditions</a> (version {{ row.terms_version }}) on the last page. Not right? <a class="tl" href="/signup?students={{ row.students }}">Start again</a>.</p>
+    </div>
+  </div>
+  <aside class="su-side">
+    <h2>{{ "Your price" if row.plan == "paid" else "Nothing to pay" }}</h2>
+    {% if row.plan == "paid" %}
+    <p class="p-total"><b>{{ money(quote.charge, true) }}</b> <span>{{ "per year" if row.billing == "annual" else "per month" }}</span></p>
+    <table class="p-break">
+      <caption>How it is worked out</caption>
+      <tbody>
+      {% for l in quote.lines %}<tr><th scope="row">Students {{ l.from }} to {{ l.from + l.count - 1 }}</th><td>{{ l.count }} × {{ "free" if not l.pence else money(l.pence, true) }}</td><td>{{ money(l.subtotal, true) }}</td></tr>{% endfor %}
+      {% if quote.minimum_applied %}<tr class="min"><th scope="row">Smallest monthly charge</th><td></td><td>{{ minimum }}</td></tr>{% endif %}
+      </tbody>
+      <tfoot><tr><th scope="row">Each month</th><td></td><td>{{ money(quote.monthly, true) }}</td></tr>
+      {% if row.billing == "annual" %}<tr><th scope="row">Each year ({{ 12 - months_free }} months)</th><td></td><td>{{ money(quote.annual, true) }}</td></tr>{% endif %}</tfoot>
+    </table>
+    <ul><li>Your price is recalculated from your active students at each renewal.</li><li>Cancel at any time; your plan runs to the end of the period you have paid for.</li></ul>
+    {% else %}
+    <p class="p-total"><b>{{ "Free" }}</b></p>
+    <ul><li>{{ "A test madrasah for trying Ilmi end to end." if row.plan == "test" else "Free while you have " ~ quote.lines[0].to ~ " active students or fewer." }}</li><li>No card is asked for.</li></ul>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

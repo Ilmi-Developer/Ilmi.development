@@ -25,6 +25,8 @@ from datetime import date
 from pathlib import Path
 from urllib.parse import quote
 
+import flask
+from html import escape as html_escape
 from flask import Flask, Response, abort, g, jsonify, redirect, request
 from werkzeug.exceptions import HTTPException, InternalServerError
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -45,6 +47,10 @@ import volunteers
 import finance
 import schools
 import tv
+import pricing
+import billing
+import school_config
+import school_setup
 from db import DB_ERRORS
 from mailer import Mailer
 
@@ -70,7 +76,9 @@ TOKEN_POINTS = {"tg": 5, "tb": 20, "tr": 50}  # green, blue, red (book completio
 HOUSE_POINT_REASONS = {"bk": "tr", "lv": "tb", "hw": "tg", "ec": "tg", "cp": "tg"}
 # Reachable without signing in. /welcome is Ilmi's start page, where anyone signed out arrives.
 PUBLIC = {"/login", "/login/code", "/forgot", "/healthz", "/logo.png", "/auth.css", "/intro.js", "/code.js", "/pwreveal.js", "/favicon.png",
-          "/favicon.ico", "/welcome", "/welcome.css", "/welcome.js", "/wash.js", "/glass.js", "/glass.css"}
+          "/favicon.ico", "/welcome", "/welcome.css", "/welcome.js", "/wash.js", "/glass.js", "/glass.css",
+          # The pricing page, sign-up, the terms and Stripe's webhook (pricing.py, billing.py).
+          "/pricing", "/pricing.css", "/pricing.js", "/signup", "/terms", "/stripe/webhook"}
 # Atkinson Hyperlegible Next stays for the TV display; the dashboard and admin pages use Nunito for text, Fraunces
 # (soft) for the wordmark, titles, figures and large italic lines (both made by tools/art/type.py), and Amiri for Arabic:
 # the letters of علمي for the name, and the start page's hadith and values in a second subset (see DESIGN.md and
@@ -84,7 +92,50 @@ ART = {"paper.webp", "wash-band.webp", "wash-cloud.webp", "wash-low.webp", "wash
 # pages can load them before any school is open.
 SHELL_FILES = {"/developer.css", "/menu.js", "/dock.js", "/warm-tooltip.js", "/avatar.js", "/theme.js"}
 # /tv/<token> is a TV screen link; tv.py checks the token.
-PUBLIC_PREFIXES = ("/invite/", "/reset/", "/tv/", "/present/", "/fonts/", "/art/")
+PUBLIC_PREFIXES = ("/invite/", "/reset/", "/tv/", "/present/", "/fonts/", "/art/", "/signup/")
+# Parts of Ilmi a school can leave out (school_config.MODULES), and the pages each one has. A school with a part
+# switched off gets "Page not found" there, whoever asks.
+MODULE_PATHS = {"finance": ("/finance",), "volunteers": ("/api/volunteers",),
+                "presenter": ("/tv", "/api/tv", "/presenter/", "/present/", "/api/presenter/", "/admin/tv"),
+                "assistant": ("/api/assistant", "/admin/requests")}
+# House points pages, shut when a school has no houses or doesn't count points.
+HOUSE_POINT_PATHS = ("/admin/house-points", "/api/house-extra", "/admin/set-houses")
+
+
+# The menu's Links group in the built dashboard, between two markers (src/page.html): group 1 is one link, kept as
+# the pattern the school's own links are drawn from.
+LINKS_BLOCK = re.compile(r"<!--LINKS-->(.*?)<!--/LINKS-->", re.S)
+LINK_ITEM = re.compile(r'<a class="nav nsub" href="[^"]*" target="_blank"[^>]*>.*?</a>', re.S)
+
+
+def menu_links(built, links):
+    """The Links group for this school: each link drawn like the first one the page was built with; no group at all
+    for a school with no links."""
+    if not links:
+        return ""
+    first = LINK_ITEM.search(built)
+    if not first:
+        return built
+    item = first.group(0)
+    icon = re.search(r"<svg.*?</svg>", item, re.S)
+    drawn = "".join(
+        f'<a class="nav nsub" href="{html_escape(link["url"], quote=True)}" target="_blank" rel="noopener noreferrer">'
+        f'{icon.group(0) if icon else ""}<span translate="no">{html_escape(link["label"])}</span>'
+        '<span class="ext" aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a>'
+        for link in links)
+    return built[:LINK_ITEM.search(built).start()] + drawn + built[[m.end() for m in LINK_ITEM.finditer(built)][-1]:]
+
+
+def school_classes(config):
+    """Classes on <html> that hide what a school doesn't use (src/template.css)."""
+    return ("" if school_config.houses(config) else " no-houses") + ("" if school_config.house_points_on(config) else " no-hp")
+
+
+def house_names():
+    """The current school's house names; Ilmi's defaults outside a request."""
+    if flask.has_request_context() and "DB" in flask.current_app.config:
+        return tuple(school_config.get()["houses"])
+    return HOUSES
 
 
 def coins(state):
@@ -178,7 +229,9 @@ def valid_student(student, levels, juz_items):
     if not isinstance(stars, list) or not all(isinstance(d, str) and DAY.fullmatch(d) for d in stars):
         return False
     # House points: the student's house (from the CSV) and the times each token was given.
-    if student.get("house", "") not in ("",) + HOUSES:
+    # The school's own house names (school_config.py); they stay valid while houses are switched off, so a save
+    # never fails over a house a student already has.
+    if student.get("house", "") not in ("",) + house_names():
         return False
     for key in TOKEN_POINTS:
         tokens = student.get(key, [])
@@ -267,6 +320,8 @@ LOGIN_CSP = PAGE_CSP.replace("img-src 'self'", GLASS_IMG) + "; script-src 'self'
 # The emailed sign-in code page (sent from POST /login and POST /login/code) runs /code.js, the animated code boxes,
 # which sends the finished code with fetch so the boxes can show whether it was right before the page moves on.
 CODE_CSP = LOGIN_CSP + "; connect-src 'self'"
+# Sign-up's last step sends the browser on to Stripe's hosted payment page (billing.py), so its forms may end there.
+SIGNUP_CSP = LOGIN_CSP.replace("form-action 'self'", "form-action 'self' https://checkout.stripe.com")
 # The Account page runs /avatar.js, the profile picture cropper, which shows the chosen photo from a blob: address
 # and sends the cropped picture with fetch.
 ACCOUNT_CSP = PAGE_CSP.replace("img-src 'self'", GLASS_IMG + " blob:") + "; script-src 'self'; connect-src 'self'"
@@ -367,6 +422,18 @@ def create_app(test_config=None):
         ASSISTANT_PROVIDER=os.environ.get("ASSISTANT_PROVIDER", "").strip(),
         ASSISTANT_LOG_DAYS=int(os.environ.get("ASSISTANT_LOG_DAYS", "90")),
         # Each teacher's and HeadTeacher's daily token allowance for the assistant; 0 turns it off.
+        # Prices, sign-up and Stripe (pricing.py, billing.py). Without STRIPE_SECRET_KEY nothing is ever charged and
+        # paid sign-ups say payment isn't available yet. STRIPE_WEBHOOK_SECRET is the signing secret of the webhook
+        # endpoint /stripe/webhook. SIGNUP_TEST_CODE, when set, is a code that skips payment on the sign-up form.
+        # SIGNUPS=off closes sign-up altogether. PRICING_JSON replaces any of pricing.DEFAULTS.
+        STRIPE_SECRET_KEY=os.environ.get("STRIPE_SECRET_KEY", "").strip(),
+        STRIPE_WEBHOOK_SECRET=os.environ.get("STRIPE_WEBHOOK_SECRET", "").strip(),
+        SIGNUP_TEST_CODE=os.environ.get("SIGNUP_TEST_CODE", "").strip(),
+        SIGNUP_OPEN=os.environ.get("SIGNUPS", "on").strip().lower() not in ("0", "off", "false", "no"),
+        PRICING_JSON=os.environ.get("PRICING_JSON", ""),
+        SALES_EMAIL=os.environ.get("SALES_EMAIL", "").strip(),
+        LEGAL_NAME=os.environ.get("LEGAL_NAME", "").strip(),
+        LEGAL_ADDRESS=os.environ.get("LEGAL_ADDRESS", "").strip(),
         ASSISTANT_DAILY_TOKENS=int(os.environ.get("ASSISTANT_DAILY_TOKENS", str(assistant.DAILY_TOKENS))),
     )
     if test_config:
@@ -383,6 +450,12 @@ def create_app(test_config=None):
     database.index_emails(auth.norm_email(app.config["DEVELOPER_EMAIL"]))
     auth.reset_admin(database, app.config["ADMIN_EMAIL"], app.config["ADMIN_RESET_PASSWORD"])
     app.config["DB"] = database
+    app.config["ROOT"] = ROOT
+    app.config["PRICING"] = pricing.load(app.config["PRICING_JSON"])
+    app.config.setdefault("STRIPE", billing.Stripe(app.config["STRIPE_SECRET_KEY"]))
+    if len(app.config["SIGNUP_TEST_CODE"]) in range(1, 12):
+        print("SIGNUP_TEST_CODE is shorter than 12 characters, so it is ignored. Use a long random code.", flush=True)
+        app.config["SIGNUP_TEST_CODE"] = ""
     if not app.config.get("TESTING"):
         with database.transaction() as db:
             memo_import.log_summary(db, "at startup")
@@ -405,6 +478,10 @@ def create_app(test_config=None):
     app.register_blueprint(helpdesk.bp)
     app.register_blueprint(volunteers.bp)
     app.register_blueprint(assistant.bp)
+    app.register_blueprint(pricing.bp)
+    app.register_blueprint(billing.bp)
+    app.register_blueprint(school_config.bp)
+    app.register_blueprint(school_setup.bp)
     if not app.config.get("TESTING"):
         helpdesk.start_summary_thread(app)
     pruned = {"at": 0}
@@ -460,6 +537,20 @@ def create_app(test_config=None):
                 auth.prune(each, app.config["RETENTION_DAYS"])
                 assistant.prune(each, app.config["ASSISTANT_LOG_DAYS"])
         public = request.path in PUBLIC or request.path.startswith(PUBLIC_PREFIXES)
+        # A suspended school (billing.py): its staff and its screen links get one plain page, and its data stays as
+        # it is. The developer still opens it. Ilmi's own public pages, and signing out, carry on working.
+        here = database.current_id()
+        if here != schools.CONTROL and not g.developer and billing.suspended(here) and request.path != "/logout" \
+                and ((g.user and not public) or request.path.startswith(auth.LINK_PATHS)):
+            if wants_json() or request.method != "GET" or request.path.endswith("/data"):
+                return jsonify(error="This madrasah’s Ilmi account is suspended."), 403
+            return auth.page("suspended.html", 403, contact=pricing.contact_email())
+        if here != schools.CONTROL and (g.user or request.path.startswith(auth.LINK_PATHS)):
+            config = school_config.get()
+            off = [k for k, paths in MODULE_PATHS.items() if not config["modules"].get(k, True)
+                   and (request.path in paths or request.path.startswith(tuple(p if p.endswith("/") else p + "/" for p in paths)))]
+            if off or (not school_config.house_points_on(config) and request.path.startswith(HOUSE_POINT_PATHS)):
+                abort(404)
         if not g.user and not public:
             if wants_json() or request.method != "GET":
                 return jsonify(error="Your session has ended. Sign in again."), 401
@@ -509,8 +600,9 @@ def create_app(test_config=None):
             EMAIL_PREVIEW_CSP if request.path.startswith("/admin/email/preview/") else \
             ACCOUNT_CSP if request.path.startswith("/account") else \
             CODE_CSP if request.path in ("/login", "/login/code") else \
+            SIGNUP_CSP if request.path.startswith("/signup") else \
             LOGIN_CSP if request.path.startswith(("/admin/", "/schools", "/finance", "/invite/", "/reset/")) \
-            or request.path == "/welcome" else PAGE_CSP
+            or request.path in ("/welcome", "/pricing", "/terms") else PAGE_CSP
         if app.config["COOKIE_SECURE"]:
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return response
@@ -647,13 +739,22 @@ def create_app(test_config=None):
     @app.get("/")
     def dashboard():
         fresh = bool(request.cookies.get(auth.fresh_cookie_name()))
+        config = school_config.get()
+        # A school made by signing up: its admin goes through School setup first (school_setup.py).
+        if g.user["role"] == "admin" and not g.developer and school_setup.pending():
+            return redirect("/admin/setup")
         # Anyone's first visit starts the tutorial (the "tour" in page.html); Account can start it again.
         with database.transaction() as tx:
             toured = tx.execute("SELECT tour_done FROM users WHERE id = ?", (g.user["id"],)).fetchone()["tour_done"]
         me = {"name": g.user["name"], "email": g.user["email"], "role": g.user["role"], "csrf": g.session["csrf"],
               "fresh": fresh, "stay": g.session["remember"], "initial": avatars.initial(g.user["name"]),
               "avatar": avatars.url(g.user["id"], g.user["avatar_at"]),
-              "tour": not toured, "assistant": assistant.enabled(app)}
+              "tour": not toured, "assistant": assistant.enabled(app) and config["modules"]["assistant"],
+              # What this school has chosen (school_config.py): its houses (none when houses are off), whether house
+              # points are counted, and which parts of Ilmi it uses. page.html and railway-storage.js read these.
+              "houses": list(school_config.houses(config)), "houseNames": config["houses"],
+              "hp": school_config.house_points_on(config),
+              "mods": config["modules"]}
         # The developer's bar: the school they have opened and the view they chose (railway-storage.js draws it).
         bar = schools.developer_bar()
         if bar:
@@ -662,10 +763,12 @@ def create_app(test_config=None):
         html = (ROOT / "Master_Dashboard_standalone.html").read_text(encoding="utf-8")
         html = html.replace("<script>", f"<script>window.RAILWAY=true;window.ME={script_json(me)};{TAB_GUARD}</script>\n<script>", 1)
         look = themes.current(g.user)
+        # The school's own links at the foot of the menu, in place of the ones the page was built with.
+        html = LINKS_BLOCK.sub(lambda m: menu_links(m.group(1), config["links"]), html, count=1)
         if bar:
             html = html.replace("</style>", '</style>\n<link rel="stylesheet" href="/developer.css">', 1)
         # has-dock: the menu is the dock (static/dock.js), so the side menu never shows first.
-        html = html.replace("<html lang=\"en\">", f"<html lang=\"en\" class=\"has-dock\"{themes.html_attrs(look)}>", 1)
+        html = html.replace("<html lang=\"en\">", f"<html lang=\"en\" class=\"has-dock{school_classes(config)}\"{themes.html_attrs(look)}>", 1)
         html = html.replace('<meta name="theme-color" content="#4b552f">', f'<meta name="theme-color" content="{look["menu"]}">', 1)
         if look["css"]:
             html = html.replace("</style>", f'</style>\n<link rel="stylesheet" href="{look["css"]}" id="themecss">', 1)
@@ -730,6 +833,21 @@ def create_app(test_config=None):
                 if student.get("house") in totals:
                     totals[student["house"]] += sum(len(student.get(k, [])) * v for k, v in TOKEN_POINTS.items())
         return jsonify(totals)
+
+    @app.post("/api/students/xlsx")
+    def students_from_excel():
+        """An Excel student list as CSV text, so the dashboard's own uploader (which reads CSV) takes .xlsx files too.
+        Nothing is saved here: the browser shows its usual preview of the rows and the admin confirms there."""
+        if not is_admin():
+            abort(403)
+        try:
+            # Sent as JSON like every other change the dashboard makes: {"file": the workbook in base64}.
+            text = school_setup.xlsx_to_csv(base64.b64decode((request.get_json() or {}).get("file") or "", validate=True))
+        except (ValueError, TypeError) as error:
+            said = str(error) if isinstance(error, ValueError) and "’" in str(error) or "sheet" in str(error) else \
+                "That file couldn’t be read. Save it as .xlsx or .csv and try again."
+            return jsonify(error=said), 400
+        return jsonify(csv=text)
 
     @app.get("/api/last-sid")
     def last_student_number():

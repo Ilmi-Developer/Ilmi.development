@@ -136,3 +136,14 @@ body.enter .devbar{animation:e-fade .2s ease both}
 @media (max-width:959.98px),(pointer:coarse){.sch-edit{padding:8px 10px;margin:-8px -10px -8px 0}}
 @media (max-width:599.98px){.sch-grid{grid-template-columns:1fr;gap:12px}}
 @media (prefers-reduced-motion:reduce){.sch-tile,.devlink{transition:none}}
+
+/* Each school's plan and state on its tile, and the subscription and suspension controls in Manage (billing.py). */
+.sch-b{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+.sch-b .pill.warn,.sch-sub .pill.warn{background:var(--warn-soft);color:var(--warn-ink)}
+.sch-pay{margin:6px 0 0;font-size:.875rem;color:var(--c-mute)}
+.sch-pay a{color:var(--navy-text)}
+.sch-sub{margin:0 0 14px;display:grid;gap:6px;font-size:.9375rem}
+.sch-sub div{display:grid;grid-template-columns:96px 1fr;gap:12px}
+.sch-sub dt{color:var(--mute)}
+.sch-sub dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.sch-danger{margin-top:16px;padding-top:16px;border-top:1px dashed var(--line-2)}

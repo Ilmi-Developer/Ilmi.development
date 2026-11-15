@@ -692,13 +692,18 @@ function logo(h){return LOGO[h]?'<svg class="logo" viewBox="0 0 100 100" aria-hi
 function houseBoard(H,unit){H=H.slice().sort(function(a,b){return b.n-a.n});
  H.forEach(function(h){h.rank=1+H.filter(function(o){return o.n>h.n}).length});
  var at=[1,0,2];return '<div class="podium hp">'+at.map(function(i){var h=H[i];if(!h)return '<div class="col"></div>';var p=Math.min(h.rank,3);
-  return '<div class="col p'+p+'"><div class="who">'+(h.rank===1&&h.n?CROWN:'')+'<div class="pc '+esc(h.house)+'">'+logo(h.house)+'<span class="pn">'+esc(h.house)+'</span>'+(h.top?earned(h.top):'')+'</div></div>'
+  return '<div class="col p'+p+'"><div class="who">'+(h.rank===1&&h.n?CROWN:'')+'<div class="pc '+esc(h.house)+'"'+hcol(h.house)+'>'+logo(h.house)+'<span class="pn">'+esc(h.house)+'</span>'+(h.top?earned(h.top):'')+'</div></div>'
    +'<div class="step"><b>'+ord(h.rank)+'</b><span>'+plural(h.n,unit)+'</span></div></div>'}).join("")+'</div>'}
 /* Under a house's name on the House race: the class's top earners for it, with their points. */
 function earned(L){return '<span class="ern">'+(L.length?L.map(function(e,i){return '<span style="animation-delay:'+(1.2+i*.25)+'s"><b>'+esc(e.name)+'</b><em>'+e.n+'</em></span>'}).join(""):'<span class="none">No points yet</span>')+'</span>'}
 function schoolHouses(){return data.houses.map(function(h){return {house:h.house,n:h.points}})}
 function classHouses(){var n={};(data.houses||[]).forEach(function(s){s.who.forEach(function(w){n[w.house]=s.n})});
- var E=data.earners;return ["Makkah","Al-Aqsa","Madinah"].map(function(h){return {house:h,n:n[h]||0,top:E?E[h]||[]:null}})}
+ /* The school's own houses, in its order (the keys of earners); none when it has no houses or doesn't count points. */
+ var E=data.earners;return (E?Object.keys(E):["Makkah","Al-Aqsa","Madinah"]).map(function(h){return {house:h,n:n[h]||0,top:E?E[h]||[]:null}})}
+/* Ilmi's three houses have their colours in the styles above; a house with a name of the school's own takes one by
+   its place in the list, set on the element itself. */
+var HNAMES=["Makkah","Al-Aqsa","Madinah"],HCOLS=["#8b5fb0","#c0563b","#2e8f96","#c0901f","#3478b0","#2f8a62"],HSEEN=[];
+function hcol(h){if(HNAMES.indexOf(h)>=0)return "";var i=HSEEN.indexOf(h);if(i<0){HSEEN.push(h);i=HSEEN.length-1}return ' style="--hc:'+HCOLS[i%HCOLS.length]+'"'}
 /* The podium sits below the title and above the base, so names on a step (ties included) shrink to fit the space
    over it instead of rising behind the title. */
 function fitPodium(el){var z=1,W=[];[].forEach.call(el.querySelectorAll(".podium .col"),function(c){var w=c.querySelector(".who"),st=c.querySelector(".step");if(!w||!st)return;

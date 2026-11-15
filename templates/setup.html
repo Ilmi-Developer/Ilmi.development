@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{# School setup (school_setup.py): the steps a new madrasah's admin goes through after signing up, and where any
+   admin changes the same choices later. One step a page; each saves by itself. No scripts: the houses' and links'
+   boxes are all there, and an empty one means "not this one". #}
+{% block title %}School setup{% endblock %}
+{% block content %}
+{% macro mini(t) -%}
+<svg class="thmini" viewBox="0 0 120 76" aria-hidden="true" focusable="false">
+  <rect width="120" height="76" fill="{{ t.bg }}"/><rect width="28" height="76" fill="{{ t.menu }}"/>
+  <circle cx="9" cy="9" r="4.5" fill="{{ t.on }}"/><rect x="4" y="20" width="20" height="7" rx="3.5" fill="{{ t.on }}"/>
+  <rect x="6" y="33" width="15" height="3" rx="1.5" fill="{{ t.menu_ink }}" opacity=".7"/><rect x="6" y="41" width="12" height="3" rx="1.5" fill="{{ t.menu_ink }}" opacity=".7"/>
+  <rect x="36" y="8" width="40" height="5" rx="2.5" fill="{{ t.title }}"/>
+  <rect x="35.25" y="19.250" width="77.5" height="49.5" rx="6.75" fill="{{ t.line }}" opacity=".6"/><rect x="36" y="20" width="76" height="48" rx="6" fill="{{ t.card }}"/>
+  <rect x="43" y="28" width="34" height="4" rx="2" fill="{{ t.ink }}"/><rect x="43" y="36" width="52" height="3" rx="1.5" fill="{{ t.mute }}"/>
+  <rect x="43" y="52" width="26" height="9" rx="4.5" fill="{{ t.fill }}"/>
+</svg>
+{%- endmacro %}
+<div class="band slim"><div class="band-top"><h1>{{ "Welcome to Ilmi" if first_time else "School setup" }}</h1>
+  {% if first_time %}<div class="acts"><form method="post" action="/admin/setup/finish"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn">Skip setup for now</button></form></div>{% endif %}
+</div>
+<p class="lede">{{ "A few choices to make Ilmi your madrasah’s own. Each one can be changed later, under School setup in the menu." if first_time else "How Ilmi is set up for your madrasah. Each page saves by itself." }}</p></div>
+
+<ol class="stp" aria-label="Setup steps">
+{% for key, label in steps %}<li{{ ' class="on"'|safe if key == step }}{{ ' aria-current="step"'|safe if key == step }}><a href="/admin/setup?step={{ key }}"><span class="stp-n">{{ loop.index }}</span>{{ label }}</a></li>{% endfor %}
+</ol>
+
+<section class="panel stw" aria-labelledby="stt">
+{% if step == "look" %}
+  <h2 id="stt">Choose your madrasah’s look</h2>
+  <p class="sub">New staff accounts start with this look, and so do you. Everyone can still pick their own on Account, where you can also make a theme in your own colours with a photo.</p>
+  <form method="post" action="/admin/setup/look">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="st-themes" role="radiogroup" aria-label="Look">
+      {% for t in themes_built %}<label class="st-theme"><input type="radio" name="theme" value="{{ t.key }}"{{ " checked" if cfg.theme == t.key }} required>{{ mini(t.tile) }}<span>{{ t.name }}</span></label>{% endfor %}
+    </div>
+    {% include "_setup_buttons.html" %}
+  </form>
+
+{% elif step == "houses" %}
+  <h2 id="stt">Houses</h2>
+  <p class="sub">Some madrasahs put every student in a house and run a points race between them. Use your own names, or turn houses off and they disappear from every page, the TV and the uploads.</p>
+  <form method="post" action="/admin/setup/houses">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    {% set on = houses_on_draft if houses_on_draft is defined else cfg.houses_on %}
+    <fieldset class="st-choice"><legend>Does your madrasah have houses?</legend>
+      <label class="check"><input type="radio" name="houses_on" value="1"{{ " checked" if on }}>Yes, students belong to houses</label>
+      <label class="check"><input type="radio" name="houses_on" value="0"{{ " checked" if not on }}>No houses</label>
+    </fieldset>
+    <fieldset class="st-set"><legend>House names</legend>
+      <p class="hint">Between {{ min_houses }} and {{ max_houses }} houses. Leave a box empty for fewer. Changing a name renames that house for every student in it, and its points follow.{% if with_house %} {{ with_house }} student{{ "s have" if with_house != 1 else " has" }} a house now.{% endif %}</p>
+      <div class="st-houses">
+        {% for name in houses_draft %}<label class="field">House {{ loop.index }}{% if name and house_counts.get(name) %} <span class="pill grey">{{ house_counts[name] }} student{{ "s" if house_counts[name] != 1 }}</span>{% endif %}<input name="house" value="{{ name }}" maxlength="{{ house_max }}" autocomplete="off"></label>{% endfor %}
+      </div>
+      <p class="hint">Emptying the box of a house that has students takes those students out of it. These boxes are ignored when houses are off; the names are kept for if you turn houses back on.</p>
+    </fieldset>
+    <fieldset class="st-choice"><legend>House points</legend>
+      {% set hp = house_points_draft if house_points_draft is defined else cfg.house_points %}
+      <label class="check"><input type="checkbox" name="house_points" value="1"{{ " checked" if hp }}>Count house points: the house race on the overview and the TV, the House points page, and Counted coins</label>
+      <p class="hint">Without this, students still belong to houses, but nothing is scored. Points already given are kept and come back if you turn it on again.</p>
+    </fieldset>
+    {% include "_setup_buttons.html" %}
+  </form>
+
+{% elif step == "options" %}
+  <h2 id="stt">What your madrasah uses</h2>
+  <p class="sub">Ilmi’s core is the same for everyone: classes, students, Qur’an lessons, memorisation, rankings and reports. These parts are optional. Turning one off hides it for all your staff; nothing it holds is deleted.</p>
+  <form method="post" action="/admin/setup/options">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <ul class="st-mods">
+      {% for key, (label, about) in modules.items() %}
+      <li><label class="st-mod"><input type="checkbox" name="module_{{ key }}" value="1"{{ " checked" if cfg.modules[key] }}><span><b>{{ label }}</b><span>{{ about }}{% if key == "assistant" and not assistant_site %} It is switched off for the whole site at the moment.{% endif %}</span></span></label></li>
+      {% endfor %}
+    </ul>
+    {% include "_setup_buttons.html" %}
+  </form>
+
+{% elif step == "links" %}
+  <h2 id="stt">Links in the menu</h2>
+  <p class="sub">Up to {{ links_draft|length }} links to the other sites your staff use, such as your own website or a learning platform. They sit at the foot of everyone’s menu and open in a new tab. Leave them all empty for no links.</p>
+  <form method="post" action="/admin/setup/links">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="st-links">
+      {% for l in links_draft %}<div class="formrow"><label class="field">Name{{ " " ~ loop.index }}<input name="label" value="{{ l.label }}" maxlength="{{ link_label_max }}" autocomplete="off"></label><label class="field">Web address<input name="url" value="{{ l.url }}" maxlength="{{ link_url_max }}" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://"></label></div>{% endfor %}
+    </div>
+    {% include "_setup_buttons.html" %}
+  </form>
+
+{% else %}
+  <h2 id="stt">Bring in your students</h2>
+  {% if students %}<p class="notice" role="status">You have {{ students }} student{{ "s" if students != 1 }} on Ilmi already. Uploading a newer list updates them and never adds anyone twice.</p>{% endif %}
+  <p class="sub">Upload your student list as a <b>CSV</b> or an <b>Excel (.xlsx)</b> file. Each row is one student; each student goes into their teacher’s classroom, and classrooms that don’t exist yet are made for you. You see a preview of every change before anything is saved.</p>
+  <ol class="st-how">
+    <li><b>Get your list ready.</b> One student on each row, with the column names in the first row. Only the student’s name and their Qur’an teacher or class are needed; Student ID, gender, year group{{ ", house" if cfg.houses_on }} and date of birth are taken too if they are there. Your own column names are fine: the preview lets you match them. <a class="btn sm" href="/admin/import-template/students.csv" download>Download the template</a></li>
+    <li><b>Upload it on Classes.</b> The button below opens the uploader. Choose the file, check the preview, and confirm.</li>
+    <li><b>Invite your staff.</b> On Manage users, invite each teacher and give them their classrooms.</li>
+  </ol>
+  <form method="post" action="/admin/setup/finish" class="st-acts">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    {% if prev %}<a class="btn" href="/admin/setup?step={{ prev }}">Back</a>{% endif %}
+    <span class="sp"></span>
+    <button class="btn" name="to" value="home">{{ "Finish, I’ll add students later" if first_time else "Go to the overview" }}</button>
+    <button class="btn primary" name="to" value="upload">{{ "Finish and upload students" if first_time else "Open the uploader" }}</button>
+  </form>
+{% endif %}
+</section>
+{% endblock %}

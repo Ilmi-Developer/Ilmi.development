@@ -1996,3 +1996,8 @@ html:not([data-logo]) .ws .tablewrap,html:not([data-logo]) .ws .sheetwrap{box-sh
 @media (prefers-reduced-motion:no-preference){.hpd .hpx,.hpd .hpr,.hpd .hpday{animation:hp-in .32s cubic-bezier(.2,.8,.2,1) both}.hpd .hpr{animation-delay:.06s}.hpd .hpday{animation-delay:calc(.1s + var(--i,0) * .04s)}}
 @keyframes hp-in{from{opacity:0;transform:translateY(6px)}}
 @media (max-width:420px){.hpx-c li{padding:6px 8px}.hpday li{grid-template-columns:minmax(0,1fr) auto}.hpday .t{display:none}}
+
+/* A school without houses, or one that doesn't count house points (School setup, school_config.py): the server marks
+   <html>, and the columns, fields and figures for them step out. Nothing is deleted; turning them back on shows them. */
+.no-houses .hsc,.no-houses .qhouses,.no-houses .qhead .qfh+.qfh,.no-houses td[data-label="House"],.no-houses .qhs{display:none!important}
+.no-hp .hpo{display:none!important}

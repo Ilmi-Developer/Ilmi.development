@@ -1,0 +1,9 @@
+{% extends "_public.html" %}
+{% block title %}Get started{% endblock %}
+{% block content %}
+<div class="su one"><div class="su-card">
+  <h1>Sign-up opens soon</h1>
+  <p class="su-lede">New madrasahs can’t sign up online just yet. {% if contact %}Email <a class="tl" href="mailto:{{ contact }}">{{ contact }}</a> and we’ll set you up.{% else %}Contact us and we’ll set you up.{% endif %}</p>
+  <p><a class="wbtn ghost" href="/pricing">See pricing</a></p>
+</div></div>
+{% endblock %}

@@ -598,3 +598,39 @@ body:has(.crop:not([hidden])){overflow:hidden}
  .fin-x>.fin-xl{display:block}
  .fin-tbl tr{break-inside:avoid}
 }
+
+/* ---------- School setup (templates/setup.html, school_setup.py) ---------- */
+.stp{list-style:none;margin:0 0 16px;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.stp a{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:4px 14px 4px 5px;border-radius:var(--r-pill);font-size:.875rem;font-weight:500;color:var(--c-ink-2);text-decoration:none;
+ transition:background-color var(--t-fast) var(--ease),color var(--t-fast) var(--ease)}
+.stp a:hover{background:var(--c-hover);color:var(--c-ink)}
+.stp-n{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--sunk);color:var(--ink-2);font:600 .8125rem/1 var(--font)}
+.stp li.on a{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:var(--shadow-card)}
+.stp li.on .stp-n{background:var(--navy);color:#fff}
+.stw{max-width:860px}
+.stw>h2{font:600 1.5rem/1.2 var(--font-display);margin:0 0 6px}
+.stw>.sub{margin:0 0 20px;max-width:68ch}
+.stw fieldset{border:0;padding:0;margin:0 0 20px;min-width:0}
+.stw legend{padding:0;margin-bottom:6px;font-size:.9375rem;font-weight:600;color:var(--ink)}
+.stw .hint{margin:0 0 10px;max-width:68ch}
+.st-themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px;margin-bottom:8px}
+.st-theme{position:relative;display:flex;flex-direction:column;gap:2px;padding:8px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);cursor:pointer;
+ transition:border-color var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease)}
+.st-theme:hover{border-color:var(--line-2)}
+.st-theme input{position:absolute;opacity:0;width:1px;height:1px}
+.st-theme>span{font-size:.875rem;font-weight:600;padding:0 4px}
+.st-theme:has(input:checked){border-color:var(--navy);box-shadow:0 0 0 1px var(--navy)}
+.st-theme:has(input:focus-visible){outline:2px solid var(--focus);outline-offset:2px}
+.st-houses{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:0 12px}
+.st-houses .pill{margin-left:6px;font-weight:500}
+.st-mods{list-style:none;margin:0 0 8px;padding:0;display:grid;gap:10px}
+.st-mod{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:14px 16px;border:1px solid var(--line);border-radius:var(--r-lg);cursor:pointer;
+ transition:border-color var(--t-fast) var(--ease)}
+.st-mod:hover{border-color:var(--line-2)}
+.st-mod input{margin:3px 0 0;width:18px;height:18px}
+.st-mod b{display:block;font-weight:600;color:var(--ink)}
+.st-mod span span{display:block;font-size:.875rem;color:var(--mute);line-height:1.5;margin-top:2px}
+.st-how{margin:0 0 24px;padding-left:1.3em;display:grid;gap:12px;max-width:70ch;color:var(--ink-2)}
+.st-how .btn{margin-left:4px}
+.st-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.st-acts .sp{flex:1}

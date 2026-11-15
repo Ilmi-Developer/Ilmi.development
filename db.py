@@ -547,13 +547,69 @@ def _c1_schools(db, postgres):
         school_id BIGINT NOT NULL)""")
 
 
+def _c2_billing(db, postgres):
+    t = _types(postgres)
+    # Sign-ups, subscriptions and suspension (see billing.py). A school with no row in `subscriptions` was added by
+    # the developer and is billed outside Ilmi, if at all.
+    db.execute("ALTER TABLE schools ADD COLUMN suspended_at BIGINT")
+    db.execute("ALTER TABLE schools ADD COLUMN suspended_reason TEXT")
+    # One row per sign-up from the pricing page, kept as the record of who agreed to which terms, when and from
+    # where. The link's token is stored only as a SHA-256 hash. status: pending (filled in, not finished),
+    # creating (its school is being made), done, expired.
+    db.execute(f"""CREATE TABLE signups (
+        id {t['id']},
+        token_hash TEXT NOT NULL UNIQUE,
+        school_name TEXT NOT NULL,
+        admin_name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        students INTEGER NOT NULL,
+        billing TEXT NOT NULL,
+        amount_pence INTEGER NOT NULL,
+        plan TEXT NOT NULL,
+        status TEXT NOT NULL,
+        terms_version TEXT NOT NULL,
+        terms_accepted_at BIGINT NOT NULL,
+        ip TEXT,
+        user_agent TEXT,
+        stripe_session TEXT,
+        school_id BIGINT,
+        created_at BIGINT NOT NULL,
+        finished_at BIGINT)""")
+    db.execute("CREATE INDEX signups_email ON signups (email, created_at)")
+    # plan: free, paid, or test (made with the developer's test code, never charged). status follows Stripe's for a
+    # paid plan (active, past_due, unpaid, canceled, incomplete) and is active or canceled for the others.
+    db.execute("""CREATE TABLE subscriptions (
+        school_id BIGINT PRIMARY KEY,
+        plan TEXT NOT NULL,
+        billing TEXT NOT NULL,
+        students INTEGER NOT NULL,
+        amount_pence INTEGER NOT NULL,
+        status TEXT NOT NULL,
+        stripe_customer TEXT,
+        stripe_subscription TEXT,
+        current_period_end BIGINT,
+        cancel_at_period_end INTEGER NOT NULL DEFAULT 0,
+        canceled_at BIGINT,
+        signup_id BIGINT,
+        terms_version TEXT,
+        terms_accepted_at BIGINT,
+        terms_accepted_by TEXT,
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL)""")
+    # Stripe events already handled, so one delivered twice changes nothing the second time.
+    db.execute("""CREATE TABLE stripe_events (
+        id TEXT PRIMARY KEY,
+        type TEXT NOT NULL,
+        received_at BIGINT NOT NULL)""")
+
+
 MIGRATIONS = [_m1_classrooms, _m2_accounts, _m3_tv_screens, _m4_tv_settings, _m5_house_points, _m6_help_requests,
               _m7_avatars, _m8_tutorial, _m9_tutorial_again, _m10_board_links, _m11_login_codes, _m12_stay_signed_in,
               _m13_presenter_shares, _m14_presenter_links, _m15_trusted_devices, _m16_head_teachers, _m17_dark_mode,
               _m18_assistant, _m19_assistant_tokens, _m20_themes, _m21_site_settings, _m22_schools, _m23_finance,
               _m24_finance_books, _m25_volunteer_requests]
 # Run after MIGRATIONS on the control database only, and recorded in its `control_migrations`.
-CONTROL_MIGRATIONS = [_c1_schools]
+CONTROL_MIGRATIONS = [_c1_schools, _c2_billing]
 SCHEMA = re.compile(r"[a-z_][a-z0-9_]{0,62}")
 
 

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+{# Ilmi's pricing page (pricing.py): four cards, the calculator and how the price is worked out. Every figure on it
+   comes from pricing.py's one configuration; /pricing.js does the calculator's sum from the same numbers
+   (data-config), and without it the bands table and the worked example still say everything. The cards are sizes of
+   madrasah, not feature packages. #}
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="same-origin">
+<meta name="theme-color" content="#f4efe4">
+<title>Pricing · Ilmi</title>
+<meta name="description" content="Ilmi’s pricing: free for up to {{ free }} students, then a small amount per active student that falls as your madrasah grows.">
+<link rel="preload" href="/fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/nunito.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/amiri-ilmi.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" type="image/png" href="/favicon.png?v=4">
+<link rel="apple-touch-icon" href="/favicon.png?v=4">
+<link rel="stylesheet" href="/pricing.css">
+<script src="/pricing.js" defer></script>
+</head>
+<body class="wl pr">
+<a class="skip" href="#main">Skip to main content</a>
+{% set go = "/" if user else "/login" %}
+{% set go_label = "Open Ilmi" if user else "Sign in" %}
+{% macro tick() %}<svg class="tk" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="m4.5 10.5 3.6 3.6 7.4-8.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>{% endmacro %}
+{# A sprig that grows with the madrasah: one pair of leaves, two, three, then a young tree. #}
+{% macro sprig(n) %}<svg class="p-art" viewBox="0 0 48 56" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+{%- if n == 4 %}<path d="M24 54V30"/><path d="M24 40c-4-1-7-4-8-8"/><path d="M24 36c4-1 7-4 8-8"/><path class="lf" d="M24 30c-9 0-15-5-15-13C9 9 16 3 24 3s15 6 15 14c0 8-6 13-15 13z"/><path d="M24 30V12"/><path d="M24 22c-3-1-5-3-6-6"/><path d="M24 18c3-1 5-3 6-6"/>
+{%- else %}<path d="M24 54V{{ 30 if n == 1 else 18 if n == 2 else 8 }}"/>
+<path class="lf" d="M24 44c-7 1-12-2-13-8 7-1 12 2 13 8z"/><path class="lf" d="M24 40c7 1 12-2 13-8-7-1-12 2-13 8z"/>
+{%- if n >= 2 %}<path class="lf" d="M24 31c-6 1-10-2-11-7 6-1 10 2 11 7z"/><path class="lf" d="M24 27c6 1 10-2 11-7-6-1-10 2-11 7z"/>{% endif %}
+{%- if n >= 3 %}<path class="lf" d="M24 19c-5 1-8-1-9-5 5-1 8 1 9 5z"/><path class="lf" d="M24 15c5 1 8-1 9-5-5-1-8 1-9 5z"/>{% endif %}
+{%- if n == 1 %}<path class="lf" d="M24 30c-2-4-1-8 0-10 1 2 2 6 0 10z"/>{% elif n == 2 %}<path class="lf" d="M24 18c-2-4-1-7 0-9 1 2 2 5 0 9z"/>{% else %}<path class="lf" d="M24 8c-1.500-2-1-4 0-5 1 1 1.500 3 0 5z"/>{% endif %}
+{%- endif %}</svg>{% endmacro %}
+<header class="wnav">
+  <a class="wbrand" href="/welcome"><span class="ilmi" translate="no"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span><span class="sr-only">, start page</span></a>
+  <nav class="wlinks" aria-label="Ilmi">
+    <a href="/welcome#what">What it does</a>
+    <a href="/welcome#inside">Inside Ilmi</a>
+    <a href="/welcome#values">Our values</a>
+    <a class="keep" href="/pricing" aria-current="page">Pricing</a>
+  </nav>
+  <a class="wbtn sm" href="{{ go }}">{{ go_label }}<svg class="arr" viewBox="0 0 20 12" aria-hidden="true" focusable="false"><path d="M1 6h17M13 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+</header>
+
+<main id="main" tabindex="-1" data-config="{{ calc }}">
+<section class="p-hero" aria-labelledby="p-h">
+  <span class="p-wash" aria-hidden="true"></span>
+  <h1 id="p-h">Pricing</h1>
+  <p class="p-lede">One platform for every madrasah. You pay by your number of active students, and each student costs less as you grow.</p>
+  <div class="p-seg" role="group" aria-label="Billing period">
+    <button type="button" data-billing="monthly" aria-pressed="true">Monthly</button>
+    <button type="button" data-billing="annual" aria-pressed="false">Annual<span class="p-save">{{ months_free }} months free</span></button>
+  </div>
+</section>
+
+<section class="p-cards" aria-label="Plans by size">
+  <ul>
+  {% for c in cards %}
+    <li class="p-card{{ ' pop' if c.popular }}">
+      {% if c.popular %}<span class="p-pop">Most popular</span>{% endif %}
+      {{ sprig(loop.index) }}
+      <h2>{{ c.name }}</h2>
+      <p class="p-tag">{{ c.tagline }}</p>
+      <p class="p-price">{% if c.from %}<small>From</small> {% endif %}<b>{{ c.price }}</b> <span>{{ c.unit }}</span></p>
+      <p class="p-note">{{ c.note }}</p>
+      <a class="wbtn{{ '' if c.popular else ' ghost' }}" href="{{ c.href if signup_open or c.cta == 'contact' else '#contact' }}"{% if c.cta == "signup" %} data-signup{% endif %}>{{ c.cta_label }}</a>
+      <hr>
+      {% if c.lead %}<p class="p-lead">{{ c.lead }}</p>{% endif %}
+      <ul class="p-feats">{% for f in c.features %}<li>{{ tick() }}<span>{{ f }}</span></li>{% endfor %}</ul>
+    </li>
+  {% endfor %}
+  </ul>
+  <p class="p-under">Every paying madrasah gets the same core platform. The cards are sizes, not feature packages: nothing essential is kept for a dearer plan.</p>
+</section>
+
+<section class="p-calc" id="calculator" aria-labelledby="calc-h">
+  <div class="p-calc-in">
+    <div class="p-calc-l">
+      <p class="v-k">Calculator</p>
+      <h2 id="calc-h">What would <em>your</em> madrasah pay?</h2>
+      <label class="p-field" for="c-n">Active students</label>
+      <div class="p-num"><input id="c-n" type="number" inputmode="numeric" min="1" max="100000" step="1" value="150" autocomplete="off" aria-describedby="c-help"></div>
+      <input id="c-r" class="p-range" type="range" min="1" max="{{ top + 250 }}" step="1" value="150" aria-label="Active students">
+      <div class="p-scale" aria-hidden="true"><span>1</span><span>{{ top }}+</span></div>
+      <p class="p-help" id="c-help">Only students currently enrolled count. Teachers and administrators are always free.</p>
+      <div class="p-seg sm" role="group" aria-label="Billing period">
+        <button type="button" data-billing="monthly" aria-pressed="true">Monthly</button>
+        <button type="button" data-billing="annual" aria-pressed="false">Annual</button>
+      </div>
+    </div>
+    <div class="p-calc-r" aria-live="polite">
+      {# Without the script, the worked example below is what shows: the server's own sum for 150 students. #}
+      <p class="p-est" id="c-label">Estimated price for <b>150</b> students</p>
+      <p class="p-total"><b id="c-total">{{ money(example.monthly, true) }}</b> <span id="c-per">per month</span></p>
+      <p class="p-sub" id="c-sub">Billed monthly. Pay annually and get {{ months_free }} months free.</p>
+      <table class="p-break" id="c-break">
+        <caption>How it is worked out</caption>
+        <tbody>
+        {% for l in example.lines %}<tr><th scope="row">Students {{ l.from }} to {{ l.from + l.count - 1 }}</th><td>{{ l.count }} × {{ "free" if not l.pence else money(l.pence, true) }}</td><td>{{ money(l.subtotal, true) }}</td></tr>{% endfor %}
+        </tbody>
+        <tfoot><tr><th scope="row">Each month</th><td></td><td>{{ money(example.monthly, true) }}</td></tr></tfoot>
+      </table>
+      <p class="p-custom" id="c-custom" hidden>For more than {{ top }} students we prepare a quotation for you, so the price fits how your madrasah is organised. <a href="#contact">Talk to us</a>.</p>
+      <a class="wbtn" id="c-go" href="{{ '/signup?students=150' if signup_open else '#contact' }}">Get started<svg class="arr" viewBox="0 0 20 12" aria-hidden="true" focusable="false"><path d="M1 6h17M13 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<section class="p-how" aria-labelledby="how-h">
+  <div class="p-how-in">
+    <div>
+      <p class="v-k">How the price is worked out</p>
+      <h2 id="how-h">Each rate applies only to the students <em>in its band.</em></h2>
+      <p>Your first {{ free }} students are free. After that, each band has its own rate, and a student is charged at the rate of the band they fall in. Passing a threshold never changes what you pay for the students before it.</p>
+      <p>A madrasah with 150 students pays for {% for l in example.lines if l.pence %}{{ l.count }} at {{ money(l.pence, true) }}{{ ", " if not loop.last and loop.revindex > 2 else " and " if not loop.last else "" }}{% endfor %}: <b>{{ money(example.monthly, true) }} a month</b>.</p>
+    </div>
+    <table class="p-bands">
+      <caption class="sr-only">Monthly rate per student, by band</caption>
+      <thead><tr><th scope="col">Students</th><th scope="col">Each month, per student</th></tr></thead>
+      <tbody>
+      {% for b in bands %}<tr><th scope="row">{{ b.from }} to {{ b.to }}</th><td>{{ b.rate }}</td></tr>{% endfor %}
+      <tr><th scope="row">{{ top + 1 }} and more</th><td>A quotation</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <dl class="p-facts">
+    <div><dt>Who counts</dt><dd>Active, enrolled students only. Students who have left or been archived are never counted, and nobody is counted twice.</dd></div>
+    <div><dt>Staff are free</dt><dd>Invite every teacher and administrator you need. There is no charge per account.</dd></div>
+    <div><dt>When you grow</dt><dd>Your price is recalculated from your active students at each renewal. Only the students above a threshold take the new band’s lower rate; you are never moved to a dearer rate for growing.</dd></div>
+    <div><dt>Smallest charge</dt><dd>A paid subscription is at least {{ minimum }} a month. Up to {{ free }} students, Ilmi is free with no card needed.</dd></div>
+    <div><dt>Paying annually</dt><dd>Pay for the year and {{ months_free }} of the twelve months are free.</dd></div>
+    <div><dt>Not included</dt><dd>Card processing fees charged by the payment provider on fees you collect, and optional third-party messaging such as SMS, are separate and shown before you use them.</dd></div>
+  </dl>
+</section>
+
+<section class="p-contact" id="contact" aria-labelledby="con-h">
+  <h2 id="con-h">A large madrasah, or several sites?</h2>
+  <p>For a large madrasah or a group of madrasahs, we’ll agree a price with you, set up your sites and help you move your records across. Above {{ top }} students, every price is by quotation.</p>
+  {% if contact %}<a class="wbtn" href="mailto:{{ contact }}?subject={{ "Ilmi for our madrasah"|urlencode }}">Email {{ contact }}</a>
+  {% else %}<p class="p-help">Contact details are on their way. In the meantime, <a href="{{ go }}">sign in</a> if you already have an account and use Help.</p>{% endif %}
+</section>
+</main>
+
+<footer class="wfoot">
+  <span class="ilmi" translate="no"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span>
+  <a href="/welcome">Start page</a>
+  <a href="/terms">Terms</a>
+  <a href="{{ go }}">{{ "Open Ilmi" if user else "Staff sign in" }}</a>
+</footer>
+</body>
+</html>

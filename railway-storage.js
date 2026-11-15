@@ -104,6 +104,7 @@
     if (on && views.scrollWidth > views.clientWidth) views.scrollLeft = on.getBoundingClientRect().left - views.getBoundingClientRect().left + views.scrollLeft - 8;
   })();
   var ICONS = {
+    settings: '<path d="M4 7h9"/><path d="M17 7h3"/><circle cx="15" cy="7" r="2"/><path d="M4 17h3"/><path d="M11 17h9"/><circle cx="9" cy="17" r="2"/>',
     users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.3-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.8a3.4 3.4 0 0 1 0 6.4"/><path d="M18 14.8c1.8.7 3 2.4 3.5 5.2"/>',
     history: '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4.5h4.5"/><path d="M12 7.5V12l3 2"/>',
     activity: '<path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/>',
@@ -137,7 +138,8 @@
     adminNav.appendChild(heading);
     [["users", "User management", "idcard", [null, ["Manage users", "/admin/users", "users"]]],
      ["live", "Live Activity", "pulse", [["Activity", "/admin/activity", "activity"], ["Class history", "/admin/history", "history"]]],
-     ["data", "Data handling", "db", [["Counted coins", "/admin/house-points", "pie"], ["Spreadsheet", "/admin/export", "sheet"], ["Import", "/admin/import", "upload"]]]
+     // Counted coins only where the school counts house points (School setup, school_config.py).
+     ["data", "Data handling", "db", (ME.hp === false ? [] : [["Counted coins", "/admin/house-points", "pie"]]).concat([["Spreadsheet", "/admin/export", "sheet"], ["Import", "/admin/import", "upload"]])]
     ].forEach(function (gr) {
       var g = document.createElement("div");
       g.className = "ngrp"; g.setAttribute("data-g", gr[0]);
@@ -161,7 +163,8 @@
     });
     adminNav.appendChild(link(["FAQs", "/admin/faqs", "faq"]));
     if (ME.assistant) adminNav.appendChild(link(["Assistant requests", "/admin/requests", "faq"]));
-    adminNav.appendChild(link(["Presenter", "/admin/tv", "tv"]));
+    if (!ME.mods || ME.mods.presenter !== false) adminNav.appendChild(link(["Presenter", "/admin/tv", "tv"]));
+    adminNav.appendChild(link(["School setup", "/admin/setup", "settings"]));
   }
   var me = document.getElementById("me");
   var who = document.createElement("div");
@@ -282,7 +285,7 @@
       var before = JSON.stringify(window.HOUSE_TOTALS);
       window.HOUSE_TOTALS = totals;
       // Admins also get the points added by hand for a whole house, for the House points page.
-      if (window.ME && (ME.role === "admin" || ME.role === "head")) {
+      if (window.ME && ME.hp !== false && (ME.role === "admin" || ME.role === "head")) {
         var extra = await api("/api/house-extra"), had = JSON.stringify(window.HOUSE_EXTRA || null);
         window.HOUSE_EXTRA = extra;
         if (had !== JSON.stringify(extra)) before = "";
@@ -492,7 +495,7 @@
   // the admin and HeadTeachers get a ping in the corner of the dashboard that stays until one of them checks it.
   // Every dashboard showing the ping (theirs, and the teacher's own) then shows it ticked off with who checked it,
   // and two seconds later it fades away. Dashboards ask for the requests every few seconds while they're on screen.
-  if (ME.role === "teacher" || ME.role === "admin" || ME.role === "head") (function () {
+  if ((!ME.mods || ME.mods.volunteers !== false) && (ME.role === "teacher" || ME.role === "admin" || ME.role === "head")) (function () {
     var CHECKS = ME.role !== "teacher", HOLD = 2000, POLL = 8000;
     var SVG = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
     var HAND = '<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11"/><path d="M11 10.5v-6a1.5 1.5 0 0 1 3 0V11"/><path d="M14 10.5v-4a1.5 1.5 0 0 1 3 0V13"/><path d="M8 13l-1.6-1.8a1.6 1.6 0 0 0-2.4 2.1L7.6 18a6 6 0 0 0 4.7 2.5H13a5 5 0 0 0 5-5V12a1.5 1.5 0 0 0-1-1.4"/>';

@@ -18,11 +18,11 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 import auth
+import school_config
 from tv import natural
 
 ROOT = Path(__file__).resolve().parent
 LONDON = ZoneInfo("Europe/London")
-HOUSES = ("Makkah", "Al-Aqsa", "Madinah")
 TOKENS = (("tg", "Green token", 5), ("tb", "Blue token", 20), ("tr", "Red token", 50))  # TOK in src/page.html
 # What a token was given for, when it was given on the Record page's House points (HPR in src/page.html).
 REASONS = {"bk": "Book completion", "lv": "Qaidah or Memorisation level", "hw": "Additional class or homework",
@@ -148,7 +148,7 @@ def gather(db):
     now = datetime.now(LONDON)
     month = datetime(now.year, now.month, 1, tzinfo=LONDON).timestamp() * 1000
     sheets = {key: Sheet(*spec) for key, spec in SHEETS.items()}
-    houses = dict.fromkeys(HOUSES, 0)
+    houses = dict.fromkeys(school_config.houses(), 0)
     memo, rewards = [], []
     for cid, state in classes:
         cname, levels = names[cid], state.get("L") or [1]

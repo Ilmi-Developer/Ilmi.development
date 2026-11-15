@@ -100,6 +100,9 @@ ACTIONS = {
     "site.title": "Changed the site title",
     "school.created": "Added a school", "school.renamed": "Renamed a school", "school.opened": "Opened a school",
     "school.office": "Set a school's admin account",
+    "school.signup": "A madrasah signed up", "school.suspended": "Suspended a school",
+    "school.unsuspended": "Lifted a school's suspension", "school.subscription_cancelled": "Cancelled a school's subscription",
+    "setup.saved": "Changed the school setup", "setup.finished": "Finished the school setup",
     "finance.billed": "Billed a fee", "finance.payment": "Recorded a fee payment",
     "finance.discount": "Gave a fee discount or waiver", "finance.refund": "Recorded a fee refund",
     "finance.corrected": "Corrected a finance entry", "finance.money_in": "Recorded money in",
@@ -895,6 +898,8 @@ def admin_invite():
                                          "Use another email address.", invite_open=True)
         user_id = tx.insert("INSERT INTO users (email, name, role, created_at) VALUES (?, ?, ?, ?)",
                             (email, name, role, now()))
+        import school_setup  # it imports this module
+        school_setup.apply_default_theme(tx, user_id)  # the look the school chose for new accounts
         db().claim(email, db().current_id())
         set_classes(tx, user_id, role, chosen_classes(tx))
         rooms = room_names(tx, user_id) if role == "teacher" else []

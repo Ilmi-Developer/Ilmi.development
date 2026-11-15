@@ -48,6 +48,7 @@ import urllib.request
 
 import assistant_records
 import auth
+import school_config
 import export
 from tv import natural
 
@@ -231,14 +232,13 @@ DATA_TOOLS = [
           {"class_id": {"type": "string", "description": "A class_id, or \"all\" for every class."},
            "from_date": DATE, "to_date": DATE}, ("class_id",)),
     _tool("add_student", "Preview adding a new student to a class. They get the next Student ID. Needs the admin's "
-          "Confirm.", {"class_id": CLASS, "name": {"type": "string"}, "house": {"type": "string", "enum": list(HOUSES)},
+          "Confirm.", {"class_id": CLASS, "name": {"type": "string"}, "house": {"type": "string", "description": "One of the school's houses."},
                        "year": {"type": "string", "description": "Madrasah year group, e.g. \"Year 4\". Optional: "
                                                                  "taken from the class name when left out."}},
           ("class_id", "name")),
     _tool("update_student_details", "Preview changing a student's name, house or madrasah year group. Needs the admin's "
           "Confirm.", {"student": STUDENT, "name": {"type": "string"},
-                       "house": {"type": "string", "enum": list(HOUSES) + [""],
-                                 "description": "\"\" clears it."},
+                       "house": {"type": "string", "description": "One of the school's houses; \"\" clears it."},
                        "year": {"type": "string", "description": "e.g. \"Year 4\"; \"\" clears it."}},
           ("student",)),
     _tool("move_student", "Preview moving a student, with all of their records, to another class. Needs the admin's "
@@ -682,6 +682,8 @@ def apply_change(kind, params, classes):
         s = blank_student(name)
         s["sid"] = sid
         if params.get("house"):
+            if params["house"] not in school_config.names():
+                raise ToolError("House must be one of: " + ", ".join(school_config.names()) + ".")
             s["house"] = params["house"]
         year = params.get("year") or madrasah_year(state.get("name", ""))
         if year:
@@ -708,8 +710,8 @@ def apply_change(kind, params, classes):
             if key not in params:
                 continue
             value = params[key] if key == "house" else clean_year(params[key])
-            if key == "house" and value not in HOUSES + ("",):
-                raise ToolError("House must be Makkah, Al-Aqsa or Madinah.")
+            if key == "house" and value not in school_config.names() + ("",):
+                raise ToolError("House must be one of: " + ", ".join(school_config.names()) + ".")
             was = s.get(key, "")
             if value == was:
                 continue

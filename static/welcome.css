@@ -450,7 +450,8 @@ html{overflow-x:hidden;overflow-x:clip}
 @media (max-width:959.98px){
  .motion .hero>.cue{display:none}
  .wnav{padding:14px 20px;gap:12px}
- .wlinks{display:none}
+ /* Pricing stays in the header on phones; the links to this page's own sections go. */
+ .wlinks a:not(.keep){display:none}
  .wbrand .ilmi{font-size:1.75rem}
 
  /* The hero: the wordmark and its drawing, then the words and the two ways in. */

@@ -16,11 +16,11 @@ from pathlib import Path
 from flask import Blueprint, Response, abort, g, jsonify, redirect, request
 
 import auth
+import school_config
 import house_extra
 import schools
 
 ROOT = Path(__file__).resolve().parent
-HOUSES = ("Makkah", "Al-Aqsa", "Madinah")
 # Keep in step with TOKEN_POINTS in server.py and TOK in src/page.html.
 TOKEN_POINTS = {"tg": 5, "tb": 20, "tr": 50}  # green, blue, red (book completion)
 YEAR = re.compile(r"(?:year|yr)\s*(\d+)", re.I)
@@ -174,6 +174,14 @@ def week_star(students, week):
     return star or None
 
 
+def house_list():
+    """The houses the screens show: the school's own, and none when it has no houses or doesn't count points."""
+    from flask import has_request_context
+    if not has_request_context():
+        return school_config.DEFAULT_HOUSES
+    return school_config.houses() if school_config.house_points_on() else ()
+
+
 def summary(rows, now=None, teachers=(), extra=None):
     """Everything the TV shows, worked out from the classroom records. extra: house points added by hand for a whole
     house (house_extra.py), which count in the house totals."""
@@ -182,12 +190,12 @@ def summary(rows, now=None, teachers=(), extra=None):
     # The TV shows one star per class on one page: each class's star for last week (the last full week).
     day = now.replace(hour=0, minute=0, second=0, microsecond=0)
     last_week = day - timedelta(days=day.weekday() + 7)
-    houses = {h: (extra or {}).get(h, 0) for h in HOUSES}
+    houses = {h: (extra or {}).get(h, 0) for h in house_list()}
     books, stars, memo, qaidah = [], [], [], []
     # Last month's winners, for the slide that looks back: Qaidah levels, each stage's top memorisation class, and
     # the house that earned the most points that month.
     past_name, past_start, past_end, past_first, past_last = last_month(now)
-    past = {"qaidah": [], "primary": [], "secondary": [], "houses": dict.fromkeys(HOUSES, 0)}
+    past = {"qaidah": [], "primary": [], "secondary": [], "houses": dict.fromkeys(house_list(), 0)}
     # Every teacher named in the classrooms (Quran and Islamic Studies) as well as those with an account.
     # A title from a classroom name wins; teachers known only by their account are Ustadh unless the name says otherwise.
     names = {}
@@ -312,8 +320,8 @@ def class_summary(row, now=None):
     state = json.loads(row["json"])
     class_name = state.get("name") or row["id"]
     tops = {k: [] for k in ("quran", "memo", "qaidah", "points", "merits")}
-    houses, books, students = dict.fromkeys(HOUSES, 0), [], []
-    earners = {h: [] for h in HOUSES}
+    houses, books, students = dict.fromkeys(house_list(), 0), [], []
+    earners = {h: [] for h in house_list()}
     all_scores, days = [], set()
     for s in state.get("S", []):
         name = short_name(s.get("name", ""))
@@ -343,6 +351,8 @@ def class_summary(row, now=None):
         if star:
             stars.append({"name": star[0], "house": star[1], "week": week.strftime("%Y-%m-%d"),
                           "label": "Week of " + week.strftime("%-d %b")})
+    if not house_list():
+        tops["points"] = []  # no houses, or house points aren't counted: no points slide
     total = {k: sum(e["n"] for e in v) for k, v in tops.items() if k != "quran"}
     return {
         "mode": "presenter",

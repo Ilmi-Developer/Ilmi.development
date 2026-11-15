@@ -20,10 +20,10 @@ import time
 from flask import Blueprint, current_app, g, request
 
 import auth
+import school_config
 import site_settings
 
 KEY = "house_list"
-HOUSES = ("Makkah", "Al-Aqsa", "Madinah")
 FIELDS = ("sid", "fid", "house", "sy", "gender", "ist")
 COLUMNS = ("Student Name", "QM", "AI", "Student ID", "Family ID", "House", "Year Group", "Gender")
 # Lists made before the columns were renamed call two of them by older names; those still work.
@@ -68,8 +68,8 @@ def parse(text):
         house = row["House"].strip()
         if not name:
             raise ValueError(f"Row {n} has no Student Name.")
-        if house not in HOUSES:
-            raise ValueError(f"Row {n} ({name}) has the house “{house}”. It must be one of " + ", ".join(HOUSES) + ".")
+        if house not in school_config.names():
+            raise ValueError(f"Row {n} ({name}) has the house “{house}”. It must be one of " + ", ".join(school_config.names()) + ".")
         out.append({"sid": (row.get("Student ID") or "").strip(),
                     "name": name, "cls": class_key(row.get("QM")),
                     "fid": row["Family ID"].strip(), "house": house, "sy": " ".join(row.get("Year Group", "").split()),
@@ -141,7 +141,7 @@ def _page(status=200, **context):
            for j, field, old, new in ch if field == "sid"]
     classes = [{"name": n, "extra": ex, **{f: sum(1 for c in ch if c[1] == f) for f in FIELDS}}
                for _, _, n, _, ch, ex in rows]
-    counts = dict.fromkeys(HOUSES, 0)
+    counts = dict.fromkeys(school_config.names(), 0)
     for _, _, _, state, _, _ in rows:
         for s in state.get("S", []):
             if s.get("house") in counts:

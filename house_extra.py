@@ -13,8 +13,8 @@ from datetime import date, datetime, time
 from flask import Blueprint, g, jsonify, request
 
 import auth
+import school_config
 
-HOUSES = ("Makkah", "Al-Aqsa", "Madinah")  # HOUSES in server.py
 COINS = (("tg", "Green", 5), ("tb", "Blue", 20), ("tr", "Red", 50))  # TOKEN_POINTS in server.py
 
 bp = Blueprint("house_extra", __name__)
@@ -29,7 +29,7 @@ def entries(tx):
 def totals(tx):
     """{house: points} from the entries."""
     points = {k: v for k, _, v in COINS}
-    out = dict.fromkeys(HOUSES, 0)
+    out = dict.fromkeys(school_config.houses(), 0)
     for e in entries(tx):
         if e["house"] in out and e["coin"] in points:
             out[e["house"]] += e["n"] * points[e["coin"]]
@@ -72,9 +72,9 @@ def groups(tx):
 def _page(status=200, **context):
     with auth.db().transaction() as tx:
         rows = groups(tx)
-    sums = {h: sum(r["points"] for r in rows if r["house"] == h) for h in HOUSES}
+    sums = {h: sum(r["points"] for r in rows if r["house"] == h) for h in school_config.houses()}
     today = datetime.now(auth.LONDON).date().isoformat()
-    return auth.page("admin_house_points.html", status, rows=rows, sums=sums, houses=HOUSES, coins=COINS, today=today, **context)
+    return auth.page("admin_house_points.html", status, rows=rows, sums=sums, houses=school_config.houses(), coins=COINS, today=today, **context)
 
 
 def _counted_at():
@@ -106,7 +106,7 @@ def admin_page():
 def add():
     auth.check_form_token()
     house, note = request.form.get("house", ""), _note()
-    if house not in HOUSES:
+    if house not in school_config.houses():
         return _page(400, error="Choose a house.")
     counts = {}
     for k, name, _ in COINS:
@@ -135,7 +135,7 @@ def add_totals():
     """A points total for any of the houses in one go, such as a whole term's count."""
     auth.check_form_token()
     note, totals = _note(), {}
-    for h in HOUSES:
+    for h in school_config.houses():
         raw = request.form.get("pts-" + h, "").replace(",", "").strip() or "0"
         if not raw.isdigit() or int(raw) > MAX_TOTAL:
             return _page(400, error=f"{h}'s points must be a whole number from 0 to {MAX_TOTAL:,}.")
