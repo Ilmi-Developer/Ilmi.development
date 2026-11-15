@@ -12,7 +12,7 @@
 /* Student-facing display, in Ilmi's olive and cream. Every slide is a still from an Islamic place or story (the Kaaba in the Prophet's time,
    Masjid an-Nabawi, Al-Aqsa, Cave Hira, Cave Thawr, the Ark, the parting of the sea, the split moon) that keeps moving
    while it is on: washing and trees in the wind, water, light. On the Presenter the class's students ride through by name. Slides change every
-   30 seconds on a TV and every 5 seconds on the Presenter, with a crossfade and a slow push in, so the screen never cuts. Everything is sized in vh for a 16:9 TV. */
+   5 seconds, on a TV and on the Presenter, with a crossfade and a slow push in, so the screen never cuts. Everything is sized in vh for a 16:9 TV. */
 :root{--navy:#3b4524;--ink:#22231b;--mute:#5d5b48;--gold:#f5c542;--gold2:#d99a00;--silver:#dfe6ee;--silver2:#9fb0c2;--bronze:#efaa72;--bronze2:#b86a2e;
  --makkah:#e9a400;--aqsa:#2a9fe6;--madinah:#1fae72;color-scheme:dark}
 *{box-sizing:border-box}
@@ -289,7 +289,7 @@ footer i.run{width:100%;transition:width linear}
 <nav id="ctl" hidden><button type="button" id="fs" class="ico" aria-label="Full screen" title="Full screen"><svg class="fs-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg><svg class="fs-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/></svg></button><button type="button" id="close" hidden>Close</button></nav>
 <script>
 (function(){
-var SLIDE_MS=30000,DATA_MS=60000;
+var SLIDE_MS=5000,DATA_MS=60000; // every slide is on for 5 seconds, on TV screens and on the Presenter
 /* /present/<token> is a teacher's Presenter: the same scenes, for one class, with its students riding through. Like a
    TV screen's link it needs no sign-in: the dashboard's Presenter button makes a new link each time, and the first tab
    to open it claims it with a key kept in this tab's sessionStorage, so it works here until the tab is closed. */
@@ -297,7 +297,6 @@ var path=location.pathname.replace(/\/+$/,""),LIVE=/^\/present\/([\w.-]+)$/.exec
  VIEW="",URL=path==="/tv"?"/api/tv":path+"/data";
 if(LIVE)try{VIEW=sessionStorage.getItem(LK)||""}catch(e){}
 var CLASSY=PRESENT; // the class's own slides, with its students riding through
-if(PRESENT)SLIDE_MS=5000; // every account's Presenter moves on every 5 seconds; TV screens keep 30
 var MAXPAGES=Math.max(1,Math.floor(SLIDE_MS/5000)); // each page of a list is on for at least five seconds
 /* The brand pill shows the site title the server put there (tv.page), or Ilmi; Presenter puts the class above it. */
 var SITE=$("brand").textContent;
