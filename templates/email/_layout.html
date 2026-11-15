@@ -17,24 +17,20 @@
   <tr><td class="outer" align="center" style="padding:36px 16px">
     <!--[if mso]><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560"><tr><td><![endif]-->
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px">
-      <tr><td style="padding:0 6px 18px">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-          <td valign="middle" style="padding-right:12px"><a href="{{ site }}" target="_blank"><img src="{{ logo }}" width="44" height="44" alt="Ilmi" style="display:block;border:0;width:44px;height:44px;border-radius:50%"></a></td>
-          <td valign="middle" style="font-family:{{ sans }};line-height:1.25">
-            <span style="display:block;font-family:Fraunces,Georgia,'Times New Roman',serif;font-size:26px;font-weight:600;line-height:1.1;letter-spacing:-.01em;color:#22231b">Ilmi <span lang="ar" dir="rtl" style="font-family:Amiri,'Geeza Pro','Times New Roman',serif;font-weight:700">علمي</span></span>
-          </td>
-        </tr></table>
+      {# The brand, centred above the card: the round logo, then the wordmark. #}
+      <tr><td align="center" style="padding:0 6px 22px">
+        <a href="{{ site }}" target="_blank" style="text-decoration:none"><img src="{{ logo }}" width="56" height="56" alt="Ilmi" style="display:block;margin:0 auto 10px;border:0;width:56px;height:56px;border-radius:50%"></a>
+        <span style="display:block;font-family:Fraunces,Georgia,'Times New Roman',serif;font-size:26px;font-weight:600;line-height:1.1;letter-spacing:-.01em;color:#22231b;text-align:center">Ilmi <span lang="ar" dir="rtl" style="font-family:Amiri,'Geeza Pro','Times New Roman',serif;font-weight:700">علمي</span></span>
       </td></tr>
-      <tr><td class="card" bgcolor="#fbf8f1" style="background-color:#fbf8f1;border:1px solid #e4dccb;border-radius:20px;padding:36px 36px 30px;box-shadow:0 1px 2px rgba(28,34,48,.04),0 6px 24px rgba(28,34,48,.06)">
+      <tr><td class="card" bgcolor="#fbf8f1" style="background-color:#fbf8f1;border:1px solid #e4dccb;border-radius:20px;padding:34px 36px 30px;box-shadow:0 1px 2px rgba(28,34,48,.04),0 6px 24px rgba(28,34,48,.06)">
         <!--TEST-->
-        {% if self.kicker() %}<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 14px"><tr><td bgcolor="#e8e9d6" style="background-color:#e8e9d6;border-radius:999px;padding:5px 12px;font-family:{{ sans }};font-size:12px;font-weight:700;line-height:16px;letter-spacing:.02em;color:#4a5628">{% block kicker %}{% endblock %}</td></tr></table>{% endif %}
-        <h1 style="margin:0 0 16px;font-family:Fraunces,Georgia,'Times New Roman',serif;font-size:28px;line-height:1.2;font-weight:600;letter-spacing:-.01em;color:#22231b">{{ self.heading() }}</h1>
+        <h1 style="margin:0 0 18px;font-family:Fraunces,Georgia,'Times New Roman',serif;font-size:26px;line-height:1.25;font-weight:600;letter-spacing:-.01em;color:#22231b;text-align:center">{{ self.heading() }}</h1>
         {% block content %}{% endblock %}
       </td></tr>
-      <tr><td align="center" style="padding:22px 16px 0;font-family:{{ sans }};font-size:12px;line-height:1.6;color:#67654f">
+      <tr><td align="center" style="padding:20px 16px 0;font-family:{{ sans }};font-size:12px;line-height:1.6;color:#67654f">
         {% block why %}{% endblock %}
-        {% if support_email %}Questions? Email the school office at <a href="mailto:{{ support_email }}" style="color:#44453a">{{ support_email }}</a>.<br>{% endif %}
-        Ilmi &middot; <a href="{{ site }}" target="_blank" style="color:#44453a">{{ site.split("//")[-1].rstrip("/") }}</a>
+        {% if support_email %}Questions? <a href="mailto:{{ support_email }}" style="color:#44453a">{{ support_email }}</a><br>{% endif %}
+        <a href="{{ site }}" target="_blank" style="color:#44453a;text-decoration:none">{{ site.split("//")[-1].rstrip("/") }}</a>
       </td></tr>
     </table>
     <!--[if mso]></td></tr></table><![endif]-->

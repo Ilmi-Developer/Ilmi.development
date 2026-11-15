@@ -3,6 +3,7 @@
 {% block title %}Your account{% endblock %}
 {% block body_class %}{{ "solo" if user.must_change else "app" }}{% endblock %}
 {% block width %} narrow{% endblock %}
+{% block head %}<script src="/pwreveal.js" defer></script>{% endblock %}
 {% block content %}
 {% if user.must_change %}
 <div class="card">

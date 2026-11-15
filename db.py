@@ -515,6 +515,23 @@ def _m24_finance_books(db, postgres):
     db.execute(q.replace("?", "%s") if postgres else q, ("General fund", "Money the madrasah can spend on anything", at))
 
 
+def _m25_volunteer_requests(db, postgres):
+    t = _types(postgres)
+    # A teacher asking for a volunteer, with why, until an admin or HeadTeacher checks it (see volunteers.py).
+    db.execute(f"""CREATE TABLE volunteer_requests (
+        id {t['id']},
+        user_id {t['ref']} REFERENCES users (id) ON DELETE SET NULL,
+        name TEXT NOT NULL,
+        note TEXT NOT NULL,
+        classes TEXT NOT NULL DEFAULT '',
+        created_at BIGINT NOT NULL,
+        checked_by {t['ref']} REFERENCES users (id) ON DELETE SET NULL,
+        checked_by_name TEXT,
+        checked_at BIGINT)""")
+    db.execute("CREATE INDEX volunteer_requests_open ON volunteer_requests (checked_at, created_at)")
+    db.execute("CREATE INDEX volunteer_requests_user ON volunteer_requests (user_id, created_at)")
+
+
 def _c1_schools(db, postgres):
     t = _types(postgres)
     # The schools. A school's id names its database: the first school keeps the site's original tables, the
@@ -534,7 +551,7 @@ MIGRATIONS = [_m1_classrooms, _m2_accounts, _m3_tv_screens, _m4_tv_settings, _m5
               _m7_avatars, _m8_tutorial, _m9_tutorial_again, _m10_board_links, _m11_login_codes, _m12_stay_signed_in,
               _m13_presenter_shares, _m14_presenter_links, _m15_trusted_devices, _m16_head_teachers, _m17_dark_mode,
               _m18_assistant, _m19_assistant_tokens, _m20_themes, _m21_site_settings, _m22_schools, _m23_finance,
-              _m24_finance_books]
+              _m24_finance_books, _m25_volunteer_requests]
 # Run after MIGRATIONS on the control database only, and recorded in its `control_migrations`.
 CONTROL_MIGRATIONS = [_c1_schools]
 SCHEMA = re.compile(r"[a-z_][a-z0-9_]{0,62}")

@@ -1620,6 +1620,14 @@ button.mc:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--focus)}
 .qmh{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:8px;border-bottom:1px solid var(--line)}
 .qmh b{font-family:var(--font-display);font-weight:600;font-size:1.0625rem}
 .qml{display:flex;justify-content:space-between;margin:8px 0 8px;font-size:.75rem;font-weight:500;color:var(--mute)}
+.qmavg{display:flex;align-items:center;gap:10px;margin:8px 0 2px;padding:8px 10px;border-radius:12px;background:var(--surface-2,color-mix(in srgb,var(--ink) 4%,transparent))}
+.qmavg.none{display:block;font-size:.8125rem;color:var(--mute)}
+.qmav{display:grid;place-items:center;min-width:44px;height:36px;padding:0 8px;border-radius:10px;font:600 1.125rem/1 var(--font-display);
+ font-variant-numeric:tabular-nums;color:var(--ink);background:color-mix(in srgb,var(--qc) 55%,var(--paper))}
+.qmat{display:flex;flex-direction:column;font-size:.8125rem;font-weight:600;color:var(--ink)}
+.qmat small{font-size:.6875rem;font-weight:500;color:var(--mute)}
+.qmam{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;font-size:.6875rem;color:var(--mute)}
+.qmam b{font:600 .9375rem/1.2 var(--font-display);color:var(--ink-2);font-variant-numeric:tabular-nums}
 .qml span{font-weight:500;color:var(--ink-2)}
 .qml .qmtg{margin-left:4px;padding:1px 8px;border-radius:999px;font-weight:600;color:var(--ink);background:color-mix(in srgb,var(--lc,var(--line-2)) 22%,var(--paper))}
 .qmw{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
@@ -2273,6 +2281,46 @@ mark.qhl{background:none;color:#2f8ae0;font-weight:inherit}
 @media (prefers-reduced-motion:reduce){#vQ[data-v="his"]:not(.hide){animation:none}}
 
 /* Help or Requests (railway-storage.js): the foot of a teacher's overview and its pop-up. */
+/* Request Volunteer (railway-storage.js, volunteers.py): the teacher's bar at the top of their overview, and the pings in
+   the top right corner of every admin's, HeadTeacher's and the asking teacher's dashboard. A ping stays until it is
+   checked; then it shows a tick and who checked it for two seconds, and fades away. */
+.vol-ask{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;margin:14px 0 0;padding:14px 20px;border-radius:var(--r-lg);
+ background:color-mix(in srgb,var(--warn-soft) 70%,var(--surface));border:1px solid color-mix(in srgb,var(--warn) 28%,var(--line))}
+.vol-ask-t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.vol-ask-t b{font-size:1rem;font-weight:600;color:var(--ink)}
+.vol-ask-t span{font-size:.875rem;color:var(--mute)}
+.vol-ask-b .ic{flex:none;width:18px;height:18px}
+.vol-f label{gap:8px}
+.vol-stack{position:fixed;z-index:60;top:calc(16px + env(safe-area-inset-top,0px));right:16px;display:flex;flex-direction:column;gap:10px;width:min(360px,calc(100vw - 32px));pointer-events:none}
+.vol-card{pointer-events:auto;display:flex;align-items:flex-start;gap:12px;padding:14px 14px 14px 16px;border-radius:var(--r-lg);background:var(--raised);
+ border:1px solid color-mix(in srgb,var(--warn) 40%,var(--line));border-left:4px solid var(--warn);box-shadow:var(--shadow-lift);
+ animation:volIn .45s cubic-bezier(.2,1.2,.4,1) both;transition:opacity .6s ease,transform .6s ease,max-height .6s ease .1s,margin .6s ease .1s,padding .6s ease .1s;max-height:320px;overflow:hidden}
+.vol-card.mine{border-left-color:var(--primary);border-color:color-mix(in srgb,var(--primary) 30%,var(--line))}
+.vol-ic{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--warn-soft);color:var(--warn-ink)}
+.vol-card:not(.checked):not(.mine) .vol-ic{animation:volPing 2.4s ease-out infinite}
+.vol-card.mine .vol-ic{background:var(--primary-soft);color:var(--primary)}
+.vol-ic .ic{width:20px;height:20px}
+.vol-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.vol-tx b{font-size:.9375rem;font-weight:600;color:var(--ink);line-height:1.3}
+.vol-cl{font-size:.75rem;font-weight:600;color:var(--mute)}
+.vol-note{margin:4px 0 2px;font-size:.875rem;line-height:1.45;color:var(--ink-2,var(--ink));white-space:pre-wrap;overflow-wrap:anywhere}
+.vol-at{font-size:.75rem;color:var(--mute)}
+.vol-chk{flex:none;align-self:center;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border:0;border-radius:999px;
+ background:var(--ok);color:#fff;font:inherit;font-size:.875rem;font-weight:600;cursor:pointer;transition:transform .15s,filter .15s}
+.vol-chk .ic{width:16px;height:16px}
+.vol-chk:hover{filter:brightness(1.08)}.vol-chk:active{transform:scale(.95)}
+.vol-chk:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.vol-chk:disabled{opacity:.6;cursor:default}
+.vol-card.checked{border-color:color-mix(in srgb,var(--ok) 45%,var(--line));border-left-color:var(--ok)}
+.vol-card.checked .vol-ic{background:var(--ok-soft);color:var(--ok-ink);animation:volTick .4s cubic-bezier(.2,1.4,.4,1)}
+.vol-card.checked .vol-at{color:var(--ok-ink);font-weight:600}
+.vol-card.gone{opacity:0;transform:translateX(24px);max-height:0;margin-top:-10px;padding-top:0;padding-bottom:0}
+@keyframes volIn{from{opacity:0;transform:translateY(-10px) scale(.97)}}
+@keyframes volPing{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--warn) 45%,transparent)}70%,100%{box-shadow:0 0 0 10px transparent}}
+@keyframes volTick{from{transform:scale(.6)}}
+@media (max-width:599.98px){.vol-stack{left:12px;right:12px;width:auto;top:calc(12px + env(safe-area-inset-top,0px))}}
+@media (prefers-reduced-motion:reduce){.vol-card,.vol-card .vol-ic{animation:none!important}.vol-card{transition:opacity .3s ease}.vol-card.gone{transform:none}}
+@media print{.vol-stack,.vol-ask{display:none!important}}
 .hrq{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;margin-top:24px;padding:16px 24px;border-radius:var(--r-lg);background:var(--surface);border:1px solid var(--line)}
 .hrq-t{display:flex;flex-direction:column;gap:2px;min-width:0}
 .hrq-t b{font-size:1rem;font-weight:600;color:var(--ink)}
@@ -3799,12 +3847,20 @@ function qMenu(i,keep){var B=QB(),s=S[i],b=B.querySelector('.qnb[data-ni="'+i+'"
  if(!keep&&QMN>=0&&QMN!==i)qMenuClose();QMN=i;b.setAttribute("aria-expanded","true");var w=s.warn||0;
  var m=document.createElement("div");m.className="qmenu";m.setAttribute("role","dialog");m.setAttribute("aria-label",s.name);
  m.innerHTML='<div class="qmh"><b>'+esc(s.name)+'</b><div class="qmm" role="group" aria-label="Merits for '+esc(s.name)+'"><span class="qmml">Merits</span><b>'+s.merits+'</b><button type="button" class="tk minus" data-mk="m-" aria-label="Take back a merit from '+esc(s.name)+'">−</button><button type="button" class="tk add m" data-mk="m+" aria-label="Give '+esc(s.name)+' a merit">+</button></div></div>'
+  +(QK==="m"?'':qmAvg(s))
   +'<p class="qml">Warning<span>Current target <b class="qmtg"'+(nod(s)?'':' style="--lc:'+lc(s.target)+'"')+'>'+esc(ct(s))+'</b></span></p><div class="qmw" role="group" aria-label="Warning for '+esc(s.name)+'">'+[1,2,3].map(function(l){return '<button type="button" class="wb'+l+'" data-mk="w'+l+'" aria-pressed="'+(w===l)+'">'+WL[l]+'</button>'}).join("")+'</div>'
   +'<button type="button" class="qmst" data-mk="st"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><path d="M7 16v-5M12 16V6M17 16v-8"/></svg>Statistics<span class="sr-only"> for '+esc(s.name)+'</span></button>';
  B.appendChild(m);var r=b.getBoundingClientRect(),br=B.getBoundingClientRect(),top=r.bottom-br.top+6;
  if(r.bottom+m.offsetHeight+12>window.innerHeight&&r.top-m.offsetHeight-6>0)top=r.top-br.top-m.offsetHeight-6;
  m.style.top=top+"px";m.style.left=Math.max(0,Math.min(r.left-br.left,B.clientWidth-m.offsetWidth))+"px";
  var f=af&&m.querySelector('[data-mk="'+af+'"]')||(!keep&&m.querySelector("button"));if(f)f.focus()}
+/* On the Quran tracker, a student's pop-up opens with their average grade: over every recorded day (absent days left
+   out), coloured as a score of that grade would be on the tracker, and this month's beside it. */
+function qmAvg(s){var all=marks(Object.keys(s.q).map(function(k){return s.q[k]})),a=avg(all),m=qMonth(s);
+ if(!all.length)return '<p class="qmavg none">No Quran grades yet</p>';
+ return '<div class="qmavg" role="group" aria-label="Average grade for '+esc(s.name)+'"><span class="qmav" style="--qc:'+qcol(Math.round(+a))+'">'+a+'</span>'
+  +'<span class="qmat">Average grade<small>out of 5 over '+plural(all.length,"day")+'</small></span>'
+  +'<span class="qmam">'+(m?'<b>'+m.v.toFixed(1)+'</b>This month':'<b>–</b>This month')+'</span></div>'}
 function qMenuAct(k){var i=QMN,s=S[i];if(!s)return;var nm=fn(s);
  if(k==="st"){qMenuClose();sxOpen(i);return}
  if(k[0]==="m"){if(k[1]==="+"){s.merits++;s.ml.push(Date.now());toast("Merit added for "+nm)}else if(s.merits>0){s.merits--;s.ml.pop();toast("Merit taken back for "+nm)}else{toast(nm+" has no merits to take back",1);return}save();render();return}
@@ -4292,11 +4348,11 @@ function tSummary(K,school){var tr=chaser();
    today until the first score of the day goes in. The overview shows one of the last two class days (the latest
    first); the pop-up behind the title shows every class over the last six. */
 var QTD="";
-/* Administrators see the section folded away by default (the user asked for it hidden): just its title and the
-   same fold arrow as the other sections. What they pick is remembered in this browser. Head teachers, who do the
-   chasing, always see it open. */
-function trFold(){return !TEACHER&&!HEAD}
-function trOpen(){if(!trFold())return true;try{return localStorage.getItem("mysafar.qtShow")==="1"}catch(e){return false}}
+/* The section folds away like the others: just its title and the same fold arrow. Administrators see it folded by
+   default (the user asked for it hidden); head teachers, who do the chasing, see it open until they fold it. What
+   each picks is remembered in this browser. */
+function trFold(){return !TEACHER}
+function trOpen(){if(!trFold())return true;try{var v=localStorage.getItem("mysafar.qtShow");return HEAD?v!=="0":v==="1"}catch(e){return HEAD}}
 function trBtn(o){return '<button type="button" class="ibtn fold" id="trT" aria-expanded="'+o+'" aria-controls="trQ" aria-label="'+(o?'Hide':'Show')+' Quran trackers"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>'}
 function trWrap(){if(trOpen())return trHtml();
  return '<section class="tsq folded" id="trQ" data-fold="qt"><div class="mod-h"><h2>Quran trackers</h2>'+trBtn(false)+'</div></section>'}

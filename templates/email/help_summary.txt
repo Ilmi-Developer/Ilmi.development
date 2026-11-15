@@ -1,14 +1,12 @@
-Assalamu alaikum,
-
 {% if items -%}
-Here is everything staff sent from Help or Requests between {{ start|when }} and {{ end|when }} (UK time).
+Help or Requests, {{ start|when }} to {{ end|when }} (UK time).
 
 Help: {{ helps }}
 Requests: {{ requests }}
 Waiting for a reply: {{ waiting }}
 {% for i in items %}
 ----
-{{ i.kind }} from {{ i.name }} ({{ i.email }}), {{ i.at|when }}
+{{ i.kind }} from {{ i.name }}, {{ i.at|when }}
 
 {{ i.body }}
 
@@ -17,7 +15,7 @@ Waiting for a reply: {{ waiting }}
 {% endfor %}
 ----
 {%- else -%}
-No help or requests were sent between {{ start|when }} and {{ end|when }} (UK time). There's nothing to do.
+No help or requests were sent between {{ start|when }} and {{ end|when }} (UK time).
 {%- endif %}
 
 Open FAQs: {{ faqs }}

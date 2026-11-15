@@ -90,6 +90,24 @@ body:has(.invite:target),body:has(.invite.open){overflow:hidden}
 .solo .field input{min-height:52px;padding:12px 46px 12px 16px;border-radius:14px}
 .fin{position:relative;display:block}
 .fin .ic{position:absolute;right:15px;top:50%;width:20px;height:20px;margin-top:-10px;color:var(--mute);pointer-events:none}
+/* Show or hide a password (static/pwreveal.js): the eye button takes the lock's place at the field's right end. Shut,
+   it is a lid with lashes; pressed, the lid lifts open and the pupil appears, with a short blink each way. */
+.fin.haspw input{padding-right:52px}
+.fin.haspw>.ic{display:none}
+.pwbtn{position:absolute;right:6px;top:50%;width:40px;height:40px;margin-top:-20px;display:grid;place-items:center;padding:0;border:0;
+ border-radius:12px;background:none;color:var(--mute);cursor:pointer;transition:color .2s,background-color .2s}
+.pwbtn:hover{color:var(--ink);background:color-mix(in srgb,var(--ink) 7%,transparent)}
+.pwbtn:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+.pweye{width:22px;height:22px;overflow:visible}
+.pweye .pwopen{transform-origin:12px 12px;transform:scaleY(.08);opacity:0;transition:transform .32s cubic-bezier(.3,1.4,.5,1),opacity .18s}
+.pweye .pwpupil{transform-origin:12px 12px;transform:scale(.3);transition:transform .3s .1s cubic-bezier(.3,1.5,.5,1)}
+.pweye .pwshut{transform-origin:12px 11px;transition:transform .28s cubic-bezier(.4,0,.2,1),opacity .2s}
+.pwbtn.on .pwopen{transform:none;opacity:1}
+.pwbtn.on .pwpupil{transform:none}
+.pwbtn.on .pwshut{transform:scaleY(-.2) translateY(-4px);opacity:0}
+.pwbtn.blink .pweye{animation:pwblink .36s ease}
+@keyframes pwblink{40%{transform:scaleY(.86)}}
+@media (prefers-reduced-motion:reduce){.pweye .pwopen,.pweye .pwpupil,.pweye .pwshut{transition:none}.pwbtn.blink .pweye{animation:none}}
 .solo .btn.primary{width:100%;min-height:54px;margin-top:8px;font:500 1.1875rem/1 var(--font-display);letter-spacing:.005em;
  box-shadow:0 1px 2px rgba(40,46,20,.2),0 12px 24px -14px rgba(40,46,20,.6)}
 .solo .btn.primary:hover{transform:translateY(-1px)}

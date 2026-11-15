@@ -82,8 +82,8 @@ link belongs to. Run locally without `DATABASE_URL`, each is a SQLite file in
   for them on **Manage users**. They can't upload CSVs, create classrooms or
   delete them. The server enforces this; the page only hides the buttons.
 - **HeadTeachers** see and record on every classroom, like an administrator, and
-  have Overview, Record, Classes, House points, Rankings, Presenter and
-  **FAQs** (where they can reply, but not delete). They have none of the
+  have Overview, Record, Classes, House points, Rankings and Presenter. FAQs
+  are the admin's alone. They have none of the
   Administration pages: no Manage users, Students, Class history, Activity, TV
   screens, Counted coins, Spreadsheet or Import, and they can't add or remove
   students or classrooms. They sign in like teachers, without an emailed code.
@@ -136,6 +136,18 @@ saying so. The web service checks once a minute from a background thread and
 records each week's email in the database, so it goes once, even after a
 restart; if the site was down at noon it goes out when it's back, up to Monday
 evening. No cron service is needed.
+
+## Request Volunteer
+
+Teachers have a **Request Volunteer** button at the top of their overview. It
+asks why they need one (required) and pings the admin and every HeadTeacher:
+a card in the top right corner of their dashboard with the teacher, their
+classes and the reason. The card stays until any one of them presses
+**Check**. Every dashboard showing it (the other admins and HeadTeachers, and
+the teacher's own, which shows the request as waiting) then shows it ticked
+off with who checked it for two seconds, and it fades away. Dashboards ask for
+requests every 8 seconds while they're on screen. A teacher can send up to 10
+a day; checked requests are deleted after `RETENTION_DAYS`.
 
 ## Ask Ilmi (the assistant)
 
@@ -266,8 +278,11 @@ can present their own classes and admins any class. Its slides are podiums for t
 the class's house race (with the house logos) and merits; memorisation and book passes on
 one board like the TV's; and the month's stars of the
 week on one page. Every Presenter, for every account, changes slide every 5 seconds
-(a list too long for one page shrinks to fit instead of turning pages). **Full screen** and **Close** show when the mouse moves;
-Close (or Escape) goes back to the class.
+(a list too long for one page shrinks to fit instead of turning pages). **Full screen**, **Close** and an arrow at each
+side (back and forward; the left and right arrow keys do the same) show when the mouse moves; Close (or Escape) goes
+back to the class. The admin's **Preview the TV** on the Presenter page opens the TV in a new tab, moves to it and goes
+full screen (where the browser doesn't allow that without a click, the first click anywhere does it); it has the same
+arrows.
 
 Like a TV screen, the Presenter opens by link and needs no sign-in once open. Each press of
 Presenter makes a new link (`/present/<random>`) and opens it in a new tab. Only the tab that

@@ -61,8 +61,8 @@ EMAIL = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
 # accounts and records. "developer" is not among them, so nobody can be given it: it is what the one account in the
 # control database is called (schools.py).
 ROLES = ("admin", "head", "teacher", "finance")
-# A HeadTeacher ("head") sees every classroom and records on any of them (Record, House points, Rankings, Presenter,
-# FAQs), but gives no house points and has none of the Administration pages: no accounts, students, imports or classroom changes.
+# A HeadTeacher ("head") sees every classroom and records on any of them (Record, House points, Rankings, Presenter),
+# but has no FAQs (only the admin answers them), gives no house points and has none of the Administration pages: no accounts, students, imports or classroom changes.
 ROLE_NAMES = {"admin": "Admin", "head": "HeadTeacher", "teacher": "Teacher", "finance": "Finance", "developer": "Developer"}
 SEES_ALL = ("admin", "head")
 COMMON_PASSWORDS = {
@@ -89,6 +89,7 @@ ACTIONS = {
     "tv.revoked": "Turned off a TV screen link", "tv.settings": "Changed a TV screen's settings",
     "email.test": "Sent a test email", "export.downloaded": "Downloaded the school spreadsheet",
     "help.sent": "Sent a Help or Requests message", "help.replied": "Replied on FAQs",
+    "volunteer.requested": "Requested a volunteer", "volunteer.checked": "Checked a volunteer request",
     "help.deleted": "Deleted a FAQs message", "avatar.changed": "Changed their profile picture",
     "avatar.removed": "Removed their profile picture", "board.created": "Made a memo board link",
     "board.revoked": "Turned off a memo board link", "login.code_sent": "Was emailed a sign-in code",
@@ -1089,6 +1090,8 @@ def prune(database, retention_days):
         tx.execute("DELETE FROM user_tokens WHERE expires_at < ?", (t - DAY,))
         tx.execute("DELETE FROM login_codes WHERE expires_at < ?", (t,))
         tx.execute("DELETE FROM trusted_devices WHERE expires_at < ?", (t,))
+        # Volunteer requests once checked are only shown for a moment; they're kept as long as the audit log.
+        tx.execute("DELETE FROM volunteer_requests WHERE checked_at < ?", (cutoff,))
         # Presenter links never opened, or whose tab has gone quiet (closed); tv.py has the times.
         tx.execute("DELETE FROM presenter_links WHERE (tab_hash IS NULL AND created_at < ?) OR last_seen_at < ?",
                    (t - 10 * MINUTE, t - 12 * HOUR))

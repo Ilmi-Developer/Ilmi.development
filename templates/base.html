@@ -100,8 +100,6 @@
     {# Teachers and HeadTeachers open one class's Presenter; admins have the Presenter page (TV screens) below. #}
     {% if user.role != "admin" %}{{ nl("/#presenter", "presenter", "Presenter") }}{% endif %}
     {% if config.ASSISTANT_ENABLED %}{{ nl("/#ask", "rehal", "Ask Ilmi") }}{% endif %}
-    {# A HeadTeacher has FAQs but none of the Administration pages. #}
-    {% if user.role == "head" %}{{ nl("/admin/faqs", "faq", "FAQs", here == "/admin/faqs") }}{% endif %}
     {% if user.role == "admin" %}
     <div class="navh" id="adminh">Administration</div>
     {% call grp("users", "idcard", "User management") %}

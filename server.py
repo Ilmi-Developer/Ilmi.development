@@ -41,6 +41,7 @@ import house_extra
 import quran_coins
 import memo_import
 import helpdesk
+import volunteers
 import finance
 import schools
 import tv
@@ -68,7 +69,7 @@ TOKEN_POINTS = {"tg": 5, "tb": 20, "tr": 50}  # green, blue, red (book completio
 # House points given on the Record page, by what for, and the token each one gives (HPR in src/page.html).
 HOUSE_POINT_REASONS = {"bk": "tr", "lv": "tb", "hw": "tg", "ec": "tg", "cp": "tg"}
 # Reachable without signing in. /welcome is Ilmi's start page, where anyone signed out arrives.
-PUBLIC = {"/login", "/login/code", "/forgot", "/healthz", "/logo.png", "/auth.css", "/intro.js", "/code.js", "/favicon.png",
+PUBLIC = {"/login", "/login/code", "/forgot", "/healthz", "/logo.png", "/auth.css", "/intro.js", "/code.js", "/pwreveal.js", "/favicon.png",
           "/favicon.ico", "/welcome", "/welcome.css", "/welcome.js", "/wash.js", "/glass.js", "/glass.css"}
 # Atkinson Hyperlegible Next stays for the TV display; the dashboard and admin pages use Nunito for text, Fraunces
 # (soft) for the wordmark, titles, figures and large italic lines (both made by tools/art/type.py), and Amiri for Arabic:
@@ -262,6 +263,7 @@ PAGE_CSP = ("default-src 'none'; style-src 'self'; img-src 'self'; font-src 'sel
 # every page that runs a script of ours also takes data: images; pages without scripts keep img-src 'self'.
 GLASS_IMG = "img-src 'self' data:"
 LOGIN_CSP = PAGE_CSP.replace("img-src 'self'", GLASS_IMG) + "; script-src 'self'"
+# The invite and reset pages run /pwreveal.js too (the eye that shows the password being typed), so they take LOGIN_CSP.
 # The emailed sign-in code page (sent from POST /login and POST /login/code) runs /code.js, the animated code boxes,
 # which sends the finished code with fetch so the boxes can show whether it was right before the page moves on.
 CODE_CSP = LOGIN_CSP + "; connect-src 'self'"
@@ -401,6 +403,7 @@ def create_app(test_config=None):
     app.register_blueprint(quran_coins.bp)
     app.register_blueprint(memo_import.bp)
     app.register_blueprint(helpdesk.bp)
+    app.register_blueprint(volunteers.bp)
     app.register_blueprint(assistant.bp)
     if not app.config.get("TESTING"):
         helpdesk.start_summary_thread(app)
@@ -506,7 +509,8 @@ def create_app(test_config=None):
             EMAIL_PREVIEW_CSP if request.path.startswith("/admin/email/preview/") else \
             ACCOUNT_CSP if request.path.startswith("/account") else \
             CODE_CSP if request.path in ("/login", "/login/code") else \
-            LOGIN_CSP if request.path.startswith(("/admin/", "/schools", "/finance")) or request.path == "/welcome" else PAGE_CSP
+            LOGIN_CSP if request.path.startswith(("/admin/", "/schools", "/finance", "/invite/", "/reset/")) \
+            or request.path == "/welcome" else PAGE_CSP
         if app.config["COOKIE_SECURE"]:
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return response
@@ -564,6 +568,16 @@ def create_app(test_config=None):
     @app.get("/glass.css")
     def glass_css():
         return Response((ROOT / "static" / "glass.css").read_text(encoding="utf-8"), mimetype="text/css")
+
+    # The Presenter page's Preview button, which opens the TV preview full screen in a new tab (templates/admin_tv.html).
+    @app.get("/tvopen.js")
+    def tvopen_js():
+        return Response((ROOT / "static" / "tvopen.js").read_text(encoding="utf-8"), mimetype="text/javascript")
+
+    # The eye button on password fields that shows or hides what was typed (sign-in, invite, reset and Account).
+    @app.get("/pwreveal.js")
+    def pwreveal_js():
+        return Response((ROOT / "static" / "pwreveal.js").read_text(encoding="utf-8"), mimetype="text/javascript")
 
     @app.get("/intro.js")
     def intro_js():

@@ -163,14 +163,6 @@
     if (ME.assistant) adminNav.appendChild(link(["Assistant requests", "/admin/requests", "faq"]));
     adminNav.appendChild(link(["Presenter", "/admin/tv", "tv"]));
   }
-  // A HeadTeacher has FAQs, after Presenter, but none of the Administration pages.
-  if (ME.role === "head") {
-    var faq = document.createElement("a");
-    faq.className = "nav"; faq.href = "/admin/faqs";
-    faq.innerHTML = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS.faq + "</svg>";
-    faq.appendChild(document.createTextNode("FAQs"));
-    document.getElementById("adminNav").appendChild(faq);
-  }
   var me = document.getElementById("me");
   var who = document.createElement("div");
   who.className = "who";
@@ -495,5 +487,143 @@
     });
     refresh();
     setInterval(function () { if (!document.hidden) refresh(); }, 180000);
+  })();
+  // Request Volunteer (volunteers.py). A teacher presses Request Volunteer at the top of their overview and says why;
+  // the admin and HeadTeachers get a ping in the corner of the dashboard that stays until one of them checks it.
+  // Every dashboard showing the ping (theirs, and the teacher's own) then shows it ticked off with who checked it,
+  // and two seconds later it fades away. Dashboards ask for the requests every few seconds while they're on screen.
+  if (ME.role === "teacher" || ME.role === "admin" || ME.role === "head") (function () {
+    var CHECKS = ME.role !== "teacher", HOLD = 2000, POLL = 8000;
+    var SVG = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+    var HAND = '<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11"/><path d="M11 10.5v-6a1.5 1.5 0 0 1 3 0V11"/><path d="M14 10.5v-4a1.5 1.5 0 0 1 3 0V13"/><path d="M8 13l-1.6-1.8a1.6 1.6 0 0 0-2.4 2.1L7.6 18a6 6 0 0 0 4.7 2.5H13a5 5 0 0 0 5-5V12a1.5 1.5 0 0 0-1-1.4"/>';
+    var TICK = '<path d="m5 12.5 4.5 4.5L19 7.5"/>';
+    var stack = document.createElement("div");
+    stack.className = "vol-stack";
+    stack.setAttribute("role", "region");
+    stack.setAttribute("aria-label", "Volunteer requests");
+    stack.setAttribute("aria-live", "polite");
+    document.body.appendChild(stack);
+    var cards = {}, skew = 0, busy = false;
+    function e(text) { return esc(text == null ? "" : text); }
+    function ago(t) {
+      var s = Math.max(0, Math.round(Date.now() / 1000 - skew - t));
+      if (s < 60) return "just now";
+      var m = Math.round(s / 60);
+      if (m < 60) return m + " min ago";
+      return new Date(t * 1000).toLocaleTimeString("en-GB", {hour: "2-digit", minute: "2-digit"});
+    }
+    function named(list) {
+      return (list || []).map(function (n) { return typeof cname === "function" ? cname(n) : n; }).join(", ");
+    }
+    async function call(path, body) {
+      var options = {credentials: "same-origin", cache: "no-store"};
+      if (body) {
+        options.method = "POST";
+        options.headers = {"Content-Type": "application/json", "X-Dashboard-Request": "1"};
+        options.body = JSON.stringify(body);
+      }
+      var response = await fetch(path, options), data = {};
+      try { data = await response.json(); } catch (error) { /* An error page, not JSON. */ }
+      if (!response.ok) throw new Error(data.error || (response.status === 401 ? "You've been signed out. Sign in again, then try once more." : "That didn't go through. Check your connection and try again."));
+      return data;
+    }
+    function card(i) {
+      var el = document.createElement("div");
+      el.className = "vol-card" + (i.mine ? " mine" : "");
+      el.dataset.id = i.id;
+      var who = i.mine ? "Your volunteer request" : e(i.name) + " needs a volunteer";
+      el.innerHTML = '<span class="vol-ic">' + SVG + HAND + '</svg></span><div class="vol-tx"><b>' + who + "</b>"
+        + (i.classes && i.classes.length && !i.mine ? '<span class="vol-cl">' + e(named(i.classes)) + "</span>" : "")
+        + '<p class="vol-note">' + e(i.note) + '</p><span class="vol-at">' + (i.mine ? "Sent " : "") + e(ago(i.at)) + (i.mine ? " · waiting to be checked" : "") + "</span></div>"
+        + (CHECKS ? '<button type="button" class="vol-chk" aria-label="Check ' + e(i.name) + '\'s volunteer request">' + SVG + TICK + "</svg><span>Check</span></button>" : "");
+      return el;
+    }
+    // Ticked off: who checked it, for two seconds, then it fades away.
+    function done(id, by, byMe) {
+      var c = cards[id];
+      if (!c || c.state !== "open") return;
+      c.state = "done";
+      var el = c.el, btn = el.querySelector(".vol-chk"), at = el.querySelector(".vol-at");
+      if (btn) btn.remove();
+      el.classList.add("checked");
+      el.querySelector(".vol-ic").innerHTML = SVG + TICK + "</svg>";
+      at.textContent = byMe ? "Checked by you" : by ? "Checked by " + by : "Checked";
+      setTimeout(function () {
+        el.classList.add("gone");
+        setTimeout(function () { el.remove(); if (cards[id] === c) delete cards[id]; }, 700);
+      }, HOLD);
+    }
+    function take(data) {
+      if (data.now) skew = Date.now() / 1000 - data.now;
+      var seen = {};
+      (data.items || []).forEach(function (i) {
+        seen[i.id] = 1;
+        var c = cards[i.id];
+        if (i.checked) { if (c) done(i.id, i.by, i.byMe); return; }
+        if (!c) {
+          var el = card(i);
+          stack.appendChild(el);
+          cards[i.id] = {el: el, state: "open"};
+        } else if (c.state === "open") {
+          var at = c.el.querySelector(".vol-at");
+          at.textContent = (i.mine ? "Sent " : "") + ago(i.at) + (i.mine ? " · waiting to be checked" : "");
+        }
+      });
+      // Gone from the list (checked a while ago, while this dashboard wasn't asking): ticked off and faded too.
+      Object.keys(cards).forEach(function (id) { if (!seen[id]) done(id, null); });
+    }
+    async function refresh() {
+      if (busy) return;
+      busy = true;
+      try { take(await call("/api/volunteers")); } catch (error) { /* Tried again on the next round. */ }
+      busy = false;
+    }
+    stack.addEventListener("click", async function (event) {
+      var b = event.target.closest(".vol-chk");
+      if (!b) return;
+      var el = b.closest(".vol-card"), id = el.dataset.id;
+      b.disabled = true;
+      try {
+        var data = await call("/api/volunteers/" + encodeURIComponent(id) + "/check", {});
+        take(data);
+      } catch (error) {
+        b.disabled = false;
+        toast(error.message, 1);
+      }
+    });
+    if (ME.role === "teacher") {
+      var bar = document.createElement("div");
+      bar.className = "vol-ask";
+      bar.innerHTML = '<div class="vol-ask-t"><b>Need an extra pair of hands?</b><span>The admin and HeadTeachers are told straight away.</span></div>'
+        + '<button type="button" class="btn p vol-ask-b" aria-haspopup="dialog">' + SVG + HAND + "</svg>Request Volunteer</button>";
+      var overview = document.getElementById("vM");
+      if (overview) overview.insertBefore(bar, overview.firstChild);
+      bar.querySelector("button").onclick = function () {
+        drawer("Request Volunteer", '<form class="addf vol-f" id="volF" novalidate>'
+          + '<label>Why do you need a volunteer?<span class="cap">For example, a student needs one-to-one reading, or the class is short of a helper today.</span>'
+          + '<textarea id="volT" rows="5" maxlength="500" required></textarea></label>'
+          + '<p class="naerr" id="volE" role="alert"></p><div class="acts"><button type="submit" class="btn p">Send request</button></div></form>');
+        DMODE = "vol";
+        document.getElementById("volT").focus();
+      };
+      document.getElementById("drwB").addEventListener("submit", async function (event) {
+        if (DMODE !== "vol" || event.target.id !== "volF") return;
+        event.preventDefault();
+        var text = document.getElementById("volT"), err = document.getElementById("volE"), send = event.target.querySelector("[type=submit]");
+        if (!text.value.trim()) { err.textContent = "Say why you need a volunteer first."; text.focus(); return; }
+        send.disabled = true; send.textContent = "Sending…";
+        try {
+          take(await call("/api/volunteers", {note: text.value}));
+          closeDrawer();
+          toast("Request sent. The admin and HeadTeachers have been pinged.", 1);
+        } catch (error) {
+          if (!document.contains(err)) return;
+          err.textContent = error.message; send.disabled = false; send.textContent = "Send request";
+        }
+      });
+    }
+    refresh();
+    setInterval(function () { if (!document.hidden) refresh(); }, POLL);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) refresh(); });
   })();
 })();

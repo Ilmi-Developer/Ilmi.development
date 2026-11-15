@@ -914,6 +914,14 @@ button.mc:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--focus)}
 .qmh{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:8px;border-bottom:1px solid var(--line)}
 .qmh b{font-family:var(--font-display);font-weight:600;font-size:1.0625rem}
 .qml{display:flex;justify-content:space-between;margin:8px 0 8px;font-size:.75rem;font-weight:500;color:var(--mute)}
+.qmavg{display:flex;align-items:center;gap:10px;margin:8px 0 2px;padding:8px 10px;border-radius:12px;background:var(--surface-2,color-mix(in srgb,var(--ink) 4%,transparent))}
+.qmavg.none{display:block;font-size:.8125rem;color:var(--mute)}
+.qmav{display:grid;place-items:center;min-width:44px;height:36px;padding:0 8px;border-radius:10px;font:600 1.125rem/1 var(--font-display);
+ font-variant-numeric:tabular-nums;color:var(--ink);background:color-mix(in srgb,var(--qc) 55%,var(--paper))}
+.qmat{display:flex;flex-direction:column;font-size:.8125rem;font-weight:600;color:var(--ink)}
+.qmat small{font-size:.6875rem;font-weight:500;color:var(--mute)}
+.qmam{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;font-size:.6875rem;color:var(--mute)}
+.qmam b{font:600 .9375rem/1.2 var(--font-display);color:var(--ink-2);font-variant-numeric:tabular-nums}
 .qml span{font-weight:500;color:var(--ink-2)}
 .qml .qmtg{margin-left:4px;padding:1px 8px;border-radius:999px;font-weight:600;color:var(--ink);background:color-mix(in srgb,var(--lc,var(--line-2)) 22%,var(--paper))}
 .qmw{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
@@ -1567,6 +1575,46 @@ mark.qhl{background:none;color:#2f8ae0;font-weight:inherit}
 @media (prefers-reduced-motion:reduce){#vQ[data-v="his"]:not(.hide){animation:none}}
 
 /* Help or Requests (railway-storage.js): the foot of a teacher's overview and its pop-up. */
+/* Request Volunteer (railway-storage.js, volunteers.py): the teacher's bar at the top of their overview, and the pings in
+   the top right corner of every admin's, HeadTeacher's and the asking teacher's dashboard. A ping stays until it is
+   checked; then it shows a tick and who checked it for two seconds, and fades away. */
+.vol-ask{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;margin:14px 0 0;padding:14px 20px;border-radius:var(--r-lg);
+ background:color-mix(in srgb,var(--warn-soft) 70%,var(--surface));border:1px solid color-mix(in srgb,var(--warn) 28%,var(--line))}
+.vol-ask-t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.vol-ask-t b{font-size:1rem;font-weight:600;color:var(--ink)}
+.vol-ask-t span{font-size:.875rem;color:var(--mute)}
+.vol-ask-b .ic{flex:none;width:18px;height:18px}
+.vol-f label{gap:8px}
+.vol-stack{position:fixed;z-index:60;top:calc(16px + env(safe-area-inset-top,0px));right:16px;display:flex;flex-direction:column;gap:10px;width:min(360px,calc(100vw - 32px));pointer-events:none}
+.vol-card{pointer-events:auto;display:flex;align-items:flex-start;gap:12px;padding:14px 14px 14px 16px;border-radius:var(--r-lg);background:var(--raised);
+ border:1px solid color-mix(in srgb,var(--warn) 40%,var(--line));border-left:4px solid var(--warn);box-shadow:var(--shadow-lift);
+ animation:volIn .45s cubic-bezier(.2,1.2,.4,1) both;transition:opacity .6s ease,transform .6s ease,max-height .6s ease .1s,margin .6s ease .1s,padding .6s ease .1s;max-height:320px;overflow:hidden}
+.vol-card.mine{border-left-color:var(--primary);border-color:color-mix(in srgb,var(--primary) 30%,var(--line))}
+.vol-ic{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--warn-soft);color:var(--warn-ink)}
+.vol-card:not(.checked):not(.mine) .vol-ic{animation:volPing 2.4s ease-out infinite}
+.vol-card.mine .vol-ic{background:var(--primary-soft);color:var(--primary)}
+.vol-ic .ic{width:20px;height:20px}
+.vol-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.vol-tx b{font-size:.9375rem;font-weight:600;color:var(--ink);line-height:1.3}
+.vol-cl{font-size:.75rem;font-weight:600;color:var(--mute)}
+.vol-note{margin:4px 0 2px;font-size:.875rem;line-height:1.45;color:var(--ink-2,var(--ink));white-space:pre-wrap;overflow-wrap:anywhere}
+.vol-at{font-size:.75rem;color:var(--mute)}
+.vol-chk{flex:none;align-self:center;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border:0;border-radius:999px;
+ background:var(--ok);color:#fff;font:inherit;font-size:.875rem;font-weight:600;cursor:pointer;transition:transform .15s,filter .15s}
+.vol-chk .ic{width:16px;height:16px}
+.vol-chk:hover{filter:brightness(1.08)}.vol-chk:active{transform:scale(.95)}
+.vol-chk:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.vol-chk:disabled{opacity:.6;cursor:default}
+.vol-card.checked{border-color:color-mix(in srgb,var(--ok) 45%,var(--line));border-left-color:var(--ok)}
+.vol-card.checked .vol-ic{background:var(--ok-soft);color:var(--ok-ink);animation:volTick .4s cubic-bezier(.2,1.4,.4,1)}
+.vol-card.checked .vol-at{color:var(--ok-ink);font-weight:600}
+.vol-card.gone{opacity:0;transform:translateX(24px);max-height:0;margin-top:-10px;padding-top:0;padding-bottom:0}
+@keyframes volIn{from{opacity:0;transform:translateY(-10px) scale(.97)}}
+@keyframes volPing{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--warn) 45%,transparent)}70%,100%{box-shadow:0 0 0 10px transparent}}
+@keyframes volTick{from{transform:scale(.6)}}
+@media (max-width:599.98px){.vol-stack{left:12px;right:12px;width:auto;top:calc(12px + env(safe-area-inset-top,0px))}}
+@media (prefers-reduced-motion:reduce){.vol-card,.vol-card .vol-ic{animation:none!important}.vol-card{transition:opacity .3s ease}.vol-card.gone{transform:none}}
+@media print{.vol-stack,.vol-ask{display:none!important}}
 .hrq{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;margin-top:24px;padding:16px 24px;border-radius:var(--r-lg);background:var(--surface);border:1px solid var(--line)}
 .hrq-t{display:flex;flex-direction:column;gap:2px;min-width:0}
 .hrq-t b{font-size:1rem;font-weight:600;color:var(--ink)}

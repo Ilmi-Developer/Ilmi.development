@@ -1,18 +1,10 @@
 {% extends "email/_layout.html" %}
 {% from "email/_parts.html" import button, fallback, p %}
-{% block preheader %}Choose a new password. The link expires in {{ reset_hours }}.{% endblock %}
-{% block kicker %}Password reset{% endblock %}
+{% block preheader %}The link expires in {{ reset_hours }}.{% endblock %}
 {% block heading %}Reset your password{% endblock %}
 {% block content %}
-{% call p() %}Assalamu alaikum {{ name }},{% endcall %}
-{% if by %}
-{% call p() %}{{ by }}, an admin, has sent you a link to choose a new password for your Ilmi account.{% endcall %}
-{% else %}
-{% call p() %}Someone asked to reset the password for your Ilmi account ({{ email }}).{% endcall %}
-{% endif %}
+{% call p() %}Assalamu alaikum {{ name }}, {% if by %}{{ by }} has sent you a link to choose a new password.{% else %}use the button below to choose a new password.{% endif %}{% endcall %}
 {{ button(link, "Choose a new password") }}
-{% call p(True) %}The link works once and expires in {{ reset_hours }}. Your current password keeps working until you choose a new one; then you'll be signed out on your other devices.{% endcall %}
-{% if not by %}{% call p(True) %}<b style="color:#44453a">Didn't ask for this?</b> Ignore this email and your password stays the same.{% endcall %}{% endif %}
+{% call p(True) %}The link expires in {{ reset_hours }}.{% if not by %} Didn't ask for this? Ignore this email and nothing changes.{% endif %}{% endcall %}
 {{ fallback(link) }}
 {% endblock %}
-{% block why %}You're getting this because a reset link was requested for {{ email }}.<br>{% endblock %}

@@ -667,18 +667,17 @@ class DashboardTests:
         self.assertEqual(self.write("New", class_id="yr5-c", client=head).status_code, 403)
         self.assertEqual(self.delete(2, client=head).status_code, 403)
         self.assertEqual(head.get("/api/house-extra").status_code, 200)
-        # FAQs: they read and reply, but only admins delete.
-        faqs = head.get("/admin/faqs")
-        self.assertEqual(faqs.status_code, 200)
-        self.assertIn(b'href="/admin/faqs"', faqs.data)
+        # FAQs are the admin's alone: no link in their menu, and the page is closed to them.
+        self.assertEqual(head.get("/admin/faqs").status_code, 403)
+        self.assertEqual(head.post("/admin/faqs/1/reply", data={}).status_code, 403)
         for path in ("/admin/users", "/admin/history", "/admin/activity", "/admin/tv", "/admin/house-points",
                      "/admin/export", "/admin/import"):
             self.assertEqual(head.get(path).status_code, 403, path)
         menu = head.get("/account").get_data(as_text=True)
         for link in ('href="/#record"', 'href="/#classes"', 'href="/#house-points"', 'href="/#rankings"',
-                     'href="/#presenter"', 'href="/admin/faqs"'):
+                     'href="/#presenter"'):
             self.assertIn(link, menu)
-        for link in ('href="/#students"', 'href="/admin/users"', "Administration"):
+        for link in ('href="/admin/faqs"', 'href="/#students"', 'href="/admin/users"', "Administration"):
             self.assertNotIn(link, menu)
         self.assertIn("<span>HeadTeacher</span>", menu)
         # Presenter for any class.
@@ -1970,6 +1969,67 @@ class DashboardTests:
                           rows["Rent and premises"]["remaining"], rows["Rent and premises"]["over"]), (25000, 25.0, -25000, True))
         self.assertEqual((rows["Tuition fees"]["actual"], rows["Tuition fees"]["variance"]), (0, -500000))
         self.assertIn("Over budget", client.get("/finance/reports/budget").get_data(as_text=True))
+
+    def test_request_volunteer(self):
+        self.write()
+        self.add_user("maryam@example.com", classes=["yr3-a"])
+        self.add_user("head@example.com", role="head", password="head-password-12")
+        teacher = self.sign_in("maryam@example.com", "teacher-password-1")
+        head = self.sign_in("head@example.com", "head-password-12")
+        listed = teacher.get("/api/volunteers").get_json()
+        self.assertEqual((listed["items"], listed["ask"], listed["check"]), ([], True, False))
+        # Only a teacher asks, with a reason, from the dashboard (JSON plus its header).
+        self.assertEqual(teacher.post("/api/volunteers", json={"note": "x"}).status_code, 403)
+        self.assertEqual(teacher.post("/api/volunteers", json={"note": "  \n "}, headers=self.headers).status_code, 400)
+        self.assertEqual(head.post("/api/volunteers", json={"note": "x"}, headers=self.headers).status_code, 403)
+        sent = teacher.post("/api/volunteers", json={"note": "A student needs one-to-one reading"}, headers=self.headers)
+        self.assertEqual(sent.status_code, 200)
+        mine = sent.get_json()["items"]
+        self.assertEqual([(i["note"], i["mine"], i["checked"], i["classes"]) for i in mine],
+                         [("A student needs one-to-one reading", True, False, ["Yr3-A"])])
+        request_id = mine[0]["id"]
+        # The admin and HeadTeachers are pinged; the teacher can't check their own.
+        for client in (self.client, head):
+            items = client.get("/api/volunteers").get_json()["items"]
+            self.assertEqual([(i["id"], i["name"], i["checked"]) for i in items], [(request_id, "Maryam", False)])
+        self.assertEqual(teacher.post(f"/api/volunteers/{request_id}/check", json={}, headers=self.headers).status_code, 403)
+        self.assertEqual(head.post("/api/volunteers/999/check", json={}, headers=self.headers).status_code, 404)
+        # The HeadTeacher checks it; everyone who saw it sees who did. A second check changes nothing.
+        checked = head.post(f"/api/volunteers/{request_id}/check", json={}, headers=self.headers).get_json()["items"]
+        self.assertEqual([(i["checked"], i["by"], i["byMe"]) for i in checked], [(True, "Head", True)])
+        self.client.post(f"/api/volunteers/{request_id}/check", json={}, headers=self.headers)
+        for client in (self.client, teacher):
+            item = client.get("/api/volunteers").get_json()["items"][0]
+            self.assertEqual((item["checked"], item["by"], item["byMe"]), (True, "Head", False))
+        self.assertEqual(self.query("SELECT checked_by_name FROM volunteer_requests")[0]["checked_by_name"], "Head")
+        # A while after it's checked it's no longer sent at all.
+        with self.app.config["DB"].transaction() as tx:
+            tx.execute("UPDATE volunteer_requests SET checked_at = checked_at - 1000")
+        self.assertEqual(self.client.get("/api/volunteers").get_json()["items"], [])
+        actions = [r["action"] for r in self.query("SELECT action FROM audit_log")]
+        self.assertEqual((actions.count("volunteer.requested"), actions.count("volunteer.checked")), (1, 1))
+        # A teacher sees only their own requests.
+        self.add_user("idris@example.com")
+        other = self.sign_in("idris@example.com", "teacher-password-1")
+        teacher.post("/api/volunteers", json={"note": "Short of a helper"}, headers=self.headers)
+        self.assertEqual(other.get("/api/volunteers").get_json()["items"], [])
+        self.assertEqual(len(head.get("/api/volunteers").get_json()["items"]), 1)
+
+    def test_password_fields_have_a_show_button_and_the_preview_opens_full_screen(self):
+        script = self.app.test_client().get("/pwreveal.js")
+        self.assertEqual((script.status_code, script.mimetype), (200, "text/javascript"))
+        self.assertIn('src="/pwreveal.js"', self.app.test_client().get("/login").get_data(as_text=True))
+        self.assertIn('src="/pwreveal.js"', self.client.get("/account").get_data(as_text=True))
+        user_id = self.add_user("t@example.com")
+        made = self.form(self.client, "/admin/users", f"/admin/users/{user_id}/link").get_data(as_text=True)
+        link = re.search(r'value="https?://[^/"]+(/reset/[^"]+)"', made).group(1)
+        page = self.app.test_client().get(link)
+        self.assertIn('src="/pwreveal.js"', page.get_data(as_text=True))
+        self.assertIn("script-src 'self'", page.headers["Content-Security-Policy"])
+        tv = self.client.get("/admin/tv").get_data(as_text=True)
+        self.assertIn('src="/tvopen.js"', tv)
+        self.assertIn('data-tv-preview', tv)
+        self.assertEqual(self.client.get("/tvopen.js").status_code, 200)
 
     def test_help_or_requests(self):
         mailer = FakeMailer()
@@ -3388,9 +3448,9 @@ class SchoolTests:
         self.assertEqual((switched.status_code, switched.headers["Location"]), (303, "/"))
         me = self.me(developer)
         self.assertEqual((me["role"], me["dev"]["view"]), ("head", "head"))
-        # A HeadTeacher's view: every classroom and FAQs, none of the Administration pages.
+        # A HeadTeacher's view: every classroom, no FAQs and none of the Administration pages.
         self.assertEqual(len(self.records(developer)), 2)
-        self.assertEqual(developer.get("/admin/faqs").status_code, 200)
+        self.assertEqual(developer.get("/admin/faqs").status_code, 403)
         self.assertEqual(developer.get("/admin/users").status_code, 403)
         self.assertEqual(self.delete(1, client=developer).status_code, 403)
         # Teacher is always one teacher's view, chosen from the school's teachers.
@@ -3620,7 +3680,7 @@ class SchoolTests:
         self.assertEqual(len(mailer.sent), sent_before + 1)
         to, _, body = mailer.sent[-1]
         self.assertEqual(to, "office@riverside.example")
-        self.assertIn("Developer has given you a staff account on Ilmi,", body)
+        self.assertIn("Developer has given you a staff account on Ilmi.", body)
         self.assertNotIn("Riverside", body)
         self.assertIn("Role: Admin", body)
         link = mailer.link()

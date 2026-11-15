@@ -3,7 +3,7 @@
 {% set sans = "Nunito,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" %}
 
 {% macro button(href, label) -%}
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:22px auto 6px">
   <tr><td bgcolor="#4d5a2c" style="background-color:#4d5a2c;border-radius:999px;mso-padding-alt:14px 28px">
     <a href="{{ href }}" target="_blank" style="display:inline-block;padding:14px 28px;font-family:{{ sans }};font-size:15px;font-weight:700;line-height:20px;color:#fbf8f1;text-decoration:none;border-radius:999px">{{ label }}</a>
   </td></tr>
@@ -11,12 +11,19 @@
 {%- endmacro %}
 
 {% macro fallback(href) -%}
-<p style="margin:18px 0 0;font-family:{{ sans }};font-size:13px;line-height:1.5;color:#67654f">If the button doesn't work, copy this link into your browser:<br>
+<p style="margin:18px 0 0;font-family:{{ sans }};font-size:12px;line-height:1.5;color:#67654f;text-align:center">Button not working? Copy this link:<br>
 <a href="{{ href }}" style="color:#4a5628;word-break:break-all">{{ href }}</a></p>
 {%- endmacro %}
 
+{# A code to type, big and spaced out in a box of its own, centred. #}
+{% macro code_box(code) -%}
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:8px auto 20px">
+  <tr><td align="center" bgcolor="#f6f1e6" style="background-color:#f6f1e6;border:2px solid #cfc5ae;border-radius:16px;padding:18px 30px 18px 40px;font-family:'SF Mono',Menlo,Consolas,'Courier New',monospace;font-size:40px;line-height:44px;font-weight:700;letter-spacing:10px;color:#22231b;mso-line-height-rule:exactly">{{ code }}</td></tr>
+</table>
+{%- endmacro %}
+
 {% macro p(muted=False) -%}
-<p style="margin:0 0 14px;font-family:{{ sans }};font-size:{{ '14px' if muted else '16px' }};line-height:1.6;color:{{ '#67654f' if muted else '#44453a' }}">{{ caller() }}</p>
+<p style="margin:0 0 14px;font-family:{{ sans }};font-size:{{ '14px' if muted else '16px' }};line-height:1.6;color:{{ '#67654f' if muted else '#44453a' }};text-align:center">{{ caller() }}</p>
 {%- endmacro %}
 
 {# Details sit in a soft grey rounded panel, like the dashboard's inner cards. #}
