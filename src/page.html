@@ -38,7 +38,7 @@
  <div class="head-top"><h1 id="ttl">School overview</h1><button class="btn ghost sm swc" id="swc" type="button" aria-haspopup="dialog" hidden>Switch class</button><span class="save" id="st" role="status" aria-live="polite"></span><details class="figpop" id="figP"><summary class="ibtn" aria-label="Figures" title="Figures"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v16h16"/><path d="M8.5 16v-4M12.5 16V8M16.5 16v-6"/></svg></summary><div class="figs" id="figs"></div></details></div>
  <div class="hello" id="hello" hidden></div>
  <div class="tabs hide" id="sub" role="tablist" aria-label="Class pages">
-  <button id="tQ" role="tab" aria-controls="vQ" aria-selected="true">Quran</button><button id="tT" role="tab" aria-controls="vT" aria-selected="false" tabindex="-1">Memo</button><button id="tD" role="tab" aria-controls="vD" aria-selected="false" tabindex="-1">Progress</button><button id="tS" role="tab" aria-controls="vS" aria-selected="false" tabindex="-1">Settings</button>
+  <button id="tQ" role="tab" aria-controls="vQ" aria-selected="true">Quran</button><button id="tT" role="tab" aria-controls="vT" aria-selected="false" tabindex="-1">Memo</button><button id="tD" role="tab" aria-controls="vD" aria-selected="false" tabindex="-1">Progress</button><button id="tG" role="tab" aria-controls="vG" aria-selected="false" tabindex="-1">Reports</button><button id="tS" role="tab" aria-controls="vS" aria-selected="false" tabindex="-1">Settings</button>
  </div>
 </div>
 
@@ -113,6 +113,8 @@ ST002,Yusuf Ali,Male,Year 4,Yr4-B-QM-Sr Zainab,Yr4-B-AI-Br Idris</div>
  </div></div>
 </section>
 
+
+<section id="vG" class="ws hide" role="tabpanel" aria-labelledby="tG"><div id="rpW"></div></section>
 
 <section id="vS" class="ws hide" role="tabpanel" aria-labelledby="tS">
  <div class="sets">
@@ -928,11 +930,11 @@ function ltOpen(o){if(!o||!o.t)return;ltHide(1);var t=o.t,v=o.s.q[o.d],sc=t.sc!=
  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&LTT.on){ltHide(1)}},true);
  document.addEventListener("scroll",function(){if(LTT.on)ltHide(1)},true);
  document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest("[data-ltd]");if(b){e.preventDefault();ltOpen(ltOf(b))}})})();
-function qCell(s,i,d,on,future){var v=s.q[d],nm=esc(s.name),lt=v!==undefined&&qTest(s,d);
- if(!on)return '<span class="qc'+(v===undefined?'':' has')+(v<0?' ab':'')+(lt?' test'+(ltMore(lt)?' tmore':''):'')+'"'+(v===undefined?'':' style="--c:'+qcol(v)+'"')+'></span>';
- var lab=nm+", "+qlab(d)+": "+(v===undefined?"not recorded":v<0?"absent":v+" out of 5")+(lt?", "+tLab(lt)+" level test":"");
- if(lt)return '<button type="button" class="qc has test'+(ltMore(lt)?' tmore':'')+'" data-qi="'+i+'" data-ltd="'+i+'|'+d+'" style="--c:'+qcol(v)+'" aria-haspopup="dialog" aria-label="'+lab+'. '+ltSay(lt)+'. Open the level test">'+v+'</button>';
- return '<button type="button" class="qc'+(v===undefined?'':' has')+(v<0?' ab':'')+'" data-qi="'+i+'"'+(v===undefined?'':' style="--c:'+qcol(v)+'"')+(future?' disabled title="This class day hasn\'t happened yet"':'')+' aria-label="'+lab+(future?', not open yet':'. Change score')+'" aria-haspopup="'+!future+'"'+(v===undefined?'':' title="'+(v<0?'Absent':v+' out of 5')+'"')+'>'+(v===undefined?(future?'':'<span aria-hidden="true">+</span>'):qtxt(v))+'</button>'}
+function qCell(s,i,d,on,future){var v=s.q[d],nm=esc(s.name),lt=v!==undefined&&qTest(s,d),hw=s.hw?s.hw[d]:undefined,hm=hw===undefined?'':'<i class="qhwm'+(hw?'':' no')+'" aria-hidden="true">'+hw+'</i>';
+ if(!on)return '<span class="qc'+(v===undefined?'':' has')+(v<0?' ab':'')+(lt?' test'+(ltMore(lt)?' tmore':''):'')+'"'+(v===undefined?'':' style="--c:'+qcol(v)+'"')+'>'+hm+'</span>';
+ var lab=nm+", "+qlab(d)+": "+(v===undefined?"not recorded":v<0?"absent":v+" out of 5")+(lt?", "+tLab(lt)+" level test":"")+(hw===undefined?"":", homework "+(hw?hw+" out of 5":"not done"));
+ if(lt)return '<button type="button" class="qc has test'+(ltMore(lt)?' tmore':'')+'" data-qi="'+i+'" data-ltd="'+i+'|'+d+'" style="--c:'+qcol(v)+'" aria-haspopup="dialog" aria-label="'+lab+'. '+ltSay(lt)+'. Open the level test">'+v+hm+'</button>';
+ return '<button type="button" class="qc'+(v===undefined?'':' has')+(v<0?' ab':'')+'" data-qi="'+i+'"'+(v===undefined?'':' style="--c:'+qcol(v)+'"')+(future?' disabled title="This class day hasn\'t happened yet"':'')+' aria-label="'+lab+(future?', not open yet':'. Change score')+'" aria-haspopup="'+!future+'"'+(v===undefined?'':' title="'+(v<0?'Absent':v+' out of 5')+'"')+'>'+(v===undefined?(future?'':'<span aria-hidden="true">+</span>'):qtxt(v))+hm+'</button>'}
 /* With a mouse, the whole row under the pointer is shaded (name, scores and house), so a name is easy to follow
    across to its box. */
 function qRowHover(Y){var hl=Y.querySelector(".qrowhl"),fine=matchMedia("(hover:hover) and (pointer:fine)");
@@ -1088,14 +1090,24 @@ var QP_=null;
 function qPopClose(back){var p=document.querySelector(".qpop:not(.mo-ghost)");if(p)fxOut(p,"pop",function(){p.remove()});Array.prototype.forEach.call(document.querySelectorAll(".qboard .qhid"),function(e){e.classList.remove("qhid")});if(WT)WT.hide();if(QP_)QP_.removeAttribute("aria-expanded");if(back&&QP_&&document.contains(QP_))QP_.focus();QP_=null}
 function qPop(btn){qPopClose();var s=S[+btn.dataset.qi];if(!s)return;var M=QK==="m",cur=M?mVal(s,QF):s.q[QF],B=QB(),lb=(M?"Memorisation for ":"Score for ")+s.name;QP_=btn;
  var p=document.createElement("div");p.className="qpop"+(M?" mpop":"");p.setAttribute("role","group");p.setAttribute("aria-label",lb);
- p.innerHTML=(M?mPick(cur):[-1,0,1,2,3,4,5].map(function(k){return '<button type="button"'+(k<0?' class="qab" aria-label="Absent" title="Absent"':'')+' style="--c:'+qcol(k)+'" data-qv="'+k+'" aria-pressed="'+(cur===k)+'">'+qtxt(k)+'</button>'}).join(""))+(cur===undefined?'':'<button type="button" class="qclr" data-qv="x">Clear</button>');
+ var sc=(M?mPick(cur):[-1,0,1,2,3,4,5].map(function(k){return '<button type="button"'+(k<0?' class="qab" aria-label="Absent" title="Absent"':'')+' style="--c:'+qcol(k)+'" data-qv="'+k+'" aria-pressed="'+(cur===k)+'">'+qtxt(k)+'</button>'}).join(""))+(cur===undefined?'':'<button type="button" class="qclr" data-qv="x">Clear</button>'),hw=M?"":hwRow(s);
+ p.innerHTML=sc+hw;if(hw)p.classList.add("qhwp");
  if(B.classList.contains("qph")){p.className="qpop qsheet"+(M?" mpop":"");p.removeAttribute("role");p.removeAttribute("aria-label");
-  p.innerHTML='<div class="qsc" data-qx aria-hidden="true"></div><div class="qscard" role="group" aria-label="'+esc(lb)+'"><div class="qsh"><b>'+esc(s.name)+'</b><small>'+esc(qlab(QF))+'</small></div><div class="qsb">'+p.innerHTML+'</div></div>';
+  p.innerHTML='<div class="qsc" data-qx aria-hidden="true"></div><div class="qscard" role="group" aria-label="'+esc(lb)+'"><div class="qsh"><b>'+esc(s.name)+'</b><small>'+esc(qlab(QF))+'</small></div><div class="qsb">'+sc+'</div>'+hw+'</div>';
   B.appendChild(p);btn.setAttribute("aria-expanded","true");(p.querySelector('[aria-pressed="true"]')||p.querySelector("[data-qv]")).focus({preventScroll:true});return}
  B.appendChild(p);btn.setAttribute("aria-expanded","true");var r=btn.getBoundingClientRect(),b=B.getBoundingClientRect(),x=r.right-b.left+8;if(x+p.offsetWidth>B.clientWidth)x=Math.max(0,r.left-b.left-p.offsetWidth-8);
  p.style.left=x+"px";p.style.top=Math.max(0,r.top-b.top+(r.height-p.offsetHeight)/2)+"px";
  /* Only the boxes the picker actually sits over step aside; the student's other days, usually the earlier ones, keep showing their scores. */
  var pl=b.left+x,pr=pl+p.offsetWidth;Array.prototype.forEach.call(B.querySelectorAll(".qcol:not(.on)>.qr:nth-child("+(+btn.dataset.qi+1)+"),.qhouses>.qn:nth-child("+(+btn.dataset.qi+1)+")"),function(e){var c=(e.firstElementChild||e).getBoundingClientRect();if(c.width&&c.right>pl-4&&c.left<pr+4)e.classList.add("qhid")});(p.querySelector('[aria-pressed="true"]')||p.firstChild).focus()}
+/* Quran homework for the class day, under the scores in the picker: 1 to 5, or 0 when it wasn't done. Kept on the
+   student as hw {day: 0 to 5}. The term report's Homework grade averages the days marked 1 to 5, as the report sheet
+   does, so a 0 shows that it wasn't done without lowering the grade. */
+function hwRow(s){var h=(s.hw||{})[QF];return '<div class="qhwr" role="group" aria-label="Homework for '+esc(s.name)+'"><span class="qhwl">Homework</span>'
+ +[0,1,2,3,4,5].map(function(k){return '<button type="button" style="--c:'+qcol(k)+'" data-hw="'+k+'" aria-pressed="'+(h===k)+'"'+(k?'':' aria-label="Not done" title="Not done"')+'>'+k+'</button>'}).join("")
+ +(h===undefined?'':'<button type="button" class="qclr" data-hw="x">Clear</button>')+'</div>'}
+function hwSet(i,v){var s=S[i],d=QF;if(!s)return;if(d>dk(Date.now())){toast("That class day hasn't happened yet",1);return}
+ if(!s.hw)s.hw={};if(v==="x"||s.hw[d]===v)delete s.hw[d];else s.hw[d]=v;if(!Object.keys(s.hw).length)delete s.hw;
+ save();render();var c=$("qB").querySelector('.qcol.on [data-qi="'+i+'"]');if(c&&!c.dataset.ltd)qPop(c)}
 function qSet(i,v,next){if(QK==="m"){mSet(i,v,next);return}var s=S[i],d=QF;if(!s)return;if(s.q[d]!==undefined&&qTest(s,d)){toast(TEACHER?"That's a level test score, so only an admin can change it.":"That's a level test score. Change it on the Record page.",1);return}if(d>dk(Date.now())){toast("That class day hasn't happened yet",1);return}
  // No message for each score (the box shows it); only refusals above get one.
  if(v==="x"||s.q[d]===v)delete s.q[d];else{s.q[d]=v;if(v<0&&s.mt&&s.mt[d])mDel(s,d)}
@@ -1107,6 +1119,7 @@ function qDrop(id,i,best){if(QM.matches)return;var c=$(id).querySelector('.qcol.
 ["qB","mB"].forEach(function(id){var BD=$(id);
 BD.addEventListener("click",function(e){var a=e.target.closest("#qAdd2");if(a){addStudent();return}
  if(e.target.closest(".qpop [data-qx]")){qPopClose(1);return}
+ var hb=e.target.closest(".qpop [data-hw]");if(hb){var hi=+QP_.dataset.qi,hx=hb.dataset.hw;qPopClose();hwSet(hi,hx==="x"?hx:+hx);return}
  var v=e.target.closest(".qpop [data-qv]");if(v){var i=+QP_.dataset.qi,x=v.dataset.qv;qPopClose();qSet(i,x==="x"||QK==="m"?x:+x,1);return}
  var b=e.target.closest(".qcol.on [data-qi]");if(b&&b.dataset.ltd)return; /* a level test's score opens its tile (ltOpen, below) */if(b&&!b.disabled){if(QP_===b){qPopClose(1);return}qPop(b)}});
 BD.addEventListener("keydown",function(e){var M=QK==="m",mk=M&&mKey_(e.key);
@@ -1155,10 +1168,13 @@ function qMenu(i,keep){var B=QB(),s=S[i],b=B.querySelector('.qnb[data-ni="'+i+'"
  if(r.bottom+m.offsetHeight+12>window.innerHeight&&r.top-m.offsetHeight-6>0)top=r.top-br.top-m.offsetHeight-6;
  m.style.top=top+"px";m.style.left=Math.max(0,Math.min(r.left-br.left,B.clientWidth-m.offsetWidth))+"px";
  var f=af&&m.querySelector('[data-mk="'+af+'"]')||(!keep&&m.querySelector("button"));if(f)f.focus()}
+/* Each warning given is also kept with its date (s.wl, {t: when, v: which}), so a term report can add up the term's
+   warnings. Taking a warning back the same day takes its entry back too, as a mistake; later it stays, as given. */
+function wlUndo(s,v){var L=s.wl||[],x=L[L.length-1];if(x&&x.v===v&&dk(x.t)===dk(Date.now()))L.pop();if(s.wl&&!L.length)delete s.wl}
 function qMenuAct(k){var i=QMN,s=S[i];if(!s)return;var nm=fn(s);
  if(k==="st"){qMenuClose();sxOpen(i);return}
  if(k[0]==="m"){if(k[1]==="+"){s.merits++;s.ml.push(Date.now());toast("Merit added for "+nm)}else if(s.merits>0){s.merits--;s.ml.pop();toast("Merit taken back for "+nm)}else{toast(nm+" has no merits to take back",1);return}save();render();return}
- if(k[0]==="w"){var v=+k[1];if(s.warn===v){s.warn=0;toast(nm+": warning removed")}else{s.warn=v;toast(nm+": "+WL[v]+" given")}save();render();return}
+ if(k[0]==="w"){var v=+k[1];if(s.warn===v){s.warn=0;wlUndo(s,v);toast(nm+": warning removed")}else{s.warn=v;(s.wl=s.wl||[]).push({t:Date.now(),v:v});toast(nm+": "+WL[v]+" given")}save();render();return}
  }
 ["qB","mB"].forEach(function(id){$(id).addEventListener("click",function(e){var mk=e.target.closest(".qmenu [data-mk]");if(mk){qMenuAct(mk.dataset.mk);return}
  var n=e.target.closest(".qnb");if(n){var i=+n.dataset.ni;if(QMN===i)qMenuClose(1);else{qPopClose();qMenu(i)}}})});
@@ -1429,7 +1445,139 @@ function render(){
  classBand();
  quran();sheet();memo();
  lanes();$("dist").innerHTML=distHtml(S);$("wk").innerHTML=weekChart(allLogs(S));past();
+ if(CUR==="G")rpDraw();
  }
+
+/* ---------- Reports ---------- */
+/* The Reports tab: each pupil's Quran and Memorisation grades for one term, worked out from what the class already
+   records, as the school's 2026-27 report spreadsheet does. Each subject has five grades: Effort and four
+   components. A teacher can set any of the five by hand (kept on the student as ro {term id: {q or m: {key: 1 to 5}}},
+   apart from the calculated grade, which is never stored); choosing Auto again brings back the calculated grade.
+   Effort is the rounded mean of the four final components (blank ones left out), unless the teacher set it.
+   Blank is not zero: a blank grade or score is left out of means, a recorded 0 counts.
+   The numbers come from the school's report settings (reports.py, ME.reports; the admin changes them below the
+   table), or RPD when there are none, as in the standalone file.
+   REPORT-CALC START: the functions down to REPORT-CALC END are pure, and tools/report_check.js tests them. */
+var RPD={terms:[{id:"t1-2026",name:"Term 1",from:"2026-09-12",to:"2026-12-20"},{id:"t2-2027",name:"Term 2",from:"2027-01-10",to:"2027-05-23"}],
+ pct:[30,50,70,90],ratio:[0.7,0.9,1.1,1.3],expected:8,test_points:1,pass_points:5};
+var RPQ=[["ef","Effort"],["mb","Manners & Behaviour"],["hw","Homework"],["pr","Pronunciation"],["fl","Fluency"]],
+ RPM=[["ef","Effort"],["mb","Manners & Behaviour"],["hw","Homework"],["cp","Class Participation"],["pg","Progress"]];
+function rpIn(d,T){return !!d&&d>=T.from&&d<=T.to}
+function rpRound(x){return Math.floor(x+0.5+1e-9)}
+function rpMean(v){return v.length?v.reduce(function(a,b){return a+b},0)/v.length:null}
+/* Percentage grade: the highest threshold met (0% is grade 1). */
+function rpPct(p,C){if(p===null||p===undefined)return null;var g=1;C.pct.forEach(function(t,k){if(p>=t-1e-9)g=k+2});return g}
+/* Class-relative grades: the pupil's metric over the active class mean. A zero mean gives grade 3. */
+function rpPerf(v,mean,C){if(v===null||v===undefined)return null;if(!mean)return 3;var r=v/mean,g=1;C.ratio.forEach(function(t,k){if(r>=t-1e-9)g=k+2});return g}
+/* Warnings run the other way, and no warnings at all is grade 5. */
+function rpWarn(v,mean,C){if(v===null||v===undefined)return null;if(!v||!mean)return 5;var r=v/mean,g=5;C.ratio.forEach(function(t,k){if(r>=t-1e-9)g=4-k});return g}
+/* Memorisation positions: each target is its place in the whole book (L2 T1 is 10 with 9 targets in Level 1), as the
+   passes are kept (s.lt). A pass with a surah label (s.lx) leaves the target where it is, so it isn't a position.
+   Start: the furthest target passed before the term (0 when none). End: the furthest by the end of the term.
+   New targets passed = end - start, so a repeat pass adds nothing and a jump counts every target it skips. */
+function rpMemo(s,T,dayOf){var a=0,b=0;(s.log||[]).forEach(function(t,k){if((s.lx||[])[k])return;var n=(s.lt||[])[k]||0,d=dayOf(t);
+  if(d<T.from)a=Math.max(a,n);else if(d<=T.to)b=Math.max(b,n)});
+ var end=Math.max(a,b);return {start:a,end:end,passed:end-a}}
+/* One subject's grades: the calculated ones (c), the teacher's (o) and the final ones shown (f). */
+function rpFinal(calc,over,keys){var f={},v=[];keys.forEach(function(k){if(k==="ef")return;var x=over&&over[k]!=null?over[k]:calc[k];f[k]=x==null?null:x;if(x!=null)v.push(x)});
+ var e=rpMean(v);calc.ef=e===null?null:rpRound(e);f.ef=over&&over.ef!=null?over.ef:calc.ef;return {c:calc,o:over||{},f:f}}
+/* Every pupil of a class (L) for term T with settings C. focus: the focus areas in the order to break ties. */
+function rpCalc(L,T,C,focus,dayOf){
+ var R=L.map(function(s){var q=s.q||{},mt=s.mt||{},hw=s.hw||{},tests=s.tests||[],ja=s.ja||{};
+  var inQ=Object.keys(q).filter(function(d){return rpIn(d,T)&&q[d]>=0}),inM=Object.keys(mt).filter(function(d){return rpIn(d,T)}),
+   inH=Object.keys(hw).filter(function(d){return rpIn(d,T)}),inT=tests.filter(function(t){return rpIn(t.d,T)}),
+   inL=(s.log||[]).filter(function(t){return rpIn(dayOf(t),T)});
+  var memo=rpMemo(s,T,dayOf),warn=(s.wl||[]).filter(function(w){return rpIn(dayOf(w.t),T)}).length,
+   tt=inM.filter(function(d){return mt[d]==="t"}).length,at=inT.filter(function(t){return t.k==="m"}).length;
+  var hv=inH.map(function(d){return hw[d]}),hc=hv.filter(function(v){return v>=1&&v<=5}).length,
+   qt=inT.filter(function(t){return t.k==="q"&&t.sc!=null}).map(function(t){return t.sc}),
+   fc={};inT.forEach(function(t){if(t.k==="q")(t.fa||[]).forEach(function(f){fc[f]=(fc[f]||0)+1})});
+  var top=null;focus.forEach(function(f){if(fc[f]&&(!top||fc[f]>fc[top]))top=f});
+  var jd=Object.keys(ja).filter(function(d){return rpIn(d,T)}),jp=jd.filter(function(d){return ja[d]===1}).length;
+  return {s:s,act:!!(inQ.length||inM.length||inH.length||inT.length||inL.length),warn:warn,memo:memo,
+   pts:(tt+at)*C.test_points+memo.passed*C.pass_points,tests:tt+at,
+   hw:hc?hv.reduce(function(a,b){return a+b},0)/hc:null,pron:qt.length?rpMean(qt):null,
+   focus:top?{f:top,n:fc[top]}:null,att:jd.length?{p:jp,n:jd.length,pct:Math.round(100*jp/jd.length)}:null}});
+ var A=R.filter(function(r){return r.act}),mean=function(k){return rpMean(A.map(function(r){return k(r)}))},
+  mw=mean(function(r){return r.warn}),mp=mean(function(r){return r.memo.passed}),mc=mean(function(r){return r.pts});
+ R.forEach(function(r){var ro=(r.s.ro||{})[T.id]||{},on=r.act;
+  var mb=on?rpWarn(r.warn,mw,C):null;
+  r.q=rpFinal({mb:mb,hw:on&&r.hw!==null?rpRound(r.hw):null,pr:on&&r.pron!==null?rpRound(r.pron):null,fl:on&&r.pron!==null?rpRound(r.pron):null},ro.q,["ef","mb","hw","pr","fl"]);
+  r.m=rpFinal({mb:mb,hw:on?rpPerf(r.memo.passed,mp,C):null,cp:on?rpPerf(r.pts,mc,C):null,
+   pg:on?rpPct(Math.min(r.memo.passed/C.expected,1)*100,C):null},ro.m,["ef","mb","hw","cp","pg"])});
+ return R}
+/* "2 passed · on L3 T4", or Complete once the last target is passed. last: the last target's position. */
+function rpNote(memo,last,label){return plural(memo.passed,"target")+" passed · "+(memo.end>=last?"Complete":"on "+label(memo.end+1))}
+/* REPORT-CALC END */
+var RPT="",RPK="q";
+function rpSet(){return window.ME&&ME.reports&&ME.reports.terms?ME.reports:RPD}
+/* The term shown: the one chosen, else the latest that has started, else the first. */
+function rpTerm(){var T=rpSet().terms,t=dk(Date.now()),pick=null;T.forEach(function(x){if(x.id===RPT)pick=x});if(pick)return pick;
+ pick=T[0];T.forEach(function(x){if(x.from<=t)pick=x});RPT=pick.id;return pick}
+function rpDay(k){var p=k.split("-");return new Date(+p[0],+p[1]-1,+p[2],12).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})}
+function rpRows(){var T=rpTerm();return rpCalc(S,T,rpSet(),FOCUS,dk)}
+function rpGrade(r,i,k,key,lab){var g=r[k],f=g.f[key],c=g.c[key],ov=g.o[key]!=null,nm=r.s.name;
+ return '<td class="rpc" data-label="'+esc(lab)+'"><select class="rpg'+(ov?' ov':'')+(f==null?' none':'')+'" data-ri="'+i+'" data-rg="'+key+'"'+(f==null?'':' style="--c:'+QC[f]+'"')
+  +' aria-label="'+esc(lab+' for '+nm)+'" title="'+(ov?'Set by the teacher. Auto would be '+(c==null?'blank':c):'Worked out from this term\'s records')+'">'
+  +'<option value="">'+(c==null?'Auto (–)':'Auto ('+c+')')+'</option>'+[1,2,3,4,5].map(function(n){return '<option value="'+n+'"'+(ov&&g.o[key]===n?' selected':'')+'>'+n+'</option>'}).join("")+'</select></td>'}
+function rpDraw(){var w=$("rpW");if(!w||!CID)return;var C=rpSet(),T=rpTerm(),R=rpRows(),cols=RPK==="q"?RPQ:RPM,act=R.filter(function(r){return r.act}).length,
+  foc=document.activeElement&&w.contains(document.activeElement)?document.activeElement:null,fk=foc&&foc.dataset?(foc.dataset.ri||"")+"|"+(foc.dataset.rg||"")+"|"+(foc.dataset.rt||foc.dataset.rk||""):"";
+ var h='<div class="toolbar"><div class="seg" id="rpTs" role="group" aria-label="Term">'+C.terms.map(function(x){return '<button type="button" data-rt="'+esc(x.id)+'" aria-pressed="'+(x.id===T.id)+'">'+esc(x.name)+'</button>'}).join("")+'</div>'
+  +'<div class="seg" id="rpKs" role="group" aria-label="Subject"><button type="button" data-rk="q" aria-pressed="'+(RPK==="q")+'">Quran</button><button type="button" data-rk="m" aria-pressed="'+(RPK==="m")+'">Memorisation</button></div>'
+  +'<p class="cap">'+esc(rpDay(T.from))+' to '+esc(rpDay(T.to))+' · '+act+' of '+plural(S.length,"pupil")+' had lessons this term</p></div>';
+ if(!S.length){w.innerHTML=h+'<p class="none">No students in this class yet.</p>';return}
+ h+='<div class="tablewrap soft"><table class="tbl stackable rpt"><caption class="sr-only">'+(RPK==="q"?"Quran":"Memorisation")+' report grades, '+esc(T.name)+'</caption><thead><tr><th scope="col">Pupil</th><th scope="col" class="n">Attendance</th>'
+  +cols.map(function(c){return '<th scope="col">'+esc(c[1])+'</th>'}).join("")+'<th scope="col">'+(RPK==="q"?'Focus for next term':'This term')+'</th></tr></thead><tbody>';
+ R.forEach(function(r,i){var s=r.s;
+  h+='<tr'+(r.act?'':' class="rpoff"')+'><td class="lead" data-label="Pupil"><button type="button" class="lk" data-rp="'+i+'">'+esc(s.name)+'</button>'+(r.act?'':'<span class="pill">No lessons this term</span>')+'</td>'
+   +'<td class="n" data-label="Attendance">'+(r.att?r.att.pct+'%<small> '+r.att.p+'/'+r.att.n+'</small>':'<span class="mute">–</span>')+'</td>'
+   +cols.map(function(c){return rpGrade(r,i,RPK,c[0],c[1])}).join("")
+   +'<td data-label="'+(RPK==="q"?'Focus for next term':'This term')+'">'+(RPK==="q"?(r.focus?esc(r.focus.f)+' ('+r.focus.n+'×)':'<span class="mute">–</span>'):(r.act?esc(rpNote(r.memo,NB-1,bl)):'<span class="mute">–</span>'))+'</td></tr>'});
+ h+='</tbody></table></div><p class="cap rpkey">Each grade is worked out from this term\'s records. Pick a number to set your own; <b>Auto</b> brings the worked-out grade back. Grades you set have an outline.</p>';
+ if(window.RAILWAY&&window.ME&&ME.role==="admin")h+=rpSettings(C);
+ w.innerHTML=h;
+ if(fk){var n=fk.split("|"),el=n[0]&&n[1]?w.querySelector('[data-ri="'+n[0]+'"][data-rg="'+n[1]+'"]'):n[2]?w.querySelector('[data-rt="'+n[2]+'"],[data-rk="'+n[2]+'"]'):null;if(el)el.focus()}}
+/* A teacher's grade: set it, or back to Auto. Empty term and subject entries are taken away again. */
+function rpOver(i,key,v){var s=S[i],T=rpTerm();if(!s)return;if(!s.ro)s.ro={};var t=s.ro[T.id]||(s.ro[T.id]={}),g=t[RPK]||(t[RPK]={});
+ if(v)g[key]=v;else delete g[key];if(!Object.keys(g).length)delete t[RPK];if(!Object.keys(t).length)delete s.ro[T.id];if(!Object.keys(s.ro).length)delete s.ro;
+ save();rpDraw()}
+/* One pupil's report for the term: both subjects, as the report sheet shows them. */
+function rpCard(i){var R=rpRows(),r=R[i],T=rpTerm();if(!r)return;
+ var part=function(k,cols,extra){var g=r[k];return '<section class="rpcard"><h3>'+(k==="q"?"Quran":"Memorisation")+'</h3><dl class="rpdl">'+cols.map(function(c){var f=g.f[c[0]];
+   return '<div><dt>'+esc(c[1])+'</dt><dd>'+(f==null?'<span class="mute">–</span>':'<b class="rpchip" style="--c:'+QC[f]+'">'+f+'</b>')+(g.o[c[0]]!=null?'<small>set by the teacher</small>':'')+'</dd></div>'}).join("")+extra+'</dl></section>'};
+ drawer(r.s.name,'<p class="cap">'+esc(T.name)+', '+esc(rpDay(T.from))+' to '+esc(rpDay(T.to))+(r.act?'':' · no lessons recorded this term')+'</p>'
+  +'<dl class="rpdl rptop"><div><dt>Attendance</dt><dd>'+(r.att?r.att.pct+'% <small>present on '+r.att.p+' of '+plural(r.att.n,"day")+'</small>':'<span class="mute">No Journey 2 Jannah attendance yet</span>')+'</dd></div>'
+  +'<div><dt>Quran level</dt><dd>'+(r.s.qa?esc(qaLab(r.s.qa)):'<span class="mute">No level yet</span>')+'</dd></div></dl>'
+  +part("q",RPQ,'<div><dt>Focus for next term</dt><dd>'+(r.focus?esc(r.focus.f)+' ('+r.focus.n+'×)':'<span class="mute">–</span>')+'</dd></div>')
+  +part("m",RPM,'<div><dt>This term</dt><dd>'+(r.act?esc(rpNote(r.memo,NB-1,bl)):'<span class="mute">–</span>')+'</dd></div>'),2)}
+/* The admin's report settings: the terms' dates and the numbers the grades use. */
+function rpSettings(C){var num=function(id,lab,v,step){return '<label>'+lab+'<input type="number" id="'+id+'" value="'+v+'" step="'+(step||1)+'" inputmode="decimal"></label>'};
+ return '<details class="up rpset" id="rpSetD"><summary>Report settings</summary><p class="sub">These apply to every class\'s reports. Each term uses its own dates, both days included.</p>'
+  +'<div id="rpTermsF">'+C.terms.map(function(x,k){return rpTermRow(x,k)}).join("")+'</div><button type="button" class="btn sm quiet" id="rpAddT">Add a term</button>'
+  +'<div class="pf">'+num("rpExp","Memorisation targets expected per term",C.expected)+num("rpTp","Participation points per test",C.test_points)+num("rpPp","Participation points per new target",C.pass_points)+'</div>'
+  +'<fieldset class="rpfs"><legend>Percentage needed for grades 2, 3, 4 and 5</legend><div class="pf">'+C.pct.map(function(v,k){return num("rpPc"+k,"Grade "+(k+2),v)}).join("")+'</div></fieldset>'
+  +'<fieldset class="rpfs"><legend>Share of the class average needed for grades 2, 3, 4 and 5 (warnings: 4, 3, 2 and 1)</legend><div class="pf">'+C.ratio.map(function(v,k){return num("rpRa"+k,"Grade "+(k+2),v,0.05)}).join("")+'</div></fieldset>'
+  +'<div class="sact"><button type="button" class="btn p" id="rpSave">Save report settings</button></div></details>'}
+function rpTermRow(x,k){return '<div class="pf rpterm" data-tid="'+esc(x.id)+'"><label>Term name<input type="text" class="rpTn" maxlength="30" value="'+esc(x.name)+'"></label><label>First day<input type="date" class="rpTf" value="'+esc(x.from)+'"></label><label>Last day<input type="date" class="rpTt" value="'+esc(x.to)+'"></label>'
+ +'<button type="button" class="btn sm quiet rpTx" aria-label="Remove '+esc(x.name)+'">Remove</button></div>'}
+function rpSlug(name,from,taken){var b=(String(name).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"term").slice(0,18)+"-"+String(from).slice(0,4),id=b,n=2;
+ while(taken.indexOf(id)>=0)id=b+"-"+n++;return id}
+function rpSaveSettings(){var rows=Array.prototype.slice.call(document.querySelectorAll("#rpTermsF .rpterm")),ids=[];
+ var terms=rows.map(function(r){var name=r.querySelector(".rpTn").value.trim(),f=r.querySelector(".rpTf").value,t=r.querySelector(".rpTt").value,id=r.dataset.tid||rpSlug(name,f,ids);ids.push(id);return {id:id,name:name,from:f,to:t}});
+ var nv=function(id){return Number($(id).value)},body={terms:terms,expected:nv("rpExp"),test_points:nv("rpTp"),pass_points:nv("rpPp"),
+  pct:[0,1,2,3].map(function(k){return nv("rpPc"+k)}),ratio:[0,1,2,3].map(function(k){return nv("rpRa"+k)})};
+ if(!terms.length){toast("Keep at least one term",1);return}
+ fetch("/api/report-settings",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json","X-Dashboard-Request":"1"},body:JSON.stringify(body)})
+  .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})}).then(function(x){if(!x.ok){toast(x.j.error||"The settings weren't saved",1);return}
+   ME.reports=x.j.settings;rpDraw();var d=$("rpSetD");if(d)d.open=true;toast("Report settings saved")},function(){toast("The settings weren't saved. Check your connection.",1)})}
+$("vG").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;
+ if(b.dataset.rt){RPT=b.dataset.rt;rpDraw();return}
+ if(b.dataset.rk){RPK=b.dataset.rk;rpDraw();return}
+ if(b.dataset.rp){rpCard(+b.dataset.rp);return}
+ if(b.id==="rpAddT"){var y=new Date().getFullYear(),box=$("rpTermsF"),k=box.children.length;box.insertAdjacentHTML("beforeend",rpTermRow({id:"",name:"Term "+(k+1),from:y+"-09-01",to:y+"-12-20"},k));box.lastChild.querySelector(".rpTn").focus();return}
+ if(b.classList.contains("rpTx")){var row=b.closest(".rpterm");if(row)row.remove();return}
+ if(b.id==="rpSave")rpSaveSettings()});
+$("vG").addEventListener("change",function(e){var t=e.target;if(t.classList.contains("rpg"))rpOver(+t.dataset.ri,t.dataset.rg,+t.value||0)});
 
 /* ---------- Tabs ---------- */
 /* Recording happens on the Quran tab: scores in the sheet, and warnings, merits, house points and the student's
@@ -1443,7 +1591,7 @@ if(HEAD)HPOFF=1;
 /* Only admins add and remove students, on the Students page; teachers and HeadTeachers can't (the server refuses it too). */
 function addBtn(){return STAFF?'<span>An admin adds students to your class.</span>':'<button type="button" class="btn sm" data-open="U">Add students on the Students page</button>'}
 $("qAdd").hidden=true;$("addRow").hidden=true
-var TABS=["Q","T","D","S"],CUR="Q";
+var TABS=["Q","T","D","G","S"],CUR="Q";
 /* The selected tab is drawn by one marker (.tabi) that slides to the tab chosen, and the new page slides in from
    the side the tab is on. Reduced motion turns both off (tokens.css). */
 function tabMark(list){var on=list.querySelector('[aria-selected="true"]'),m=list.querySelector(".tabi");if(!on||!on.offsetWidth)return;
@@ -1452,7 +1600,7 @@ function tabMark(list){var on=list.querySelector('[aria-selected="true"]'),m=lis
  if(!m.classList.contains("go"))requestAnimationFrame(function(){m.classList.add("go")})}
 function panelIn(el,dir){if(!dir)return;el.style.setProperty("--dx",(dir>0?14:-14)+"px");el.classList.remove("enter");void el.offsetWidth;el.classList.add("enter")}
 function tab(n,focus){if(TABS.indexOf(n)<0)n="Q";var nk=n==="T"?"m":"q";if(nk!==QK){qPopClose();qMenuClose();QK=nk}var dir=TABS.indexOf(n)-TABS.indexOf(CUR),was=$("v"+CUR)&&!$("v"+CUR).classList.contains("hide");CUR=n;TABS.forEach(function(k){var on=k===n,b=$("t"+k);$("v"+k).classList.toggle("hide",!on);b.setAttribute("aria-selected",on);b.tabIndex=on?0:-1});
- if(focus)$("t"+n).focus();$("t"+n).scrollIntoView({block:"nearest",inline:"nearest"});tabMark($("sub"));if(was)panelIn($("v"+n),dir);if(n==="Q"&&CID)qGrid(0);if(n==="T"&&CID){if(VW.T==="day")qGrid(0);else mList()}if(PAGE==="C")dockSet();if(was&&dir)arrive()}
+ if(focus)$("t"+n).focus();$("t"+n).scrollIntoView({block:"nearest",inline:"nearest"});tabMark($("sub"));if(was)panelIn($("v"+n),dir);if(n==="Q"&&CID)qGrid(0);if(n==="G"&&CID)rpDraw();if(n==="T"&&CID){if(VW.T==="day")qGrid(0);else mList()}if(PAGE==="C")dockSet();if(was&&dir)arrive()}
 var TMR=0;window.addEventListener("resize",function(){clearTimeout(TMR);TMR=setTimeout(function(){tabMark($("sub"))},80)});
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){tabMark($("sub"))});
 function keyTabs(ids,fn,prefix){ids.forEach(function(k,i){var b=$(prefix+k);b.onclick=function(){fn(k)};

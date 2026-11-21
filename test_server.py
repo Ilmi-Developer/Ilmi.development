@@ -34,6 +34,7 @@ import assistant
 import auth
 import emails
 import memo_import
+import reports
 import helpdesk
 import server
 import tv
@@ -296,6 +297,58 @@ class DashboardTests:
         self.assertEqual(self.write(state=dict(self.state, S=[student])).status_code, 200)
         student["q"] = {"2026-10-10": -2}
         self.assertEqual(self.write(revision=1, state=dict(self.state, S=[student])).status_code, 400)
+
+    def report_student(self, **extra):
+        return dict({"name": "A", "target": 1, "passes": 0, "merits": 0, "warn": 1, "log": [], "lt": [], "lx": [], "ml": [],
+                     "q": {}, "hw": {"2026-10-10": 0, "2026-10-11": 5}, "wl": [{"t": 1790000000000, "v": 1}],
+                     "ja": {"2026-10-10": 1}, "ro": {"t1-2026": {"q": {"ef": 4}, "m": {"pg": 2}}}}, **extra)
+
+    def test_report_records_on_students(self):
+        # Quran homework by day (0 when not done), dated warnings, J2J attendance and teachers' report grades.
+        self.assertEqual(self.write(state=dict(self.state, S=[self.report_student()])).status_code, 200)
+        for key, value in (("hw", {"2026-10-10": 6}), ("hw", {"10 Oct": 3}), ("wl", [{"t": 1, "v": 4}]), ("wl", [{"v": 1}]),
+                           ("ja", {"2026-10-10": 2}), ("ro", {"t1-2026": {"q": {"pg": 3}}}), ("ro", {"t1-2026": {"m": {"ef": 6}}}),
+                           ("ro", {"Term 1": {"q": {"ef": 3}}})):
+            state = dict(self.state, S=[self.report_student(**{key: value})])
+            self.assertEqual(self.write(revision=1, state=state).status_code, 400, (key, value))
+
+    def test_attendance_comes_from_j2j_not_teachers(self):
+        student = self.report_student()
+        self.assertEqual(self.write(state=dict(self.state, S=[student])).status_code, 200)
+        self.add_user("teacher@example.com", classes=["yr3-a"])
+        teacher = self.sign_in("teacher@example.com", "teacher-password-1")
+        refused = self.write(revision=1, state=dict(self.state, S=[dict(student, ja={"2026-10-10": 0})]), client=teacher)
+        self.assertEqual(refused.status_code, 403)
+        self.assertIn("Journey 2 Jannah", refused.get_json()["error"])
+        # Their homework, warnings and report grades save, with the attendance left as it was.
+        changed = dict(student, hw={"2026-10-17": 3}, wl=[], ro={"t1-2026": {"q": {"hw": 2}}})
+        self.assertEqual(self.write(revision=1, state=dict(self.state, S=[changed]), client=teacher).status_code, 200)
+        # The admin (and later the J2J sync) can change it.
+        self.assertEqual(self.write(revision=2, state=dict(self.state, S=[dict(changed, ja={})])).status_code, 200)
+
+    def test_report_settings(self):
+        self.assertIn('"reports": {"terms": [{"id": "t1-2026", "name": "Term 1", "from": "2026-09-12"',
+                      self.client.get("/").get_data(as_text=True))
+        settings = copy.deepcopy(reports.DEFAULTS)
+        settings["expected"] = 10
+        settings["terms"][0]["name"] = "  Autumn   term "
+        saved = self.client.post("/api/report-settings", json=settings, headers=self.headers)
+        self.assertEqual(saved.status_code, 200)
+        self.assertEqual(saved.get_json()["settings"]["terms"][0]["name"], "Autumn term")
+        self.assertIn('"expected": 10', self.client.get("/").get_data(as_text=True))
+        for change in ({"to": "2026-09-01"}, {"from": "12/09/2026"}, {"id": "Term One"}, {"name": ""}):
+            bad = copy.deepcopy(settings)
+            bad["terms"][0].update(change)
+            self.assertEqual(self.client.post("/api/report-settings", json=bad, headers=self.headers).status_code, 400, change)
+        for key, value in (("pct", [30, 30, 70, 90]), ("ratio", [0.7, 0.9, 1.1]), ("expected", 0), ("pass_points", "5")):
+            self.assertEqual(self.client.post("/api/report-settings", json=dict(settings, **{key: value}),
+                                              headers=self.headers).status_code, 400, key)
+        # Only the admin changes them, and only from the dashboard.
+        self.add_user("teacher@example.com")
+        teacher = self.sign_in("teacher@example.com", "teacher-password-1")
+        self.assertEqual(teacher.post("/api/report-settings", json=settings, headers=self.headers).status_code, 403)
+        self.assertEqual(self.client.post("/api/report-settings", json=settings).status_code, 403)
+        self.assertIn('"expected": 10', teacher.get("/").get_data(as_text=True))
 
     def test_memo_tracker_marks(self):
         student = {"name": "A", "target": 1, "passes": 0, "merits": 0, "warn": 0, "log": [], "lt": [], "lx": [], "ml": [],

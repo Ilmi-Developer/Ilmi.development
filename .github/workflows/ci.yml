@@ -30,6 +30,8 @@ jobs:
         run: |
           python tools/build.py
           git diff --exit-code -- Master_Dashboard.html Master_Dashboard_standalone.html
+      - name: Report calculations
+        run: node tools/report_check.js
       - name: Tests (SQLite and PostgreSQL)
         env:
           TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres

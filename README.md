@@ -56,6 +56,28 @@ ST002,Yusuf Ali,Male,Year 4,Yr4-B-QM-Sr Zainab,Yr4-B-AI-Br Idris
   as one Student ID used for two different names.
 - Commas, semicolons or tabs between columns all work.
 
+## Term reports
+
+Every class has a **Reports** tab, so each teacher sees the reports for their own Quran and Memorisation class (the
+admin and HeadTeachers see every class's). It works out each pupil's five grades per subject for a term (Effort and
+four components) from what the class already records, using the rules of the school's report spreadsheet:
+
+| Subject | Grade | Worked out from |
+| --- | --- | --- |
+| Both | Manners & Behaviour | Warnings given in the term (each one is now kept with its date) against the class average |
+| Quran | Homework | The term's homework marks from the Quran tab's score picker: the mean of the 1 to 5 marks (0, not done, is left out) |
+| Quran | Pronunciation, Fluency | The mean score of the term's Quran level tests |
+| Quran | Focus for next term | The focus area ticked most often on the term's Quran level tests |
+| Memorisation | Homework | New targets passed in the term against the class average |
+| Memorisation | Class Participation | Tests (Memo tab and level tests) × 1 + new targets × 5, against the class average |
+| Memorisation | Progress | New targets passed out of 8 expected, as a percentage |
+| Both | Effort | The rounded mean of the other four final grades |
+
+Only pupils with a lesson recorded in the term get grades, and class averages count only them. A teacher can pick their
+own grade for any of the five; **Auto** brings back the worked-out one. Attendance comes from Journey 2 Jannah
+(stored on each pupil by class day; teachers can't change it). The term dates and every number above are the admin's
+**Report settings** under the table (`reports.py`). `node tools/report_check.js` checks the calculations.
+
 ## House points
 
 Every student belongs to one of three houses: **Makkah**, **Al-Aqsa** or
