@@ -263,6 +263,12 @@ recording starts from the Quran tab.
   level with empty levels named once in a line instead of zero rows) and
   Pass history (passes per week, the history and Add a
   past pass).
+- **Reports**: a term's grades in the Quran sheet's look: one row a pupil on hairlines, each grade a 40px box
+  in the score colours, Effort first in the class-day lane, then attendance and the focus area or targets passed.
+  A box opens the Quran score picker (1 to 5, and Worked out to give a grade back; a bottom sheet on phones); a
+  small olive pencil marks a grade the teacher set. Print, the admin's Report settings (rows like Settings, in the
+  drawer) and the rules ("?") are the toolbar's icons. A name opens the term report laid out like Statistics, with
+  Print report. On phones each pupil is a name and attendance line, the five boxes labelled under them, then the note.
 - **Settings**: one column of rounded rows in the Memo card style: class
   name, first class day, adding students (teachers only), then reset and delete.
 

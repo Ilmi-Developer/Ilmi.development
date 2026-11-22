@@ -114,7 +114,7 @@ ST002,Yusuf Ali,Male,Year 4,Yr4-B-QM-Sr Zainab,Yr4-B-AI-Br Idris</div>
 </section>
 
 
-<section id="vG" class="ws hide" role="tabpanel" aria-labelledby="tG"><div id="rpW"></div></section>
+<section id="vG" class="ws hide" role="tabpanel" aria-labelledby="tG"><div id="repW"></div></section>
 
 <section id="vS" class="ws hide" role="tabpanel" aria-labelledby="tS">
  <div class="sets">
@@ -1444,7 +1444,7 @@ function render(){
  classBand();
  quran();sheet();memo();
  lanes();$("dist").innerHTML=distHtml(S);$("wk").innerHTML=weekChart(allLogs(S));past();
- if(CUR==="G")rpDraw();
+ if(CUR==="G")repDraw();
  }
 
 /* ---------- Reports ---------- */
@@ -1454,131 +1454,204 @@ function render(){
    apart from the calculated grade, which is never stored); choosing Auto again brings back the calculated grade.
    Effort is the rounded mean of the four final components (blank ones left out), unless the teacher set it.
    Blank is not zero: a blank grade or score is left out of means, a recorded 0 counts.
-   The numbers come from the school's report settings (reports.py, ME.reports; the admin changes them below the
-   table), or RPD when there are none, as in the standalone file.
+   The numbers come from the school's report settings (reports.py, ME.reports; the admin changes them from the
+   toolbar), or REPD when there are none, as in the standalone file.
    REPORT-CALC START: the functions down to REPORT-CALC END are pure, and tools/report_check.js tests them. */
-var RPD={terms:[{id:"t1-2026",name:"Term 1",from:"2026-09-12",to:"2026-12-20"},{id:"t2-2027",name:"Term 2",from:"2027-01-10",to:"2027-05-23"}],
+var REPD={terms:[{id:"t1-2026",name:"Term 1",from:"2026-09-12",to:"2026-12-20"},{id:"t2-2027",name:"Term 2",from:"2027-01-10",to:"2027-05-23"}],
  pct:[30,50,70,90],ratio:[0.7,0.9,1.1,1.3],expected:8,test_points:1,pass_points:5};
-var RPQ=[["ef","Effort"],["mb","Manners & Behaviour"],["hw","Homework"],["pr","Pronunciation"],["fl","Fluency"]],
- RPM=[["ef","Effort"],["mb","Manners & Behaviour"],["hw","Homework"],["cp","Class Participation"],["pg","Progress"]];
-function rpIn(d,T){return !!d&&d>=T.from&&d<=T.to}
-function rpRound(x){return Math.floor(x+0.5+1e-9)}
-function rpMean(v){return v.length?v.reduce(function(a,b){return a+b},0)/v.length:null}
+var REPQ=[["ef","Effort"],["mb","Manners & Behaviour"],["hw","Homework"],["pr","Pronunciation"],["fl","Fluency"]],
+ REPM=[["ef","Effort"],["mb","Manners & Behaviour"],["hw","Homework"],["cp","Class Participation"],["pg","Progress"]];
+function repIn(d,T){return !!d&&d>=T.from&&d<=T.to}
+function repRound(x){return Math.floor(x+0.5+1e-9)}
+function repMean(v){return v.length?v.reduce(function(a,b){return a+b},0)/v.length:null}
 /* Percentage grade: the highest threshold met (0% is grade 1). */
-function rpPct(p,C){if(p===null||p===undefined)return null;var g=1;C.pct.forEach(function(t,k){if(p>=t-1e-9)g=k+2});return g}
+function repPct(p,C){if(p===null||p===undefined)return null;var g=1;C.pct.forEach(function(t,k){if(p>=t-1e-9)g=k+2});return g}
 /* Class-relative grades: the pupil's metric over the active class mean. A zero mean gives grade 3. */
-function rpPerf(v,mean,C){if(v===null||v===undefined)return null;if(!mean)return 3;var r=v/mean,g=1;C.ratio.forEach(function(t,k){if(r>=t-1e-9)g=k+2});return g}
+function repPerf(v,mean,C){if(v===null||v===undefined)return null;if(!mean)return 3;var r=v/mean,g=1;C.ratio.forEach(function(t,k){if(r>=t-1e-9)g=k+2});return g}
 /* Warnings run the other way, and no warnings at all is grade 5. */
-function rpWarn(v,mean,C){if(v===null||v===undefined)return null;if(!v||!mean)return 5;var r=v/mean,g=5;C.ratio.forEach(function(t,k){if(r>=t-1e-9)g=4-k});return g}
+function repWarn(v,mean,C){if(v===null||v===undefined)return null;if(!v||!mean)return 5;var r=v/mean,g=5;C.ratio.forEach(function(t,k){if(r>=t-1e-9)g=4-k});return g}
 /* Memorisation positions: each target is its place in the whole book (L2 T1 is 10 with 9 targets in Level 1), as the
    passes are kept (s.lt). A pass with a surah label (s.lx) leaves the target where it is, so it isn't a position.
    Start: the furthest target passed before the term (0 when none). End: the furthest by the end of the term.
    New targets passed = end - start, so a repeat pass adds nothing and a jump counts every target it skips. */
-function rpMemo(s,T,dayOf){var a=0,b=0;(s.log||[]).forEach(function(t,k){if((s.lx||[])[k])return;var n=(s.lt||[])[k]||0,d=dayOf(t);
+function repMemo(s,T,dayOf){var a=0,b=0;(s.log||[]).forEach(function(t,k){if((s.lx||[])[k])return;var n=(s.lt||[])[k]||0,d=dayOf(t);
   if(d<T.from)a=Math.max(a,n);else if(d<=T.to)b=Math.max(b,n)});
  var end=Math.max(a,b);return {start:a,end:end,passed:end-a}}
 /* One subject's grades: the calculated ones (c), the teacher's (o) and the final ones shown (f). */
-function rpFinal(calc,over,keys){var f={},v=[];keys.forEach(function(k){if(k==="ef")return;var x=over&&over[k]!=null?over[k]:calc[k];f[k]=x==null?null:x;if(x!=null)v.push(x)});
- var e=rpMean(v);calc.ef=e===null?null:rpRound(e);f.ef=over&&over.ef!=null?over.ef:calc.ef;return {c:calc,o:over||{},f:f}}
+function repFinal(calc,over,keys){var f={},v=[];keys.forEach(function(k){if(k==="ef")return;var x=over&&over[k]!=null?over[k]:calc[k];f[k]=x==null?null:x;if(x!=null)v.push(x)});
+ var e=repMean(v);calc.ef=e===null?null:repRound(e);f.ef=over&&over.ef!=null?over.ef:calc.ef;return {c:calc,o:over||{},f:f}}
 /* Every pupil of a class (L) for term T with settings C. focus: the focus areas in the order to break ties.
    Quran Homework is the mean score of the pupil's passed Quran level tests in the term, rounded. Memorisation Homework
-   compares the new targets the pupil passed with the active class's mean (1 to 5, rpPerf). */
-function rpCalc(L,T,C,focus,dayOf){
+   compares the new targets the pupil passed with the active class's mean (1 to 5, repPerf). */
+function repCalc(L,T,C,focus,dayOf){
  var R=L.map(function(s){var q=s.q||{},mt=s.mt||{},hw=s.hw||{},tests=s.tests||[],ja=s.ja||{};
-  var inQ=Object.keys(q).filter(function(d){return rpIn(d,T)&&q[d]>=0}),inM=Object.keys(mt).filter(function(d){return rpIn(d,T)}),
-   inH=Object.keys(hw).filter(function(d){return rpIn(d,T)}),inT=tests.filter(function(t){return rpIn(t.d,T)}),
-   inL=(s.log||[]).filter(function(t){return rpIn(dayOf(t),T)});
-  var memo=rpMemo(s,T,dayOf),warn=(s.wl||[]).filter(function(w){return rpIn(dayOf(w.t),T)}).length,
+  var inQ=Object.keys(q).filter(function(d){return repIn(d,T)&&q[d]>=0}),inM=Object.keys(mt).filter(function(d){return repIn(d,T)}),
+   inH=Object.keys(hw).filter(function(d){return repIn(d,T)}),inT=tests.filter(function(t){return repIn(t.d,T)}),
+   inL=(s.log||[]).filter(function(t){return repIn(dayOf(t),T)});
+  var memo=repMemo(s,T,dayOf),warn=(s.wl||[]).filter(function(w){return repIn(dayOf(w.t),T)}).length,
    tt=inM.filter(function(d){return mt[d]==="t"}).length,at=inT.filter(function(t){return t.k==="m"}).length;
   var ps=function(k){return inT.filter(function(t){return t.k===k&&t.ok&&t.sc!=null}).map(function(t){return t.sc})},
    qt=inT.filter(function(t){return t.k==="q"&&t.sc!=null}).map(function(t){return t.sc}),
    fc={};inT.forEach(function(t){if(t.k==="q")(t.fa||[]).forEach(function(f){fc[f]=(fc[f]||0)+1})});
   var top=null;focus.forEach(function(f){if(fc[f]&&(!top||fc[f]>fc[top]))top=f});
-  var jd=Object.keys(ja).filter(function(d){return rpIn(d,T)}),jp=jd.filter(function(d){return ja[d]===1}).length;
+  var jd=Object.keys(ja).filter(function(d){return repIn(d,T)}),jp=jd.filter(function(d){return ja[d]===1}).length;
   return {s:s,act:!!(inQ.length||inM.length||inH.length||inT.length||inL.length),warn:warn,memo:memo,
    pts:(tt+at)*C.test_points+memo.passed*C.pass_points,tests:tt+at,
-   hwq:rpMean(ps("q")),pron:qt.length?rpMean(qt):null,
+   hwq:repMean(ps("q")),pron:qt.length?repMean(qt):null,
    focus:top?{f:top,n:fc[top]}:null,att:jd.length?{p:jp,n:jd.length,pct:Math.round(100*jp/jd.length)}:null}});
- var A=R.filter(function(r){return r.act}),mean=function(k){return rpMean(A.map(function(r){return k(r)}))},
+ var A=R.filter(function(r){return r.act}),mean=function(k){return repMean(A.map(function(r){return k(r)}))},
   mw=mean(function(r){return r.warn}),mp=mean(function(r){return r.memo.passed}),mc=mean(function(r){return r.pts});
  R.forEach(function(r){var ro=(r.s.ro||{})[T.id]||{},on=r.act;
-  var mb=on?rpWarn(r.warn,mw,C):null;
-  r.q=rpFinal({mb:mb,hw:on&&r.hwq!==null?rpRound(r.hwq):null,pr:on&&r.pron!==null?rpRound(r.pron):null,fl:on&&r.pron!==null?rpRound(r.pron):null},ro.q,["ef","mb","hw","pr","fl"]);
-  r.m=rpFinal({mb:mb,hw:on?rpPerf(r.memo.passed,mp,C):null,cp:on?rpPerf(r.pts,mc,C):null,
-   pg:on?rpPct(Math.min(r.memo.passed/C.expected,1)*100,C):null},ro.m,["ef","mb","hw","cp","pg"])});
+  var mb=on?repWarn(r.warn,mw,C):null;
+  r.q=repFinal({mb:mb,hw:on&&r.hwq!==null?repRound(r.hwq):null,pr:on&&r.pron!==null?repRound(r.pron):null,fl:on&&r.pron!==null?repRound(r.pron):null},ro.q,["ef","mb","hw","pr","fl"]);
+  r.m=repFinal({mb:mb,hw:on?repPerf(r.memo.passed,mp,C):null,cp:on?repPerf(r.pts,mc,C):null,
+   pg:on?repPct(Math.min(r.memo.passed/C.expected,1)*100,C):null},ro.m,["ef","mb","hw","cp","pg"])});
  return R}
 /* "2 passed · on L3 T4", or Complete once the last target is passed. last: the last target's position. */
-function rpNote(memo,last,label){return plural(memo.passed,"target")+" passed · "+(memo.end>=last?"Complete":"on "+label(memo.end+1))}
+function repNote(memo,last,label){return plural(memo.passed,"target")+" passed · "+(memo.end>=last?"Complete":"on "+label(memo.end+1))}
 /* REPORT-CALC END */
-var RPT="",RPK="q";
-function rpSet(){return window.ME&&ME.reports&&ME.reports.terms?ME.reports:RPD}
+var REPT="",REPK="q",REPP=null;
+/* The Reports tab looks like the Quran sheet it comes from: one row a pupil, each grade a 40px box in the score
+   colours, Effort first in the class-day lane as the grade that sums up the rest. A box opens the same picker as a
+   Quran score (a sheet from the bottom on phones). A grade the teacher set carries a small pencil; "Worked out"
+   in the picker gives it back. Print, Report settings (the admin's) and the rules ("?") sit in the toolbar's tools,
+   as on the Quran tab; a pupil's name opens their term report, laid out like Statistics, which prints like it. */
+var REPI={pr:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3.5h10V9"/><rect x="3.5" y="9" width="17" height="8" rx="2"/><path d="M7 14h10v6.5H7z"/></svg>',
+ st:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>',
+ pen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19h3.5L18 9.5a2.5 2.5 0 0 0-3.5-3.5L5 15.5z"/></svg>'};
+/* Short column heads; the full names are in the report and in each box's label. */
+var REPH={ef:"Effort",mb:"Manners",hw:"Homework",pr:"Pronunciation",fl:"Fluency",cp:"Participation",pg:"Progress"};
+function repSet(){return window.ME&&ME.reports&&ME.reports.terms?ME.reports:REPD}
 /* The term shown: the one chosen, else the latest that has started, else the first. */
-function rpTerm(){var T=rpSet().terms,t=dk(Date.now()),pick=null;T.forEach(function(x){if(x.id===RPT)pick=x});if(pick)return pick;
- pick=T[0];T.forEach(function(x){if(x.from<=t)pick=x});RPT=pick.id;return pick}
-function rpDay(k){var p=k.split("-");return new Date(+p[0],+p[1]-1,+p[2],12).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})}
-function rpRows(){var T=rpTerm();return rpCalc(S,T,rpSet(),FOCUS,dk)}
-function rpGrade(r,i,k,key,lab){var g=r[k],f=g.f[key],c=g.c[key],ov=g.o[key]!=null,nm=r.s.name;
- return '<td class="rpc" data-label="'+esc(lab)+'"><select class="rpg'+(ov?' ov':'')+(f==null?' none':'')+'" data-ri="'+i+'" data-rg="'+key+'"'+(f==null?'':' style="--c:'+QC[f]+'"')
-  +' aria-label="'+esc(lab+' for '+nm)+'" title="'+(ov?'Set by the teacher. Auto would be '+(c==null?'blank':c):'Worked out from this term\'s records')+'">'
-  +'<option value="">'+(c==null?'Auto (–)':'Auto ('+c+')')+'</option>'+[1,2,3,4,5].map(function(n){return '<option value="'+n+'"'+(ov&&g.o[key]===n?' selected':'')+'>'+n+'</option>'}).join("")+'</select></td>'}
-function rpDraw(){var w=$("rpW");if(!w||!CID)return;var C=rpSet(),T=rpTerm(),R=rpRows(),cols=RPK==="q"?RPQ:RPM,act=R.filter(function(r){return r.act}).length,
-  foc=document.activeElement&&w.contains(document.activeElement)?document.activeElement:null,fk=foc&&foc.dataset?(foc.dataset.ri||"")+"|"+(foc.dataset.rg||"")+"|"+(foc.dataset.rt||foc.dataset.rk||""):"";
- var h='<div class="toolbar"><div class="seg" id="rpTs" role="group" aria-label="Term">'+C.terms.map(function(x){return '<button type="button" data-rt="'+esc(x.id)+'" aria-pressed="'+(x.id===T.id)+'">'+esc(x.name)+'</button>'}).join("")+'</div>'
-  +'<div class="seg" id="rpKs" role="group" aria-label="Subject"><button type="button" data-rk="q" aria-pressed="'+(RPK==="q")+'">Quran</button><button type="button" data-rk="m" aria-pressed="'+(RPK==="m")+'">Memorisation</button></div>'
-  +'<p class="cap">'+esc(rpDay(T.from))+' to '+esc(rpDay(T.to))+' · '+act+' of '+plural(S.length,"pupil")+' had lessons this term</p></div>';
- if(!S.length){w.innerHTML=h+'<p class="none">No students in this class yet.</p>';return}
- h+='<div class="tablewrap soft"><table class="tbl stackable rpt"><caption class="sr-only">'+(RPK==="q"?"Quran":"Memorisation")+' report grades, '+esc(T.name)+'</caption><thead><tr><th scope="col">Pupil</th><th scope="col" class="n">Attendance</th>'
-  +cols.map(function(c){return '<th scope="col">'+esc(c[1])+'</th>'}).join("")+'<th scope="col">'+(RPK==="q"?'Focus for next term':'This term')+'</th></tr></thead><tbody>';
- R.forEach(function(r,i){var s=r.s;
-  h+='<tr'+(r.act?'':' class="rpoff"')+'><td class="lead" data-label="Pupil"><button type="button" class="lk" data-rp="'+i+'">'+esc(s.name)+'</button>'+(r.act?'':'<span class="pill">No lessons this term</span>')+'</td>'
-   +'<td class="n" data-label="Attendance">'+(r.att?r.att.pct+'%<small> '+r.att.p+'/'+r.att.n+'</small>':'<span class="mute">–</span>')+'</td>'
-   +cols.map(function(c){return rpGrade(r,i,RPK,c[0],c[1])}).join("")
-   +'<td data-label="'+(RPK==="q"?'Focus for next term':'This term')+'">'+(RPK==="q"?(r.focus?esc(r.focus.f)+' ('+r.focus.n+'×)':'<span class="mute">–</span>'):(r.act?esc(rpNote(r.memo,NB-1,bl)):'<span class="mute">–</span>'))+'</td></tr>'});
- h+='</tbody></table></div><p class="cap rpkey">Each grade is worked out from this term\'s records. Pick a number to set your own; <b>Auto</b> brings the worked-out grade back. Grades you set have an outline.</p>';
- if(window.RAILWAY&&window.ME&&ME.role==="admin")h+=rpSettings(C);
- w.innerHTML=h;
- if(fk){var n=fk.split("|"),el=n[0]&&n[1]?w.querySelector('[data-ri="'+n[0]+'"][data-rg="'+n[1]+'"]'):n[2]?w.querySelector('[data-rt="'+n[2]+'"],[data-rk="'+n[2]+'"]'):null;if(el)el.focus()}}
-/* A teacher's grade: set it, or back to Auto. Empty term and subject entries are taken away again. */
-function rpOver(i,key,v){var s=S[i],T=rpTerm();if(!s)return;if(!s.ro)s.ro={};var t=s.ro[T.id]||(s.ro[T.id]={}),g=t[RPK]||(t[RPK]={});
- if(v)g[key]=v;else delete g[key];if(!Object.keys(g).length)delete t[RPK];if(!Object.keys(t).length)delete s.ro[T.id];if(!Object.keys(s.ro).length)delete s.ro;
- save();rpDraw()}
-/* One pupil's report for the term: both subjects, as the report sheet shows them. */
-function rpCard(i){var R=rpRows(),r=R[i],T=rpTerm();if(!r)return;
- var part=function(k,cols,extra){var g=r[k];return '<section class="rpcard"><h3>'+(k==="q"?"Quran":"Memorisation")+'</h3><dl class="rpdl">'+cols.map(function(c){var f=g.f[c[0]];
-   return '<div><dt>'+esc(c[1])+'</dt><dd>'+(f==null?'<span class="mute">–</span>':'<b class="rpchip" style="--c:'+QC[f]+'">'+f+'</b>')+(g.o[c[0]]!=null?'<small>set by the teacher</small>':'')+'</dd></div>'}).join("")+extra+'</dl></section>'};
- drawer(r.s.name,'<p class="cap">'+esc(T.name)+', '+esc(rpDay(T.from))+' to '+esc(rpDay(T.to))+(r.act?'':' · no lessons recorded this term')+'</p>'
-  +'<dl class="rpdl rptop"><div><dt>Attendance</dt><dd>'+(r.att?r.att.pct+'% <small>present on '+r.att.p+' of '+plural(r.att.n,"day")+'</small>':'<span class="mute">No Journey 2 Jannah attendance yet</span>')+'</dd></div>'
-  +'<div><dt>Quran level</dt><dd>'+(r.s.qa?esc(qaLab(r.s.qa)):'<span class="mute">No level yet</span>')+'</dd></div></dl>'
-  +part("q",RPQ,'<div><dt>Focus for next term</dt><dd>'+(r.focus?esc(r.focus.f)+' ('+r.focus.n+'×)':'<span class="mute">–</span>')+'</dd></div>')
-  +part("m",RPM,'<div><dt>This term</dt><dd>'+(r.act?esc(rpNote(r.memo,NB-1,bl)):'<span class="mute">–</span>')+'</dd></div>'),2)}
-/* The admin's report settings: the terms' dates and the numbers the grades use. */
-function rpSettings(C){var num=function(id,lab,v,step){return '<label>'+lab+'<input type="number" id="'+id+'" value="'+v+'" step="'+(step||1)+'" inputmode="decimal"></label>'};
- return '<details class="up rpset" id="rpSetD"><summary>Report settings</summary><p class="sub">These apply to every class\'s reports. Each term uses its own dates, both days included.</p>'
-  +'<div id="rpTermsF">'+C.terms.map(function(x,k){return rpTermRow(x,k)}).join("")+'</div><button type="button" class="btn sm quiet" id="rpAddT">Add a term</button>'
-  +'<div class="pf">'+num("rpExp","Memorisation targets expected per term",C.expected)+num("rpTp","Participation points per test",C.test_points)+num("rpPp","Participation points per new target",C.pass_points)+'</div>'
-  +'<fieldset class="rpfs"><legend>Percentage needed for grades 2, 3, 4 and 5</legend><div class="pf">'+C.pct.map(function(v,k){return num("rpPc"+k,"Grade "+(k+2),v)}).join("")+'</div></fieldset>'
-  +'<fieldset class="rpfs"><legend>Share of the class average needed for grades 2, 3, 4 and 5 (warnings: 4, 3, 2 and 1)</legend><div class="pf">'+C.ratio.map(function(v,k){return num("rpRa"+k,"Grade "+(k+2),v,0.05)}).join("")+'</div></fieldset>'
-  +'<div class="sact"><button type="button" class="btn p" id="rpSave">Save report settings</button></div></details>'}
-function rpTermRow(x,k){return '<div class="pf rpterm" data-tid="'+esc(x.id)+'"><label>Term name<input type="text" class="rpTn" maxlength="30" value="'+esc(x.name)+'"></label><label>First day<input type="date" class="rpTf" value="'+esc(x.from)+'"></label><label>Last day<input type="date" class="rpTt" value="'+esc(x.to)+'"></label>'
- +'<button type="button" class="btn sm quiet rpTx" aria-label="Remove '+esc(x.name)+'">Remove</button></div>'}
-function rpSlug(name,from,taken){var b=(String(name).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"term").slice(0,18)+"-"+String(from).slice(0,4),id=b,n=2;
+function repTerm(){var T=repSet().terms,t=dk(Date.now()),pick=null;T.forEach(function(x){if(x.id===REPT)pick=x});if(pick)return pick;
+ pick=T[0];T.forEach(function(x){if(x.from<=t)pick=x});REPT=pick.id;return pick}
+function repDay(k,y){var p=k.split("-");return new Date(+p[0],+p[1]-1,+p[2],12).toLocaleDateString("en-GB",y?{day:"numeric",month:"short",year:"numeric"}:{day:"numeric",month:"short"})}
+function repRange(T){return repDay(T.from,T.from.slice(0,4)!==T.to.slice(0,4))+' to '+repDay(T.to,1)}
+function repRows(){return repCalc(S,repTerm(),repSet(),FOCUS,dk)}
+function repCols(k){return k==="q"?REPQ:REPM}
+function repLab(key){return (REPK==="q"?REPQ:REPM).filter(function(c){return c[0]===key})[0][1]}
+function repExtra(r,k){return k==="q"?(r.focus?esc(r.focus.f)+' <small>'+r.focus.n+'×</small>':''):(r.act?esc(repNote(r.memo,NB-1,bl)):'')}
+/* One grade box. sm: the smaller, static box of a report. */
+function repBox(r,i,k,key,sm){var g=r[k],f=g.f[key],c=g.c[key],ov=g.o[key]!=null,lab=repCols(k).filter(function(x){return x[0]===key})[0][1];
+ var inner=(f==null?'<span aria-hidden="true">–</span>':f)+(ov?'<i class="repov" aria-hidden="true">'+REPI.pen+'</i>':'');
+ if(sm)return '<span class="repb sm'+(f==null?'':' has')+(ov?' ov':'')+'"'+(f==null?'':' style="--c:'+QC[f]+'"')+'>'+inner+'</span>';
+ return '<button type="button" class="repb'+(f==null?'':' has')+(ov?' ov':'')+'" data-ri="'+i+'" data-rg="'+key+'"'+(f==null?'':' style="--c:'+QC[f]+'"')+' aria-haspopup="true" aria-expanded="false"'
+  +' aria-label="'+esc(lab+' for '+r.s.name+': '+(f==null?'no grade':f+' out of 5')+(ov?', set by you, worked out '+(c==null?'as blank':c):'')+'. Change')+'"'
+  +' title="'+esc(ov?'You set this. Worked out: '+(c==null?'none':c):f==null?'Not enough records this term':'Worked out from this term\'s records')+'">'+inner+'</button>'}
+function repDraw(){var w=$("repW");if(!w||!CID)return;repPickClose();var C=repSet(),T=repTerm(),R=repRows(),cols=repCols(REPK),act=R.filter(function(r){return r.act}).length,
+  foc=document.activeElement&&w.contains(document.activeElement)?document.activeElement:null,fk=foc&&foc.dataset?(foc.dataset.ri||"")+"|"+(foc.dataset.rg||"")+"|"+(foc.dataset.rt||foc.dataset.rk||""):"",
+  admin=window.RAILWAY&&window.ME&&ME.role==="admin";
+ var h='<div class="toolbar"><div class="seg" id="repTs" role="group" aria-label="Term">'+C.terms.map(function(x){return '<button type="button" data-rt="'+esc(x.id)+'" aria-pressed="'+(x.id===T.id)+'">'+esc(x.name)+'</button>'}).join("")+'</div>'
+  +'<div class="seg" id="repKs" role="group" aria-label="Subject"><button type="button" data-rk="q" aria-pressed="'+(REPK==="q")+'">Quran</button><button type="button" data-rk="m" aria-pressed="'+(REPK==="m")+'">Memorisation</button></div>'
+  +'<p class="cap">'+esc(repRange(T))+' · <b>'+act+'</b> of '+plural(S.length,"pupil")+' with lessons</p>'
+  +'<div class="tools"><button type="button" class="ibtn" id="repPrintAll" aria-label="Print the term reports for the class" title="Print term reports"'+(S.length?'':' disabled')+'>'+REPI.pr+'</button>'
+  +(admin?'<button type="button" class="ibtn" id="repSetB" aria-haspopup="dialog" aria-label="Report settings" title="Report settings">'+REPI.st+'</button>':'')
+  +'<details class="help"><summary aria-label="How the report grades work">?</summary><div class="hb"><p>Every grade is worked out from what the class recorded between the term\'s first and last day. Effort is the average of the other four, to the nearest whole grade.</p>'
+  +'<p>Tap a grade (or select it and type 1 to 5) to give your own. A pencil marks the grades you set; <b>Worked out</b> in the picker, or Backspace, gives the grade back.</p>'
+  +'<p>Pupils with no lessons recorded this term get no grades and aren\'t counted in the class averages. Attendance comes from Journey 2 Jannah.</p></div></details></div></div>';
+ if(!S.length){w.innerHTML=h+'<p class="none repnone">No students yet. An admin adds them on the Students page.</p>';return}
+ h+='<div class="repwrap"><table class="repsheet"><caption class="sr-only">'+(REPK==="q"?"Quran":"Memorisation")+' report grades, '+esc(T.name)+'</caption><thead><tr><th scope="col" class="repn">Pupil</th>'
+  +cols.map(function(c){return '<th scope="col" class="'+(c[0]==="ef"?'repe':'repg')+'" title="'+esc(c[1])+'">'+esc(REPH[c[0]])+'</th>'}).join("")
+  +'<th scope="col" class="repa">Attendance</th><th scope="col" class="repx">'+(REPK==="q"?'Focus for next term':'This term')+'</th></tr></thead><tbody>';
+ R.forEach(function(r,i){var x=repExtra(r,REPK);
+  h+='<tr'+(r.act?'':' class="off"')+'><th scope="row" class="repn"><button type="button" class="lk" data-rp="'+i+'" aria-haspopup="dialog">'+esc(r.s.name)+'</button>'+(r.act?'':'<small>No lessons this term</small>')+'</th>'
+   +cols.map(function(c){return '<td class="'+(c[0]==="ef"?'repe':'repg')+'" data-l="'+esc(REPH[c[0]])+'">'+repBox(r,i,REPK,c[0])+'</td>'}).join("")
+   +'<td class="repa">'+(r.att?'<b>'+r.att.pct+'%</b><small>'+r.att.p+' of '+r.att.n+'</small>':'<span class="mute">–</span>')+'</td>'
+   +'<td class="repx">'+(x||'<span class="mute">–</span>')+'</td></tr>'});
+ w.innerHTML=h+'</tbody></table></div>';
+ if(fk){var n=fk.split("|"),el=n[0]&&n[1]?w.querySelector('.repb[data-ri="'+n[0]+'"][data-rg="'+n[1]+'"]'):n[2]?w.querySelector('[data-rt="'+n[2]+'"],[data-rk="'+n[2]+'"]'):null;if(el)el.focus()}}
+/* A teacher's grade: set it, or 0 for the worked-out one again. Empty term and subject entries are taken away. */
+function repOver(i,key,v){var s=S[i],T=repTerm();if(!s)return;if(!s.ro)s.ro={};var t=s.ro[T.id]||(s.ro[T.id]={}),g=t[REPK]||(t[REPK]={});
+ if(v)g[key]=v;else delete g[key];if(!Object.keys(g).length)delete t[REPK];if(!Object.keys(t).length)delete s.ro[T.id];if(!Object.keys(s.ro).length)delete s.ro;
+ save();repDraw();var b=$("repW").querySelector('.repb[data-ri="'+i+'"][data-rg="'+key+'"]');if(b){b.focus();repDrop(b)}}
+function repDrop(b){if(QM.matches||!b.classList.contains("has"))return;b.classList.add("drop");setTimeout(function(){b.classList.remove("drop")},900)}
+/* The grade picker: 1 to 5 in the score colours, beside the box like a Quran score's (a bottom sheet under 600px). */
+function repPickClose(back){var p=$("repPop");if(p)p.remove();if(REPP){REPP.setAttribute("aria-expanded","false");if(back&&document.contains(REPP))REPP.focus()}REPP=null}
+function repPick(btn){repPickClose();var R=repRows(),i=+btn.dataset.ri,key=btn.dataset.rg,r=R[i];if(!r)return;
+ var g=r[REPK],f=g.f[key],c=g.c[key],ov=g.o[key]!=null,lab=repLab(key),W=$("repW");REPP=btn;
+ var bs=[1,2,3,4,5].map(function(n){return '<button type="button" data-rv="'+n+'" style="--c:'+QC[n]+'" aria-pressed="'+(f===n)+'">'+n+'</button>'}).join("")
+  +(ov?'<button type="button" class="qclr" data-rv="0">Worked out'+(c==null?'':' <b>'+c+'</b>')+'</button>':'');
+ var p=document.createElement("div");p.id="repPop";
+ if(matchMedia("(max-width:599.98px)").matches){p.className="qpop qsheet repop";
+  p.innerHTML='<div class="qsc" data-rx aria-hidden="true"></div><div class="qscard" role="group" aria-label="'+esc(lab+' for '+r.s.name)+'"><div class="qsh"><b>'+esc(r.s.name)+'</b><small>'+esc(lab)+(ov?' · worked out '+(c==null?'–':c):'')+'</small></div><div class="qsb">'+bs+'</div></div>';W.appendChild(p)}
+ else{p.className="qpop repop";p.setAttribute("role","group");p.setAttribute("aria-label",lab+" for "+r.s.name);p.innerHTML=bs;W.appendChild(p);
+  var a=btn.getBoundingClientRect(),o=W.getBoundingClientRect(),x=a.right-o.left+8;if(x+p.offsetWidth>W.clientWidth)x=Math.max(0,a.left-o.left-p.offsetWidth-8);
+  p.style.left=x+"px";p.style.top=(a.top-o.top+(a.height-p.offsetHeight)/2)+"px"}
+ btn.setAttribute("aria-expanded","true");(p.querySelector('[aria-pressed="true"]')||p.querySelector("[data-rv]")).focus({preventScroll:true})}
+/* One pupil's term report: figures like Statistics, then a card a subject. */
+function repFigs(r){var q=r.q.f.ef,m=r.m.f.ef,end=r.memo.end>=NB-1;
+ var F=[["Attendance",r.att?r.att.pct+"%":"–",r.att?r.att.p+" of "+plural(r.att.n,"day"):"From Journey 2 Jannah","mi"],["Quran effort",q==null?"–":q,"out of 5","co"],
+  ["Memorisation effort",m==null?"–":m,"out of 5","sk"],["Targets passed",r.act?r.memo.passed:"–",r.act?(end?"Book complete":"now on "+bl(r.memo.end+1)):"no lessons","la"],
+  ["Quran level",r.s.qa?r.s.qa:"–",r.s.qa?(r.s.qa>QBOOK?"Tajweed Book":"Qaidah Book"):"not tested yet","bu"],["Focus next term",r.focus?r.focus.f:"–",r.focus?"ticked on "+plural(r.focus.n,"level test"):"none ticked","pe"]];
+ return '<div class="sxfig">'+F.map(function(f,i){return '<div class="sxf '+f[3]+'" style="--i:'+i+'"><span>'+f[0]+'</span><b title="'+esc(String(f[1]))+'">'+esc(String(f[1]))+'</b><small>'+esc(f[2])+'</small></div>'}).join("")+'</div>'}
+function repSub(r,k){var cols=repCols(k),g=r[k],any=cols.some(function(c){return g.o[c[0]]!=null});
+ return '<section class="sxc repsub"><h3>'+(k==="q"?"Quran":"Memorisation")+'</h3><ul class="repgl">'+cols.map(function(c){return '<li'+(c[0]==="ef"?' class="ef"':'')+'><span>'+esc(c[1])+'</span>'+repBox(r,0,k,c[0],1)+'</li>'}).join("")+'</ul>'
+  +(k==="m"&&r.act?'<p class="repnote">'+esc(repNote(r.memo,NB-1,bl))+'</p>':'')+(any?'<p class="repnote mute"><i class="repov" aria-hidden="true">'+REPI.pen+'</i> Set by the teacher</p>':'')+'</section>'}
+function repCard(i){var r=repRows()[i],T=repTerm();if(!r)return;
+ drawer(r.s.name,'<div class="rephd"><p class="cap">'+esc(cname(ST[CID].name))+' · '+esc(T.name)+', '+esc(repRange(T))+(r.act?'':' · no lessons recorded')+'</p>'
+  +'<button type="button" class="btn p sm sxpr" data-rprint="'+i+'">'+REPI.pr+'Print report</button></div>'+repFigs(r)+'<div class="sxg">'+repSub(r,"q")+repSub(r,"m")+'</div>',2)}
+function repPage(r,T){var s=r.s,h=s.house;
+ return '<section class="prp"><header class="prh"><span class="prb ilmi"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span><span class="prt">Term report</span><span class="prdt">'+esc(T.name)+'</span></header>'
+  +'<div class="prn"><h1>'+esc(s.name)+'</h1><p>'+esc(cname(ST[CID].name))+(s.sy?' · '+esc(s.sy):'')+(h?' · <span class="sxh h-'+esc(h)+'"><i></i>'+esc(h)+'</span>':'')+(s.sid?' · '+esc(s.sid):'')+'</p><p class="prper">'+esc(T.name)+': '+esc(repRange(T))+'</p></div>'
+  +repFigs(r)+'<div class="sxg">'+repSub(r,"q")+repSub(r,"m")+'</div><div class="prc"><b>Teacher\'s comments</b><i></i><i></i><i></i></div><footer class="prf">Ilmi</footer></section>'}
+function repPrint(ix){var R=repRows(),T=repTerm(),P=$("prt");if(!P){P=document.createElement("div");P.id="prt";P.setAttribute("aria-hidden","true");document.body.appendChild(P)}
+ P.innerHTML=ix.map(function(i){return repPage(R[i],T)}).join("");document.documentElement.classList.add("printing");
+ var done=function(){document.documentElement.classList.remove("printing");P.innerHTML="";removeEventListener("afterprint",done)};addEventListener("afterprint",done);
+ setTimeout(function(){window.print();if(!("onafterprint" in window))done()},60)}
+/* The admin's report settings, in rows like a class's Settings: the terms, then the numbers the grades use. */
+function repNum(id,v,step,lab){return '<input type="number" id="'+id+'" value="'+v+'" step="'+(step||1)+'" inputmode="decimal" aria-label="'+esc(lab)+'">'}
+function repTermRow(x){return '<div class="srow repterm" data-tid="'+esc(x.id)+'"><label class="repf">Name<input type="text" class="repTn" maxlength="30" value="'+esc(x.name)+'"></label>'
+ +'<label class="repf">First day<input type="date" class="repTf" value="'+esc(x.from)+'"></label><label class="repf">Last day<input type="date" class="repTt" value="'+esc(x.to)+'"></label>'
+ +'<button type="button" class="btn sm quiet repTx" aria-label="Remove '+esc(x.name)+'">Remove</button></div>'}
+function repSettingsOpen(){var C=repSet(),grades=function(pre,vals,step,what){return '<span class="repq">'+vals.map(function(v,k){return '<label><small>'+(k+2)+'</small>'+repNum(pre+k,v,step,what+" for grade "+(k+2))+'</label>'}).join("")+'</span>'};
+ drawer("Report settings",'<div class="sets repsets"><p class="cap">For every class\'s term reports. Each term runs from its first day to its last, both included.</p>'
+  +'<h3 class="seth">Terms</h3><div id="repTermsF">'+C.terms.map(repTermRow).join("")+'</div><div class="sact"><button type="button" class="btn sm quiet" id="repAddT">Add a term</button></div>'
+  +'<h3 class="seth">Memorisation</h3>'
+  +'<div class="srow"><div class="sl"><b><label for="repExp">Targets expected per term</label></b><span class="sub">Progress is the share of these passed.</span></div>'+repNum("repExp",C.expected,1,"Targets expected per term")+'</div>'
+  +'<div class="srow"><div class="sl"><b>Participation points</b><span class="sub">For each test, and for each new target passed.</span></div><span class="repq"><label><small>Test</small>'+repNum("repTp",C.test_points,1,"Points per test")+'</label><label><small>Target</small>'+repNum("repPp",C.pass_points,1,"Points per new target")+'</label></span></div>'
+  +'<h3 class="seth">Grade boundaries</h3>'
+  +'<div class="srow"><div class="sl"><b>Percentages</b><span class="sub">The percentage a pupil needs for grades 2 to 5.</span></div>'+grades("repPc",C.pct,1,"Percentage")+'</div>'
+  +'<div class="srow"><div class="sl"><b>Against the class</b><span class="sub">The share of the class average needed for grades 2 to 5. Warnings run the other way.</span></div>'+grades("repRa",C.ratio,0.05,"Share of the class average")+'</div>'
+  +'<div class="sact"><button type="button" class="btn p" id="repSave">Save report settings</button></div></div>')}
+function repSlug(name,from,taken){var b=(String(name).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"term").slice(0,18)+"-"+String(from).slice(0,4),id=b,n=2;
  while(taken.indexOf(id)>=0)id=b+"-"+n++;return id}
-function rpSaveSettings(){var rows=Array.prototype.slice.call(document.querySelectorAll("#rpTermsF .rpterm")),ids=[];
- var terms=rows.map(function(r){var name=r.querySelector(".rpTn").value.trim(),f=r.querySelector(".rpTf").value,t=r.querySelector(".rpTt").value,id=r.dataset.tid||rpSlug(name,f,ids);ids.push(id);return {id:id,name:name,from:f,to:t}});
- var nv=function(id){return Number($(id).value)},body={terms:terms,expected:nv("rpExp"),test_points:nv("rpTp"),pass_points:nv("rpPp"),
-  pct:[0,1,2,3].map(function(k){return nv("rpPc"+k)}),ratio:[0,1,2,3].map(function(k){return nv("rpRa"+k)})};
+function repSaveSettings(){var rows=Array.prototype.slice.call(document.querySelectorAll("#repTermsF .repterm")),ids=[];
+ var terms=rows.map(function(r){var name=r.querySelector(".repTn").value.trim(),f=r.querySelector(".repTf").value,t=r.querySelector(".repTt").value,id=r.dataset.tid||repSlug(name,f,ids);ids.push(id);return {id:id,name:name,from:f,to:t}});
+ var nv=function(id){return Number($(id).value)},body={terms:terms,expected:nv("repExp"),test_points:nv("repTp"),pass_points:nv("repPp"),
+  pct:[0,1,2,3].map(function(k){return nv("repPc"+k)}),ratio:[0,1,2,3].map(function(k){return nv("repRa"+k)})};
  if(!terms.length){toast("Keep at least one term",1);return}
+ var b=$("repSave");b.disabled=true;b.textContent="Saving…";
  fetch("/api/report-settings",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json","X-Dashboard-Request":"1"},body:JSON.stringify(body)})
-  .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})}).then(function(x){if(!x.ok){toast(x.j.error||"The settings weren't saved",1);return}
-   ME.reports=x.j.settings;rpDraw();var d=$("rpSetD");if(d)d.open=true;toast("Report settings saved")},function(){toast("The settings weren't saved. Check your connection.",1)})}
-$("vG").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;
- if(b.dataset.rt){RPT=b.dataset.rt;rpDraw();return}
- if(b.dataset.rk){RPK=b.dataset.rk;rpDraw();return}
- if(b.dataset.rp){rpCard(+b.dataset.rp);return}
- if(b.id==="rpAddT"){var y=new Date().getFullYear(),box=$("rpTermsF"),k=box.children.length;box.insertAdjacentHTML("beforeend",rpTermRow({id:"",name:"Term "+(k+1),from:y+"-09-01",to:y+"-12-20"},k));box.lastChild.querySelector(".rpTn").focus();return}
- if(b.classList.contains("rpTx")){var row=b.closest(".rpterm");if(row)row.remove();return}
- if(b.id==="rpSave")rpSaveSettings()});
-$("vG").addEventListener("change",function(e){var t=e.target;if(t.classList.contains("rpg"))rpOver(+t.dataset.ri,t.dataset.rg,+t.value||0)});
+  .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})}).then(function(x){b.disabled=false;b.textContent="Save report settings";if(!x.ok){toast(x.j.error||"The settings weren't saved",1);return}
+   ME.reports=x.j.settings;repDraw();closeDrawer();toast("Report settings saved")},function(){b.disabled=false;b.textContent="Save report settings";toast("The settings weren't saved. Check your connection.",1)})}
+$("vG").addEventListener("click",function(e){
+ if(e.target.closest("#repPop [data-rx]")){repPickClose(1);return}
+ var v=e.target.closest("#repPop [data-rv]");if(v&&REPP){var i=+REPP.dataset.ri,k=REPP.dataset.rg;repPickClose();repOver(i,k,+v.dataset.rv);return}
+ var b=e.target.closest("button");if(!b)return;
+ if(b.classList.contains("repb")){if(REPP===b){repPickClose(1);return}repPick(b);return}
+ if(b.dataset.rt){REPT=b.dataset.rt;repDraw();return}
+ if(b.dataset.rk){REPK=b.dataset.rk;repDraw();return}
+ if(b.dataset.rp){repCard(+b.dataset.rp);return}
+ if(b.id==="repPrintAll"){repPrint(S.map(function(_,i){return i}));return}
+ if(b.id==="repSetB")repSettingsOpen()});
+/* Keys as on the Quran sheet: 1 to 5 sets the grade, Backspace gives the worked-out one back, the arrows move. */
+$("vG").addEventListener("keydown",function(e){var pop=e.target.closest("#repPop");
+ if(pop){var bs=Array.prototype.slice.call(pop.querySelectorAll("button")),j=bs.indexOf(e.target);
+  if(e.key==="Escape"){e.preventDefault();e.stopPropagation();repPickClose(1)}
+  else if(e.key==="ArrowRight"||e.key==="ArrowLeft"){e.preventDefault();bs[(j+(e.key==="ArrowRight"?1:-1)+bs.length)%bs.length].focus()}
+  else if(/^[1-5]$/.test(e.key)&&REPP){e.preventDefault();var i=+REPP.dataset.ri,k=REPP.dataset.rg;repPickClose();repOver(i,k,+e.key)}
+  else if(e.key==="Tab")trap(e,pop);return}
+ var b=e.target.closest(".repb");if(!b)return;var i=+b.dataset.ri,k=b.dataset.rg,ks=repCols(REPK).map(function(c){return c[0]}),c=ks.indexOf(k),go=null;
+ if(/^[1-5]$/.test(e.key)){e.preventDefault();repOver(i,k,+e.key);return}
+ if(e.key==="Backspace"||e.key==="Delete"){e.preventDefault();repOver(i,k,0);return}
+ if(e.key==="ArrowDown")go=[i+1,c];else if(e.key==="ArrowUp")go=[i-1,c];else if(e.key==="ArrowRight")go=[i,c+1];else if(e.key==="ArrowLeft")go=[i,c-1];
+ if(go&&go[0]>=0&&go[0]<S.length&&go[1]>=0&&go[1]<ks.length){e.preventDefault();var n=$("repW").querySelector('.repb[data-ri="'+go[0]+'"][data-rg="'+ks[go[1]]+'"]');if(n)n.focus()}});
+document.addEventListener("click",function(e){if(REPP&&!e.target.closest("#repPop")&&!e.target.closest(".repb"))repPickClose()});
+$("drwB").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;
+ if(b.dataset.rprint){repPrint([+b.dataset.rprint]);return}
+ if(b.id==="repAddT"){var y=new Date().getFullYear(),box=$("repTermsF");box.insertAdjacentHTML("beforeend",repTermRow({id:"",name:"Term "+(box.children.length+1),from:y+"-09-01",to:y+"-12-20"}));box.lastChild.querySelector(".repTn").focus();return}
+ if(b.classList.contains("repTx")){var row=b.closest(".repterm");if(row)row.remove();return}
+ if(b.id==="repSave")repSaveSettings()});
 
 /* ---------- Tabs ---------- */
 /* Recording happens on the Quran tab: scores in the sheet, and warnings, merits, house points and the student's
@@ -1601,7 +1674,7 @@ function tabMark(list){var on=list.querySelector('[aria-selected="true"]'),m=lis
  if(!m.classList.contains("go"))requestAnimationFrame(function(){m.classList.add("go")})}
 function panelIn(el,dir){if(!dir)return;el.style.setProperty("--dx",(dir>0?14:-14)+"px");el.classList.remove("enter");void el.offsetWidth;el.classList.add("enter")}
 function tab(n,focus){if(TABS.indexOf(n)<0)n="Q";var nk=n==="T"?"m":"q";if(nk!==QK){qPopClose();qMenuClose();QK=nk}var dir=TABS.indexOf(n)-TABS.indexOf(CUR),was=$("v"+CUR)&&!$("v"+CUR).classList.contains("hide");CUR=n;TABS.forEach(function(k){var on=k===n,b=$("t"+k);$("v"+k).classList.toggle("hide",!on);b.setAttribute("aria-selected",on);b.tabIndex=on?0:-1});
- if(focus)$("t"+n).focus();$("t"+n).scrollIntoView({block:"nearest",inline:"nearest"});tabMark($("sub"));if(was)panelIn($("v"+n),dir);if(n==="Q"&&CID)qGrid(0);if(n==="G"&&CID)rpDraw();if(n==="T"&&CID){if(VW.T==="day")qGrid(0);else mList()}if(PAGE==="C")dockSet();if(was&&dir)arrive()}
+ if(focus)$("t"+n).focus();$("t"+n).scrollIntoView({block:"nearest",inline:"nearest"});tabMark($("sub"));if(was)panelIn($("v"+n),dir);if(n==="Q"&&CID)qGrid(0);if(n==="G"&&CID)repDraw();if(n==="T"&&CID){if(VW.T==="day")qGrid(0);else mList()}if(PAGE==="C")dockSet();if(was&&dir)arrive()}
 var TMR=0;window.addEventListener("resize",function(){clearTimeout(TMR);TMR=setTimeout(function(){tabMark($("sub"))},80)});
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){tabMark($("sub"))});
 function keyTabs(ids,fn,prefix){ids.forEach(function(k,i){var b=$(prefix+k);b.onclick=function(){fn(k)};
