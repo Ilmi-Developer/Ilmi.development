@@ -3789,8 +3789,7 @@ function qPop(btn){qPopClose();var s=S[+btn.dataset.qi];if(!s)return;var M=QK===
  /* Only the boxes the picker actually sits over step aside; the student's other days, usually the earlier ones, keep showing their scores. */
  var pl=b.left+x,pr=pl+p.offsetWidth;Array.prototype.forEach.call(B.querySelectorAll(".qcol:not(.on)>.qr:nth-child("+(+btn.dataset.qi+1)+"),.qhouses>.qn:nth-child("+(+btn.dataset.qi+1)+")"),function(e){var c=(e.firstElementChild||e).getBoundingClientRect();if(c.width&&c.right>pl-4&&c.left<pr+4)e.classList.add("qhid")});(p.querySelector('[aria-pressed="true"]')||p.firstChild).focus()}
 /* Quran homework for the class day, under the scores in the picker: 1 to 5, or 0 when it wasn't done. Kept on the
-   student as hw {day: 0 to 5}. The term report's Homework grade averages the days marked 1 to 5, as the report sheet
-   does, so a 0 shows that it wasn't done without lowering the grade. */
+   student as hw {day: 0 to 5}. It is kept as a record; the term report's Homework grade comes from passed level tests. */
 function hwRow(s){var h=(s.hw||{})[QF];return '<div class="qhwr" role="group" aria-label="Homework for '+esc(s.name)+'"><span class="qhwl">Homework</span>'
  +[0,1,2,3,4,5].map(function(k){return '<button type="button" style="--c:'+qcol(k)+'" data-hw="'+k+'" aria-pressed="'+(h===k)+'"'+(k?'':' aria-label="Not done" title="Not done"')+'>'+k+'</button>'}).join("")
  +(h===undefined?'':'<button type="button" class="qclr" data-hw="x">Clear</button>')+'</div>'}
@@ -4170,7 +4169,8 @@ function rpMemo(s,T,dayOf){var a=0,b=0;(s.log||[]).forEach(function(t,k){if((s.l
 /* One subject's grades: the calculated ones (c), the teacher's (o) and the final ones shown (f). */
 function rpFinal(calc,over,keys){var f={},v=[];keys.forEach(function(k){if(k==="ef")return;var x=over&&over[k]!=null?over[k]:calc[k];f[k]=x==null?null:x;if(x!=null)v.push(x)});
  var e=rpMean(v);calc.ef=e===null?null:rpRound(e);f.ef=over&&over.ef!=null?over.ef:calc.ef;return {c:calc,o:over||{},f:f}}
-/* Every pupil of a class (L) for term T with settings C. focus: the focus areas in the order to break ties. */
+/* Every pupil of a class (L) for term T with settings C. focus: the focus areas in the order to break ties.
+   Homework, in each subject, is the mean score of the pupil's passed level tests in that subject in the term, rounded. */
 function rpCalc(L,T,C,focus,dayOf){
  var R=L.map(function(s){var q=s.q||{},mt=s.mt||{},hw=s.hw||{},tests=s.tests||[],ja=s.ja||{};
   var inQ=Object.keys(q).filter(function(d){return rpIn(d,T)&&q[d]>=0}),inM=Object.keys(mt).filter(function(d){return rpIn(d,T)}),
@@ -4178,21 +4178,21 @@ function rpCalc(L,T,C,focus,dayOf){
    inL=(s.log||[]).filter(function(t){return rpIn(dayOf(t),T)});
   var memo=rpMemo(s,T,dayOf),warn=(s.wl||[]).filter(function(w){return rpIn(dayOf(w.t),T)}).length,
    tt=inM.filter(function(d){return mt[d]==="t"}).length,at=inT.filter(function(t){return t.k==="m"}).length;
-  var hv=inH.map(function(d){return hw[d]}),hc=hv.filter(function(v){return v>=1&&v<=5}).length,
+  var ps=function(k){return inT.filter(function(t){return t.k===k&&t.ok&&t.sc!=null}).map(function(t){return t.sc})},
    qt=inT.filter(function(t){return t.k==="q"&&t.sc!=null}).map(function(t){return t.sc}),
    fc={};inT.forEach(function(t){if(t.k==="q")(t.fa||[]).forEach(function(f){fc[f]=(fc[f]||0)+1})});
   var top=null;focus.forEach(function(f){if(fc[f]&&(!top||fc[f]>fc[top]))top=f});
   var jd=Object.keys(ja).filter(function(d){return rpIn(d,T)}),jp=jd.filter(function(d){return ja[d]===1}).length;
   return {s:s,act:!!(inQ.length||inM.length||inH.length||inT.length||inL.length),warn:warn,memo:memo,
    pts:(tt+at)*C.test_points+memo.passed*C.pass_points,tests:tt+at,
-   hw:hc?hv.reduce(function(a,b){return a+b},0)/hc:null,pron:qt.length?rpMean(qt):null,
+   hwq:rpMean(ps("q")),hwm:rpMean(ps("m")),pron:qt.length?rpMean(qt):null,
    focus:top?{f:top,n:fc[top]}:null,att:jd.length?{p:jp,n:jd.length,pct:Math.round(100*jp/jd.length)}:null}});
  var A=R.filter(function(r){return r.act}),mean=function(k){return rpMean(A.map(function(r){return k(r)}))},
-  mw=mean(function(r){return r.warn}),mp=mean(function(r){return r.memo.passed}),mc=mean(function(r){return r.pts});
+  mw=mean(function(r){return r.warn}),mc=mean(function(r){return r.pts});
  R.forEach(function(r){var ro=(r.s.ro||{})[T.id]||{},on=r.act;
   var mb=on?rpWarn(r.warn,mw,C):null;
-  r.q=rpFinal({mb:mb,hw:on&&r.hw!==null?rpRound(r.hw):null,pr:on&&r.pron!==null?rpRound(r.pron):null,fl:on&&r.pron!==null?rpRound(r.pron):null},ro.q,["ef","mb","hw","pr","fl"]);
-  r.m=rpFinal({mb:mb,hw:on?rpPerf(r.memo.passed,mp,C):null,cp:on?rpPerf(r.pts,mc,C):null,
+  r.q=rpFinal({mb:mb,hw:on&&r.hwq!==null?rpRound(r.hwq):null,pr:on&&r.pron!==null?rpRound(r.pron):null,fl:on&&r.pron!==null?rpRound(r.pron):null},ro.q,["ef","mb","hw","pr","fl"]);
+  r.m=rpFinal({mb:mb,hw:on&&r.hwm!==null?rpRound(r.hwm):null,cp:on?rpPerf(r.pts,mc,C):null,
    pg:on?rpPct(Math.min(r.memo.passed/C.expected,1)*100,C):null},ro.m,["ef","mb","hw","cp","pg"])});
  return R}
 /* "2 passed · on L3 T4", or Complete once the last target is passed. last: the last target's position. */

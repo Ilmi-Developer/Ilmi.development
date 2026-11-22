@@ -69,11 +69,14 @@ check("Progress: 6 of 8 expected is 75%, grade 4", () => {
   const R = rpCalc([pupil({log, lt: [1, 2, 3, 4, 5, 6], lx: ["", "", "", "", "", ""]})], T1, C, FOCUS, day);
   assert.strictEqual(R[0].m.c.pg, 4);
 });
-check("Quran homework averages 1 to 5 only; blank with none", () => {
-  const R = rpCalc([pupil({q: {"2026-10-03": 4}, hw: {"2026-10-03": 4, "2026-10-04": 3, "2026-10-10": 0}}),
-                    pupil({q: {"2026-10-03": 4}, hw: {"2026-10-03": 0}})], T1, C, FOCUS, day);
-  assert.strictEqual(R[0].q.c.hw, 4, "(4 + 3 + 0) / 2 = 3.5 rounds to 4");
-  assert.strictEqual(R[1].q.c.hw, null);
+check("Homework: the rounded mean score of the term's passed tests, per subject; blank with none", () => {
+  const tests = [{d: "2026-10-03", k: "q", n: 3, sc: 4, ok: true}, {d: "2026-10-10", k: "q", n: 4, sc: 3, ok: true},
+                 {d: "2026-10-17", k: "q", n: 5, sc: 1, ok: false}, {d: "2026-10-24", k: "m", n: 9, sc: 2, ok: true},
+                 {d: "2026-11-07", k: "m", n: 10, sc: 4, ok: true, x: "212. Surah Al-Mulk"}, {d: "2027-01-16", k: "m", n: 11, sc: 1, ok: true}];
+  const R = rpCalc([pupil({tests, hw: {"2026-10-03": 0}}), pupil({q: {"2026-10-03": 4}, tests: [{d: "2026-10-03", k: "q", n: 1, sc: 2, ok: false}]})],
+                   T1, C, FOCUS, day);
+  same([R[0].q.c.hw, R[0].m.c.hw], [4, 3], "Quran (4 + 3) / 2 = 3.5 rounds to 4, the fail left out; Memo (2 + 4) / 2 = 3, Term 2 left out");
+  same([R[1].q.c.hw, R[1].m.c.hw], [null, null], "no passes, no grade");
 });
 check("Pronunciation and Fluency from the term's Quran level tests; focus ties go by the settings order", () => {
   const tests = [{d: "2026-10-03", k: "q", n: 3, sc: 4, ok: true, fa: ["Madd", "Harakah"]},
@@ -93,20 +96,19 @@ check("active group, class-relative grades and inactive pupils", () => {
   same(R.map(r => r.act), [true, true, false], "absent only is not a lesson");
   // Warnings: A 2, B 0, mean 1. A's ratio 2 is grade 1; B has none, grade 5.
   same([R[0].q.c.mb, R[1].q.c.mb, R[2].q.c.mb], [1, 5, null]);
-  // New targets: A 2, B 0, mean 1. Points: A 2 tests + 2 passes x 5 = 12, B 1 test = 1, mean 6.5.
-  same([R[0].m.c.hw, R[1].m.c.hw], [5, 1]);
+  // Points: A 2 tests + 2 new targets x 5 = 12, B 1 test = 1, mean 6.5.
   same([R[0].m.c.cp, R[1].m.c.cp], [5, 1]);
   assert.strictEqual(R[2].m.f.ef, null);
 });
 check("Effort: rounded mean of the final grades, teacher grades included; an Effort override wins", () => {
-  const s = pupil({q: {"2026-10-03": 4}, hw: {"2026-10-03": 2}, ro: {"t1-2026": {q: {hw: 5}}}});
+  const s = pupil({tests: [{d: "2026-10-03", k: "q", n: 1, sc: 2, ok: true}], ro: {"t1-2026": {q: {hw: 5}}}});
   const R = rpCalc([s], T1, C, FOCUS, day);
-  // Manners 5 (no warnings), Homework 5 (teacher), Pronunciation and Fluency blank: Effort 5.
-  same([R[0].q.c.hw, R[0].q.f.hw, R[0].q.f.ef], [2, 5, 5]);
+  // Manners 5 (no warnings), Homework 5 (teacher, worked out 2), Pronunciation 2, Fluency 2: (5 + 5 + 2 + 2) / 4 = 3.5, Effort 4.
+  same([R[0].q.c.hw, R[0].q.f.hw, R[0].q.f.ef], [2, 5, 4]);
   s.ro["t1-2026"].q.ef = 2;
   assert.strictEqual(rpCalc([s], T1, C, FOCUS, day)[0].q.f.ef, 2);
   s.ro["t1-2026"].q = {mb: 1};
-  assert.strictEqual(rpCalc([s], T1, C, FOCUS, day)[0].q.f.ef, 2, "(1 + 2) / 2 = 1.5 rounds to 2");
+  assert.strictEqual(rpCalc([s], T1, C, FOCUS, day)[0].q.f.ef, 2, "(1 + 2 + 2 + 2) / 4 = 1.75 rounds to 2");
 });
 check("Journey 2 Jannah attendance for the term", () => {
   const R = rpCalc([pupil({ja: {"2026-10-03": 1, "2026-10-04": 0, "2026-10-10": 1, "2027-01-16": 0}})], T1, C, FOCUS, day);

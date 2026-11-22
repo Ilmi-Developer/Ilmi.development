@@ -65,16 +65,16 @@ four components) from what the class already records, using the rules of the sch
 | Subject | Grade | Worked out from |
 | --- | --- | --- |
 | Both | Manners & Behaviour | Warnings given in the term (each one is now kept with its date) against the class average |
-| Quran | Homework | The term's homework marks from the Quran tab's score picker: the mean of the 1 to 5 marks (0, not done, is left out) |
+| Both | Homework | The mean score of the pupil's passed level tests in that subject in the term, to the nearest whole number |
 | Quran | Pronunciation, Fluency | The mean score of the term's Quran level tests |
 | Quran | Focus for next term | The focus area ticked most often on the term's Quran level tests |
-| Memorisation | Homework | New targets passed in the term against the class average |
 | Memorisation | Class Participation | Tests (Memo tab and level tests) × 1 + new targets × 5, against the class average |
 | Memorisation | Progress | New targets passed out of 8 expected, as a percentage |
 | Both | Effort | The rounded mean of the other four final grades |
 
 Only pupils with a lesson recorded in the term get grades, and class averages count only them. A teacher can pick their
-own grade for any of the five; **Auto** brings back the worked-out one. Attendance comes from Journey 2 Jannah
+own grade for any of the five; **Auto** brings back the worked-out one. The Quran tab's score picker also records each day's
+homework (0 to 5, 0 when not done); it is kept with the pupil but doesn't change a grade. Attendance comes from Journey 2 Jannah
 (stored on each pupil by class day; teachers can't change it). The term dates and every number above are the admin's
 **Report settings** under the table (`reports.py`). `node tools/report_check.js` checks the calculations.
 
