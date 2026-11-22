@@ -4353,7 +4353,7 @@ function repBox(c,r,i,k,key,sm){var g=r[k],f=g.f[key],cv=g.c[key],ov=g.o[key]!=n
  if(sm)return '<span class="repb sm'+(f==null?'':' has')+(ov?' ov':'')+'"'+(f==null?'':' style="--c:'+QC[f]+'"')+'>'+inner+'</span>';
  return '<button type="button" class="repb'+(f==null?'':' has')+(ov?' ov':'')+'" data-rc="'+esc(c)+'" data-ri="'+i+'" data-rg="'+key+'"'+(f==null?'':' style="--c:'+QC[f]+'"')+' aria-haspopup="true" aria-expanded="false"'
   +' aria-label="'+esc(lab+' for '+r.s.name+': '+(f==null?'no grade':f+' out of 5')+(ov?', set by you, worked out '+(cv==null?'as blank':cv):'')+'. Change')+'"'
-  +' title="'+esc(ov?'You set this. Worked out: '+(cv==null?'none':cv):f==null?'Not enough records this term':'Worked out from this term\'s records')+'">'+inner+'</button>'}
+  +(ov?' title="'+esc('You set this. Worked out: '+(cv==null?'none':cv))+'"':'')+'>'+inner+'</button>'}
 /* The table of one class: a row a pupil. */
 function repTable(c,R){var cols=repCols(REPK),T=repTerm();
  var h='<div class="repwrap"><table class="repsheet"><caption class="sr-only">'+esc(cname(ST[c].name))+', '+(REPK==="q"?"Quran":"Memorisation")+' report grades, '+esc(T.name)+'</caption><thead><tr><th scope="col" class="repn">Pupil</th>'
@@ -4365,9 +4365,7 @@ function repTable(c,R){var cols=repCols(REPK),T=repTerm();
    +'<td class="repa">'+(r.att?'<b>'+r.att.pct+'%</b><small>'+r.att.p+' of '+r.att.n+'</small>':'<span class="mute">–</span>')+'</td>'
    +'<td class="repx">'+(x||'<span class="mute">–</span>')+'</td></tr>'});
  return h+'</tbody></table></div>'}
-function repHelp(){return '<details class="help"><summary aria-label="How the report grades work">?</summary><div class="hb"><p>Every grade is worked out from what the class recorded between the term\'s first and last day. Effort is the average of the other four, to the nearest whole grade.</p>'
- +'<p>Tap a grade (or select it and type 1 to 5) to give your own. A pencil marks the grades you set; <b>Worked out</b> in the picker, or Backspace, gives the grade back.</p>'
- +'<p>Pupils with no lessons recorded this term get no grades and aren\'t counted in the class averages. Attendance comes from Journey 2 Jannah.</p></div></details>'}
+function repHelp(){return '<details class="help"><summary aria-label="How to change a grade">?</summary><div class="hb"><p>Tap a grade (or select it and type 1 to 5) to change it. A pencil marks the grades you set; <b>Worked out</b> in the picker, or Backspace, puts the grade back.</p></div></details>'}
 function repSegs(){var C=repSet(),T=repTerm();return '<div class="seg" data-rs="t" role="group" aria-label="Term">'+C.terms.map(function(x){return '<button type="button" data-rt="'+esc(x.id)+'" aria-pressed="'+(x.id===T.id)+'">'+esc(x.name)+'</button>'}).join("")+'</div>'
  +'<div class="seg" data-rs="k" role="group" aria-label="Subject"><button type="button" data-rk="q" aria-pressed="'+(REPK==="q")+'">Quran</button><button type="button" data-rk="m" aria-pressed="'+(REPK==="m")+'">Memorisation</button></div>'}
 /* Focus stays where it was when a table is drawn again. */
@@ -4418,9 +4416,9 @@ function repPick(btn){repPickClose();var c=btn.dataset.rc,i=+btn.dataset.ri,key=
  btn.setAttribute("aria-expanded","true");(p.querySelector('[aria-pressed="true"]')||p.querySelector("[data-rv]")).focus({preventScroll:true})}
 /* One pupil's term report: figures like Statistics, then a card a subject. */
 function repFigs(r){var q=r.q.f.ef,m=r.m.f.ef;
- var F=[["Attendance",r.att?r.att.pct+"%":"–",r.att?r.att.p+" of "+plural(r.att.n,"day"):"From Journey 2 Jannah","mi"],["Quran effort",q==null?"–":q,"out of 5","co"],
+ var F=[["Attendance",r.att?r.att.pct+"%":"–",r.att?r.att.p+" of "+plural(r.att.n,"day"):"not recorded","mi"],["Quran effort",q==null?"–":q,"out of 5","co"],
   ["Memorisation effort",m==null?"–":m,"out of 5","sk"],["Targets passed",r.act?r.memo.passed:"–",r.act?repNow(r.memo):"no lessons","la"],
-  ["Quran level",r.s.qa?r.s.qa:"–",r.s.qa?(r.s.qa>QBOOK?"Tajweed Book":"Qaidah Book"):"not tested yet","bu"],["Focus next term",r.focus?r.focus.f:"–",r.focus?"ticked on "+plural(r.focus.n,"level test"):"none ticked","pe"]];
+  ["Quran level",r.s.qa?r.s.qa:"–",r.s.qa?(r.s.qa>QBOOK?"Tajweed Book":"Qaidah Book"):"not tested yet","bu"],["Focus next term",r.focus?r.focus.f:"–",r.focus?plural(r.focus.n,"time"):"none yet","pe"]];
  return '<div class="sxfig">'+F.map(function(f,i){return '<div class="sxf '+f[3]+'" style="--i:'+i+'"><span>'+f[0]+'</span><b title="'+esc(String(f[1]))+'">'+esc(String(f[1]))+'</b><small>'+esc(f[2])+'</small></div>'}).join("")+'</div>'}
 function repSub(r,k){var cols=repCols(k),g=r[k],any=cols.some(function(x){return g.o[x[0]]!=null});
  return '<section class="sxc repsub"><h3>'+(k==="q"?"Quran":"Memorisation")+'</h3><ul class="repgl">'+cols.map(function(x){return '<li'+(x[0]==="ef"?' class="ef"':'')+'><span>'+esc(x[1])+'</span>'+repBox("",r,0,k,x[0],1)+'</li>'}).join("")+'</ul>'
@@ -4452,10 +4450,10 @@ function repMail(scope,c,i){REPM_.scope=scope;REPM_.c=c||"";REPM_.i=i||0;REPM_.p
 function repMailDraw(){var o=REPM_,B=(window.ME&&ME.brand)||{},T=repTerm(),L=repMailList(),withPe=L.filter(function(x){return x.pe}).length,n=o.to==="test"?L.length:withPe,b=$("drwB");if(!b)return;
  var who=o.scope==="one"?esc(L[0]?L[0].r.s.name:""):o.scope==="class"?esc(cname(ST[o.c].name)):"every class";
  var h='<div class="repmail"><p class="cap">'+esc(T.name)+' reports for '+who+', '+esc(repRange(T))+'.</p>'
-  +(!B.logo||!B.name?'<div class="repwarn" role="note"><b>Add your school\'s branding</b><span>Parents see your school\'s name, logo and colour at the top of each report. Set them in Report settings.</span><button type="button" class="btn sm" data-rset="1">Report settings</button></div>':'')
-  +'<div class="srow"><div class="sl"><b>Send to</b><span class="sub">'+(o.to==="test"?'Every report goes to '+(B.test_to?'<b>'+esc(B.test_to)+'</b>':'the test address, which isn\'t set yet')+', so you can check them first.':withPe+' of '+plural(L.length,"pupil")+(withPe===1?' has':' have')+' a parent email on their details. The rest are skipped.')+'</span></div>'
+  +(!B.logo||!B.name?'<div class="repwarn" role="note"><b>Add your school\'s branding</b><span>Your school\'s name, logo and colour go at the top of each report.</span><button type="button" class="btn sm" data-rset="1">Report settings</button></div>':'')
+  +'<div class="srow"><div class="sl"><b>Send to</b><span class="sub">'+(o.to==="test"?(B.test_to?'Every report goes to <b>'+esc(B.test_to)+'</b>.':'Set a test address in Report settings first.'):withPe+' of '+plural(L.length,"pupil")+(withPe===1?' has':' have')+' a parent email. The rest are skipped.')+'</span></div>'
   +'<div class="seg" role="group" aria-label="Send to"><button type="button" data-rto="test" aria-pressed="'+(o.to==="test")+'">Test address</button><button type="button" data-rto="parents" aria-pressed="'+(o.to==="parents")+'">Parents</button></div></div>'
-  +(o.scope!=="one"?'<label class="srow repchk"><span class="sl"><b>Include pupils with no lessons</b><span class="sub">Their reports have blank grades.</span></span><input type="checkbox" id="repOff"'+(o.off?' checked':'')+'></label>':'')
+  +(o.scope!=="one"?'<label class="srow repchk"><span class="sl"><b>Include pupils with no lessons this term</b></span><input type="checkbox" id="repOff"'+(o.off?' checked':'')+'></label>':'')
   +'<div class="repprev"><div class="repprevh"><label>Preview'+(L.length>1?'<select id="repPv">'+L.map(function(x,k){return '<option value="'+k+'"'+(k===o.pv?' selected':'')+'>'+esc(x.r.s.name)+'</option>'}).join("")+'</select>':'')+'</label><span class="cap" id="repSubj"></span></div>'
   +'<iframe id="repFrame" title="The email as parents will see it" sandbox="allow-popups"></iframe></div>'
   +'<div class="acts repsend"><button type="button" class="btn" data-rsent="1">Sent so far</button><button type="button" class="btn p" id="repGo"'+(n&&(o.to!=="test"||B.test_to)?'':' disabled')+'>'+(n?'Send '+plural(n,"report"):'Nothing to send')+'</button></div>'
@@ -4484,8 +4482,8 @@ function repTermRow(x){return '<div class="srow repterm" data-tid="'+esc(x.id)+'
  +'<button type="button" class="btn sm quiet repTx" aria-label="Remove '+esc(x.name)+'">Remove</button></div>'}
 var REPLOGO=null;
 function repSettingsOpen(){var C=repSet(),B=(window.ME&&ME.brand)||{},grades=function(pre,vals,step,what){return '<span class="repq">'+vals.map(function(v,k){return '<label><small>'+(k+2)+'</small>'+repNum(pre+k,v,step,what+" for grade "+(k+2))+'</label>'}).join("")+'</span>'};REPLOGO=null;
- drawer("Report settings",'<div class="sets repsets"><p class="cap">For every class\'s term reports. Each term runs from its first day to its last, both included.</p>'
-  +'<h3 class="seth">School branding</h3><p class="cap">What parents see at the top of each emailed report.</p>'
+ drawer("Report settings",'<div class="sets repsets"><p class="cap">These apply to every class.</p>'
+  +'<h3 class="seth">School branding</h3>'
   +'<div class="srow repbrand"><div class="replogo" id="repLogoP" style="--bc:'+esc(B.colour||"#4d5a2c")+'">'+(B.logo?'<img src="'+esc(B.logo)+'" alt="">':'<span>No logo</span>')+'</div>'
   +'<div class="repbf"><label class="repf">School name<input type="text" id="repBn" maxlength="80" value="'+esc(B.name||"")+'" placeholder="Your school\'s name"></label>'
   +'<div class="repbr"><label class="btn sm repup">Choose logo<input type="file" id="repBl" accept="image/png,image/jpeg,image/webp" hidden></label>'
@@ -4493,11 +4491,11 @@ function repSettingsOpen(){var C=repSet(),B=(window.ME&&ME.brand)||{},grades=fun
   +'<div class="srow"><div class="sl"><b><label for="repBt">Test address</label></b><span class="sub">Reports you send as a test go here instead of to parents.</span></div><input type="email" id="repBt" class="reptest" value="'+esc(B.test_to||"")+'" placeholder="name@example.com"></div>'
   +'<h3 class="seth">Terms</h3><div id="repTermsF">'+C.terms.map(repTermRow).join("")+'</div><div class="sact"><button type="button" class="btn sm quiet" id="repAddT">Add a term</button></div>'
   +'<h3 class="seth">Memorisation</h3>'
-  +'<div class="srow"><div class="sl"><b><label for="repExp">Targets expected per term</label></b><span class="sub">Progress is the share of these passed.</span></div>'+repNum("repExp",C.expected,1,"Targets expected per term")+'</div>'
+  +'<div class="srow"><div class="sl"><b><label for="repExp">Targets expected per term</label></b></div>'+repNum("repExp",C.expected,1,"Targets expected per term")+'</div>'
   +'<div class="srow"><div class="sl"><b>Participation points</b><span class="sub">For each test, and for each new target passed.</span></div><span class="repq"><label><small>Test</small>'+repNum("repTp",C.test_points,1,"Points per test")+'</label><label><small>Target</small>'+repNum("repPp",C.pass_points,1,"Points per new target")+'</label></span></div>'
   +'<h3 class="seth">Grade boundaries</h3>'
   +'<div class="srow"><div class="sl"><b>Percentages</b><span class="sub">The percentage a pupil needs for grades 2 to 5.</span></div>'+grades("repPc",C.pct,1,"Percentage")+'</div>'
-  +'<div class="srow"><div class="sl"><b>Against the class</b><span class="sub">The share of the class average needed for grades 2 to 5. Warnings run the other way.</span></div>'+grades("repRa",C.ratio,0.05,"Share of the class average")+'</div>'
+  +'<div class="srow"><div class="sl"><b>Against the class</b><span class="sub">The share of the class average needed for grades 2 to 5.</span></div>'+grades("repRa",C.ratio,0.05,"Share of the class average")+'</div>'
   +'<div class="sact"><button type="button" class="btn p" id="repSave">Save report settings</button></div></div>')}
 function repSlug(name,from,taken){var b=(String(name).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"term").slice(0,18)+"-"+String(from).slice(0,4),id=b,n=2;
  while(taken.indexOf(id)>=0)id=b+"-"+n++;return id}

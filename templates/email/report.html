@@ -71,7 +71,7 @@
     <p style="margin:0 0 4px;font-size:15px;line-height:1.5;color:#67654f">Assalāmu ʿalaykum,</p>
     <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:#44453a">Here is {{ first }}'s report for {{ term }}{% if label %} in {{ label }}{% endif %}, from {{ dates }}.</p>
     <h1 class="h1" style="margin:0;font-family:{{ serif }};font-size:30px;font-weight:600;line-height:1.15;letter-spacing:-.015em;color:#22231b">{{ pupil }}</h1>
-    {% if not act %}<p style="margin:10px 0 0;font-size:14px;line-height:1.5;color:#67654f">No lessons were recorded for {{ first }} this term, so the grades are left blank.</p>{% endif %}
+    {% if not act %}<p style="margin:10px 0 0;font-size:14px;line-height:1.5;color:#67654f">No lessons were recorded for {{ first }} this term.</p>{% endif %}
   </td></tr>
 
   {# Three figures. #}
@@ -122,7 +122,7 @@
 
   {# How to read it, and who sent it. #}
   <tr><td class="pad" style="padding:24px 32px 30px;font-family:{{ sans }}">
-    <p style="margin:0 0 6px;font-size:13px;line-height:1.55;color:#67654f">Grades are out of 5, where 5 is the highest. Effort brings the other four together.</p>
+    <p style="margin:0 0 6px;font-size:13px;line-height:1.55;color:#67654f">Grades are out of 5, where 5 is the highest.</p>
     <p style="margin:0;font-size:13px;line-height:1.55;color:#67654f">{% if support_email %}Questions about this report? Email <a href="mailto:{{ support_email }}" style="color:#44453a">{{ support_email }}</a>.{% else %}Questions about this report? Reply to this email.{% endif %}</p>
   </td></tr>
 </table>

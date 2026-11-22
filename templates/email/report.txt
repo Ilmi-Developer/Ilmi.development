@@ -4,7 +4,7 @@ Assalāmu ʿalaykum,
 
 Here is {{ first }}'s report for {{ term }}{% if label %} in {{ label }}{% endif %}, from {{ dates }}.
 {% if not act %}
-No lessons were recorded for {{ first }} this term, so the grades are left blank.
+No lessons were recorded for {{ first }} this term.
 {% endif %}
 {{ pupil }}
 
@@ -14,7 +14,7 @@ Attendance: {{ (attendance ~ " (" ~ att.p ~ " of " ~ att.n ~ " days)") if att el
 {% for row in section.rows %}- {{ row.label }}: {{ (row.grade ~ " out of 5") if row.grade else "no grade" }}
 {% endfor %}{% for label, value in section.notes %}- {{ label }}: {{ value }}
 {% endfor %}{% endfor %}
-Grades are out of 5, where 5 is the highest. Effort brings the other four together.
+Grades are out of 5, where 5 is the highest.
 {% if support_email %}Questions about this report? Email {{ support_email }}.{% else %}Questions about this report? Reply to this email.{% endif %}
 
 Sent by {{ school }} with Ilmi: {{ site }}
