@@ -10,6 +10,7 @@ the admin can change them on the Reports tab without a code change:
 - ratio: the class-relative thresholds for performance grades 2, 3, 4 and 5 (warnings run the other way: 4, 3, 2, 1).
 - expected: Memorisation targets a pupil is expected to pass in a term (Progress).
 - test_points, pass_points: Memorisation participation points for each test and each new target passed.
+- lowest: the lowest grade a calculation gives (2); a teacher can still give a 1 by hand.
 
 Teachers' own grades (overrides) are kept on each student in the class record (server.valid_student, "ro"), apart
 from the calculated grades, which are never stored: they are worked out again whenever the tab is drawn.
@@ -43,6 +44,7 @@ DEFAULTS = {
     "expected": 8,
     "test_points": 1,
     "pass_points": 5,
+    "lowest": 2,
 }
 # Grade keys a teacher can set by hand, per subject: Quran ("q") and Memorisation ("m"). Keep in step with RPQ and RPM
 # in src/page.html. ef: Effort, mb: Manners & Behaviour, hw: Homework, pr: Pronunciation, fl: Fluency,
@@ -85,7 +87,8 @@ def clean(value):
     if not _ascending(value.get("pct"), (int,), 1, 100) or not _ascending(value.get("ratio"), (int, float), 0, 5):
         return None
     numbers = {}
-    for key, low, high in (("expected", 1, 100), ("test_points", 0, 20), ("pass_points", 0, 20)):
+    value = dict(value, lowest=value.get("lowest", DEFAULTS["lowest"]))  # settings saved before there was one
+    for key, low, high in (("expected", 1, 100), ("test_points", 0, 20), ("pass_points", 0, 20), ("lowest", 1, 5)):
         if type(value.get(key)) is not int or not low <= value[key] <= high:
             return None
         numbers[key] = value[key]
