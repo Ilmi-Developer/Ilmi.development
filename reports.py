@@ -135,8 +135,6 @@ DEFAULT_COLOUR = "#4d5a2c"
 LOGO_MAX = 3_000_000  # bytes of the uploaded picture, before it is redrawn as a PNG of at most 512 pixels
 SEND_MAX = 600  # reports in one send
 SEND_GAP = 0.6  # seconds between two emails, under the email service's rate limit
-# Grade colours, the dashboard's score scale (QC in src/page.html) for grades 1 to 5.
-GRADE_COLOURS = {1: "#f1c49f", 2: "#efd99a", 3: "#d8dfa2", 4: "#b8d6a6", 5: "#9cc8a8"}
 LABELS = {"q": (("ef", "Effort"), ("mb", "Manners & behaviour"), ("hw", "Homework"), ("pr", "Pronunciation"),
                 ("fl", "Fluency")),
           "m": (("ef", "Effort"), ("mb", "Manners & behaviour"), ("hw", "Homework"), ("cp", "Class participation"),
@@ -167,12 +165,6 @@ def _ink_on(colour):
     r, gr, b = (int(colour[i:i + 2], 16) for i in (1, 3, 5))
     lum = 0.2126 * channel(r) + 0.7152 * channel(gr) + 0.0722 * channel(b)
     return "#ffffff" if 1.05 / (lum + 0.05) >= 3 else "#1c2230"
-
-
-def _tint(colour, amount):
-    """The colour mixed with white: amount 0 is white, 1 the colour."""
-    r, gr, b = (int(colour[i:i + 2], 16) for i in (1, 3, 5))
-    return "#" + "".join(f"{round(255 - (255 - c) * amount):02x}" for c in (r, gr, b))
 
 
 def _dominant(image):
@@ -296,8 +288,7 @@ def render_report(report, term, school):
     first = report["name"].split(" ")[0] or report["name"]
     sections = []
     for k, title in (("q", "Quran"), ("m", "Memorisation")):
-        rows = [{"label": label, "grade": report["grades"][k][key], "colour": GRADE_COLOURS.get(report["grades"][k][key], ""),
-                 "lead": key == "ef"} for key, label in LABELS[k]]
+        rows = [{"label": label, "grade": report["grades"][k][key], "lead": key == "ef"} for key, label in LABELS[k]]
         notes = []
         if k == "q":
             # The Quran level and targets passed are figures at the top, so the notes don't repeat them.
@@ -308,14 +299,14 @@ def render_report(report, term, school):
         sections.append({"title": title, "rows": rows, "notes": notes})
     att = report["att"]
     context = {"school": school["name"] or "Your school", "colour": colour, "ink": _ink_on(colour),
-               "tint": _tint(colour, 0.08), "soft": _tint(colour, 0.16), "logo": school["logo_abs"],
+               "logo": school["logo_abs"],
                "ilmi": auth.public_url("/logo.png?v=4"), "site": auth.public_url("/"),
                "pupil": report["name"], "first": first, "label": report["label"], "term": term["name"],
                "dates": f"{_day_text(term['from'], term['from'][:4] != term['to'][:4])} to {_day_text(term['to'])}",
                "attendance": f"{round(100 * att['p'] / att['n'])}%" if att else "", "att": att,
                "level": report["qa"] or "", "book": ("Tajweed Book" if report["qa"] > QAIDAH_BOOK else "Qaidah Book") if report["qa"] else "",
                "passed": report["memo"]["passed"] if report["memo"] else "",
-               "colours": GRADE_COLOURS, "sections": sections, "act": report["act"],
+               "sections": sections, "act": report["act"],
                "support_email": current_app.config.get("SUPPORT_EMAIL", "")}
     subject = f"{first}'s {term['name']} report from {context['school']}"
     return (subject, render_template("email/report.txt", **context).strip() + "\n",

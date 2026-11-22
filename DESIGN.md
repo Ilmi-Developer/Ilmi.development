@@ -275,8 +275,11 @@ recording starts from the Quran tab.
   lessons, the email itself in a frame for any pupil, then Send in a bar that stays at the foot, and Sent so far.
 - **Term report emails** (`templates/email/report.html`) are the school's, not Ilmi's: its colour as a band across
   the top with its logo and name (white type where the colour reaches 3:1), a small white Ilmi tag in the top right
-  corner, three figures in a tint of its colour, then Quran and Memorisation as rows with each grade a chip in the
-  score colours beside five marks. Under 520px the marks are dropped and the figures shrink to stay three across.
+  corner, three figures in white boxes with a hairline, then Quran and Memorisation as rows with each grade a number
+  beside five marks. The school's colour is the only colour: the band, the Effort chip and the marks filled in;
+  everything else is ink on white on a neutral grey. Under 520px the marks are dropped and the figures shrink to stay
+  three across. A pupil's report in the dashboard follows it: neutral figure boxes and plain numbers, Effort on the
+  olive.
 - **Settings**: one column of rounded rows in the Memo card style: class
   name, first class day, adding students (teachers only), then reset and delete.
 
