@@ -69,14 +69,14 @@ check("Progress: 6 of 8 expected is 75%, grade 4", () => {
   const R = rpCalc([pupil({log, lt: [1, 2, 3, 4, 5, 6], lx: ["", "", "", "", "", ""]})], T1, C, FOCUS, day);
   assert.strictEqual(R[0].m.c.pg, 4);
 });
-check("Homework: the rounded mean score of the term's passed tests, per subject; blank with none", () => {
+check("Quran Homework: the rounded mean score of the term's passed Quran tests; blank with none", () => {
   const tests = [{d: "2026-10-03", k: "q", n: 3, sc: 4, ok: true}, {d: "2026-10-10", k: "q", n: 4, sc: 3, ok: true},
                  {d: "2026-10-17", k: "q", n: 5, sc: 1, ok: false}, {d: "2026-10-24", k: "m", n: 9, sc: 2, ok: true},
                  {d: "2026-11-07", k: "m", n: 10, sc: 4, ok: true, x: "212. Surah Al-Mulk"}, {d: "2027-01-16", k: "m", n: 11, sc: 1, ok: true}];
   const R = rpCalc([pupil({tests, hw: {"2026-10-03": 0}}), pupil({q: {"2026-10-03": 4}, tests: [{d: "2026-10-03", k: "q", n: 1, sc: 2, ok: false}]})],
                    T1, C, FOCUS, day);
-  same([R[0].q.c.hw, R[0].m.c.hw], [4, 3], "Quran (4 + 3) / 2 = 3.5 rounds to 4, the fail left out; Memo (2 + 4) / 2 = 3, Term 2 left out");
-  same([R[1].q.c.hw, R[1].m.c.hw], [null, null], "no passes, no grade");
+  same(R[0].q.c.hw, 4, "(4 + 3) / 2 = 3.5 rounds to 4; the fail and Memo tests left out");
+  same(R[1].q.c.hw, null, "no passes, no grade");
 });
 check("Pronunciation and Fluency from the term's Quran level tests; focus ties go by the settings order", () => {
   const tests = [{d: "2026-10-03", k: "q", n: 3, sc: 4, ok: true, fa: ["Madd", "Harakah"]},
@@ -96,6 +96,8 @@ check("active group, class-relative grades and inactive pupils", () => {
   same(R.map(r => r.act), [true, true, false], "absent only is not a lesson");
   // Warnings: A 2, B 0, mean 1. A's ratio 2 is grade 1; B has none, grade 5.
   same([R[0].q.c.mb, R[1].q.c.mb, R[2].q.c.mb], [1, 5, null]);
+  // Memo Homework: new targets A 2, B 0, mean 1, so ratios 2 and 0.
+  same([R[0].m.c.hw, R[1].m.c.hw], [5, 1]);
   // Points: A 2 tests + 2 new targets x 5 = 12, B 1 test = 1, mean 6.5.
   same([R[0].m.c.cp, R[1].m.c.cp], [5, 1]);
   assert.strictEqual(R[2].m.f.ef, null);

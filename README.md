@@ -65,9 +65,10 @@ four components) from what the class already records, using the rules of the sch
 | Subject | Grade | Worked out from |
 | --- | --- | --- |
 | Both | Manners & Behaviour | Warnings given in the term (each one is now kept with its date) against the class average |
-| Both | Homework | The mean score of the pupil's passed level tests in that subject in the term, to the nearest whole number |
+| Quran | Homework | The mean score of the pupil's passed Quran level tests in the term, to the nearest whole number |
 | Quran | Pronunciation, Fluency | The mean score of the term's Quran level tests |
 | Quran | Focus for next term | The focus area ticked most often on the term's Quran level tests |
+| Memorisation | Homework | New targets passed in the term against the class average |
 | Memorisation | Class Participation | Tests (Memo tab and level tests) × 1 + new targets × 5, against the class average |
 | Memorisation | Progress | New targets passed out of 8 expected, as a percentage |
 | Both | Effort | The rounded mean of the other four final grades |
