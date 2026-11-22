@@ -342,7 +342,7 @@ class DashboardTests:
             bad = copy.deepcopy(settings)
             bad["terms"][0].update(change)
             self.assertEqual(self.client.post("/api/report-settings", json=bad, headers=self.headers).status_code, 400, change)
-        for key, value in (("pct", [30, 30, 70, 90]), ("ratio", [0.7, 0.9, 1.1]), ("expected", 0), ("pass_points", "5")):
+        for key, value in (("pct", [30, 30, 70, 90]), ("ratio", [0.7, 0.9, 1.1]), ("expected", 0), ("pass_points", "5"), ("lowest", 0), ("lowest", 6)):
             self.assertEqual(self.client.post("/api/report-settings", json=dict(settings, **{key: value}),
                                               headers=self.headers).status_code, 400, key)
         # Only the admin changes them, and only from the dashboard.

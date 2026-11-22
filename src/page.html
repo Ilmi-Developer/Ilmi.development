@@ -1460,7 +1460,7 @@ function render(){
    toolbar), or REPD when there are none, as in the standalone file.
    REPORT-CALC START: the functions down to REPORT-CALC END are pure, and tools/report_check.js tests them. */
 var REPD={terms:[{id:"t1-2026",name:"Term 1",from:"2026-09-12",to:"2026-12-20"},{id:"t2-2027",name:"Term 2",from:"2027-01-10",to:"2027-05-23"}],
- pct:[30,50,70,90],ratio:[0.7,0.9,1.1,1.3],expected:8,test_points:1,pass_points:5};
+ pct:[30,50,70,90],ratio:[0.7,0.9,1.1,1.3],expected:8,test_points:1,pass_points:5,lowest:2};
 var REPQ=[["ef","Effort"],["mb","Manners & Behaviour"],["hw","Homework"],["pr","Pronunciation"],["fl","Fluency"]],
  REPM=[["ef","Effort"],["mb","Manners & Behaviour"],["hw","Homework"],["cp","Class Participation"],["pg","Progress"]];
 function repIn(d,T){return !!d&&d>=T.from&&d<=T.to}
@@ -1479,9 +1479,11 @@ function repWarn(v,mean,C){if(v===null||v===undefined)return null;if(!v||!mean)r
 function repMemo(s,T,dayOf){var a=0,b=0;(s.log||[]).forEach(function(t,k){if((s.lx||[])[k])return;var n=(s.lt||[])[k]||0,d=dayOf(t);
   if(d<T.from)a=Math.max(a,n);else if(d<=T.to)b=Math.max(b,n)});
  var end=Math.max(a,b);return {start:a,end:end,passed:end-a}}
-/* One subject's grades: the calculated ones (c), the teacher's (o) and the final ones shown (f). */
-function repFinal(calc,over,keys){var f={},v=[];keys.forEach(function(k){if(k==="ef")return;var x=over&&over[k]!=null?over[k]:calc[k];f[k]=x==null?null:x;if(x!=null)v.push(x)});
- var e=repMean(v);calc.ef=e===null?null:repRound(e);f.ef=over&&over.ef!=null?over.ef:calc.ef;return {c:calc,o:over||{},f:f}}
+/* One subject's grades: the calculated ones (c), the teacher's (o) and the final ones shown (f). A calculated grade is
+   never below low (the settings' lowest, 2), Effort included; a teacher can still give any grade from 1. */
+function repFinal(calc,over,keys,low){low=low||1;keys.forEach(function(k){if(calc[k]!=null&&calc[k]<low)calc[k]=low});
+ var f={},v=[];keys.forEach(function(k){if(k==="ef")return;var x=over&&over[k]!=null?over[k]:calc[k];f[k]=x==null?null:x;if(x!=null)v.push(x)});
+ var e=repMean(v);calc.ef=e===null?null:Math.max(low,repRound(e));f.ef=over&&over.ef!=null?over.ef:calc.ef;return {c:calc,o:over||{},f:f}}
 /* Every pupil of a class (L) for term T with settings C. focus: the focus areas in the order to break ties.
    Quran Homework is the mean score of the pupil's passed Quran level tests in the term, rounded. Memorisation Homework
    compares the new targets the pupil passed with the active class's mean (1 to 5, repPerf). */
@@ -1505,9 +1507,9 @@ function repCalc(L,T,C,focus,dayOf){
   mw=mean(function(r){return r.warn}),mp=mean(function(r){return r.memo.passed}),mc=mean(function(r){return r.pts});
  R.forEach(function(r){var ro=(r.s.ro||{})[T.id]||{},on=r.act;
   var mb=on?repWarn(r.warn,mw,C):null;
-  r.q=repFinal({mb:mb,hw:on&&r.hwq!==null?repRound(r.hwq):null,pr:on&&r.pron!==null?repRound(r.pron):null,fl:on&&r.pron!==null?repRound(r.pron):null},ro.q,["ef","mb","hw","pr","fl"]);
+  r.q=repFinal({mb:mb,hw:on&&r.hwq!==null?repRound(r.hwq):null,pr:on&&r.pron!==null?repRound(r.pron):null,fl:on&&r.pron!==null?repRound(r.pron):null},ro.q,["ef","mb","hw","pr","fl"],C.lowest||2);
   r.m=repFinal({mb:mb,hw:on?repPerf(r.memo.passed,mp,C):null,cp:on?repPerf(r.pts,mc,C):null,
-   pg:on?repPct(Math.min(r.memo.passed/C.expected,1)*100,C):null},ro.m,["ef","mb","hw","cp","pg"])});
+   pg:on?repPct(Math.min(r.memo.passed/C.expected,1)*100,C):null},ro.m,["ef","mb","hw","cp","pg"],C.lowest||2)});
  return R}
 /* "2 passed · on L3 T4", or Complete once the last target is passed. last: the last target's position. */
 function repNote(memo,last,label){return plural(memo.passed,"target")+" passed · "+(memo.end>=last?"Complete":"on "+label(memo.end+1))}
@@ -1687,6 +1689,7 @@ function repSettingsOpen(){var C=repSet(),B=(window.ME&&ME.brand)||{},grades=fun
   +'<div class="srow"><div class="sl"><b><label for="repExp">Targets expected per term</label></b></div>'+repNum("repExp",C.expected,1,"Targets expected per term")+'</div>'
   +'<div class="srow"><div class="sl"><b>Participation points</b><span class="sub">For each test, and for each new target passed.</span></div><span class="repq"><label><small>Test</small>'+repNum("repTp",C.test_points,1,"Points per test")+'</label><label><small>Target</small>'+repNum("repPp",C.pass_points,1,"Points per new target")+'</label></span></div>'
   +'<h3 class="seth">Grade boundaries</h3>'
+  +'<div class="srow"><div class="sl"><b><label for="repLow">Lowest worked-out grade</label></b><span class="sub">Teachers can still give a lower grade by hand.</span></div>'+repNum("repLow",C.lowest||2,1,"Lowest worked-out grade")+'</div>'
   +'<div class="srow"><div class="sl"><b>Percentages</b><span class="sub">The percentage a pupil needs for grades 2 to 5.</span></div>'+grades("repPc",C.pct,1,"Percentage")+'</div>'
   +'<div class="srow"><div class="sl"><b>Against the class</b><span class="sub">The share of the class average needed for grades 2 to 5.</span></div>'+grades("repRa",C.ratio,0.05,"Share of the class average")+'</div>'
   +'<div class="sact"><button type="button" class="btn p" id="repSave">Save report settings</button></div></div>')}
@@ -1694,7 +1697,7 @@ function repSlug(name,from,taken){var b=(String(name).toLowerCase().replace(/[^a
  while(taken.indexOf(id)>=0)id=b+"-"+n++;return id}
 function repSaveSettings(){var rows=Array.prototype.slice.call(document.querySelectorAll("#repTermsF .repterm")),ids=[];
  var terms=rows.map(function(r){var name=r.querySelector(".repTn").value.trim(),f=r.querySelector(".repTf").value,t=r.querySelector(".repTt").value,id=r.dataset.tid||repSlug(name,f,ids);ids.push(id);return {id:id,name:name,from:f,to:t}});
- var nv=function(id){return Number($(id).value)},body={terms:terms,expected:nv("repExp"),test_points:nv("repTp"),pass_points:nv("repPp"),
+ var nv=function(id){return Number($(id).value)},body={terms:terms,expected:nv("repExp"),test_points:nv("repTp"),pass_points:nv("repPp"),lowest:nv("repLow"),
   pct:[0,1,2,3].map(function(k){return nv("repPc"+k)}),ratio:[0,1,2,3].map(function(k){return nv("repRa"+k)})};
  var brand={name:$("repBn").value.trim(),colour:$("repBc").value,test_to:$("repBt").value.trim()};if(REPLOGO==="x")brand.remove_logo=true;else if(REPLOGO)brand.logo=REPLOGO;
  if(!terms.length){toast("Keep at least one term",1);return}

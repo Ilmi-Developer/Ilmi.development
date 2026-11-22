@@ -94,12 +94,12 @@ check("active group, class-relative grades and inactive pupils", () => {
   const off = pupil({name: "C", q: {"2026-10-03": -1}, wl: [{t: at("2026-10-03"), v: 3}]});
   const R = repCalc([a, b, off], T1, C, FOCUS, day);
   same(R.map(r => r.act), [true, true, false], "absent only is not a lesson");
-  // Warnings: A 2, B 0, mean 1. A's ratio 2 is grade 1; B has none, grade 5.
-  same([R[0].q.c.mb, R[1].q.c.mb, R[2].q.c.mb], [1, 5, null]);
+  // Warnings: A 2, B 0, mean 1. A's ratio 2 is grade 1 on the scale, raised to the lowest, 2; B has none, grade 5.
+  same([R[0].q.c.mb, R[1].q.c.mb, R[2].q.c.mb], [2, 5, null]);
   // Memo Homework: new targets A 2, B 0, mean 1, so ratios 2 and 0.
-  same([R[0].m.c.hw, R[1].m.c.hw], [5, 1]);
+  same([R[0].m.c.hw, R[1].m.c.hw], [5, 2]);
   // Points: A 2 tests + 2 new targets x 5 = 12, B 1 test = 1, mean 6.5.
-  same([R[0].m.c.cp, R[1].m.c.cp], [5, 1]);
+  same([R[0].m.c.cp, R[1].m.c.cp], [5, 2]);
   assert.strictEqual(R[2].m.f.ef, null);
 });
 check("Effort: rounded mean of the final grades, teacher grades included; an Effort override wins", () => {
@@ -111,6 +111,16 @@ check("Effort: rounded mean of the final grades, teacher grades included; an Eff
   assert.strictEqual(repCalc([s], T1, C, FOCUS, day)[0].q.f.ef, 2);
   s.ro["t1-2026"].q = {mb: 1};
   assert.strictEqual(repCalc([s], T1, C, FOCUS, day)[0].q.f.ef, 2, "(1 + 2 + 2 + 2) / 4 = 1.75 rounds to 2");
+});
+check("worked-out grades never go below 2, but a teacher can give a 1", () => {
+  const s = pupil({q: {"2026-10-03": 4}, tests: [{d: "2026-10-03", k: "q", n: 1, sc: 1, ok: true}, {d: "2026-10-10", k: "q", n: 2, sc: 0, ok: false}],
+    ro: {"t1-2026": {q: {fl: 1}}}});
+  const R = repCalc([s], T1, C, FOCUS, day);
+  // Homework 1 (the pass) and Pronunciation 1 ((1 + 0) / 2 = 0.5 rounds to 1) are raised to 2; Fluency is the teacher's 1.
+  same([R[0].q.c.hw, R[0].q.c.pr, R[0].q.f.fl], [2, 2, 1]);
+  // Effort: (5 + 2 + 2 + 1) / 4 = 2.5 rounds to 3.
+  assert.strictEqual(R[0].q.f.ef, 3);
+  same(repCalc([s], T1, Object.assign({}, C, {lowest: 1}), FOCUS, day)[0].q.c.hw, 1, "the lowest is a setting");
 });
 check("Journey 2 Jannah attendance for the term", () => {
   const R = repCalc([pupil({ja: {"2026-10-03": 1, "2026-10-04": 0, "2026-10-10": 1, "2027-01-16": 0}})], T1, C, FOCUS, day);
