@@ -39,6 +39,7 @@ import site_settings
 import export
 import house_extra
 import quran_coins
+import reports
 import memo_import
 import helpdesk
 import finance
@@ -50,7 +51,7 @@ from mailer import Mailer
 ROOT = Path(__file__).resolve().parent
 CLASS_ID = re.compile(r"[a-z0-9][a-z0-9-]{0,63}")
 DAY = re.compile(r"\d{4}-\d{2}-\d{2}")
-DETAILS = ("sid", "fid", "gender", "year", "sy", "ist", "dob")
+DETAILS = ("sid", "fid", "gender", "year", "sy", "ist", "dob", "pe")
 # Student IDs given by the school, like SE263; new students get the next one.
 STUDENT_NUMBER = re.compile(r"SE(\d+)", re.IGNORECASE)
 MAX_CLASSES = 500
@@ -83,12 +84,17 @@ ART = {"paper.webp", "wash-band.webp", "wash-cloud.webp", "wash-low.webp", "wash
 # pages can load them before any school is open.
 SHELL_FILES = {"/developer.css", "/menu.js", "/dock.js", "/warm-tooltip.js", "/avatar.js", "/theme.js"}
 # /tv/<token> is a TV screen link; tv.py checks the token.
-PUBLIC_PREFIXES = ("/invite/", "/reset/", "/tv/", "/present/", "/fonts/", "/art/")
+PUBLIC_PREFIXES = ("/invite/", "/reset/", "/tv/", "/present/", "/fonts/", "/art/", "/brand/")
 
 
 def coins(state):
     """Every house coin in a class, counted by colour and the time it was given."""
     return Counter((k, t) for s in state.get("S", []) for k in TOKEN_POINTS for t in s.get(k, []))
+
+
+def attendance(state):
+    """Every student's Journey 2 Jannah attendance in a class, by student and day."""
+    return {(k, i, d): v for k in ("S", "X") for i, s in enumerate(state.get(k, [])) for d, v in s.get("ja", {}).items()}
 
 
 def valid_state(state):
@@ -145,6 +151,9 @@ def valid_student(student, levels, juz_items):
     if not all(isinstance(student.get(k, ""), str) for k in DETAILS):
         return False
     if student.get("dob", "") and not DAY.fullmatch(student["dob"]):
+        return False
+    # A parent's email address ("pe"), where the term report is sent.
+    if student.get("pe", "") and not reports.EMAIL.fullmatch(student["pe"]):
         return False
     # Details changed by hand on the profile ("ed"), which a later CSV upload leaves alone, and the earlier
     # Student IDs and names it had ("xid", "xn"), so the upload still recognises the student.
@@ -204,6 +213,25 @@ def valid_student(student, levels, juz_items):
     marks = student.get("mt", {})
     if not isinstance(marks, dict) or not all(isinstance(d, str) and DAY.fullmatch(d) and v in ("t", "l")
                                                for d, v in marks.items()):
+        return False
+    # Quran homework, by class day: 1 to 5, or 0 for homework not done (the Quran tab's score picker).
+    homework = student.get("hw", {})
+    if not isinstance(homework, dict) or not all(isinstance(d, str) and DAY.fullmatch(d) and type(v) is int and 0 <= v <= 5
+                                                  for d, v in homework.items()):
+        return False
+    # Each warning given, with when ("t") and which ("v", as "warn"), so a term report can add up a term's warnings.
+    warnings = student.get("wl", [])
+    if not isinstance(warnings, list) or not all(
+            isinstance(x, dict) and type(x.get("t")) in (int, float) and x["t"] >= 0 and type(x.get("v")) is int
+            and 1 <= x["v"] <= 3 for x in warnings):
+        return False
+    # Journey 2 Jannah attendance, by class day: 1 present, 0 absent. Only the J2J sync (or the admin) writes it.
+    attendance = student.get("ja", {})
+    if not isinstance(attendance, dict) or not all(isinstance(d, str) and DAY.fullmatch(d) and v in (0, 1) and type(v) is int
+                                                    for d, v in attendance.items()):
+        return False
+    # Teachers' own report grades, by term and subject (reports.py).
+    if not reports.valid_overrides(student.get("ro", {})):
         return False
     return True
 
@@ -391,6 +419,7 @@ def create_app(test_config=None):
     app.register_blueprint(avatars.bp)
     app.register_blueprint(themes.bp)
     app.register_blueprint(site_settings.bp)
+    app.register_blueprint(reports.bp)
     app.register_blueprint(schools.bp)
     app.register_blueprint(finance.bp)
     app.register_blueprint(tv.bp)
@@ -490,7 +519,7 @@ def create_app(test_config=None):
         # The font files are public and never change; everything else is private.
         # The logo is public too, and email apps fetch it for every email they show.
         # A profile picture sets its own (private) caching, as its address changes with the picture.
-        if not (request.path.startswith(("/avatar/", "/theme-photo/", "/theme.css")) and response.status_code == 200):
+        if not (request.path.startswith(("/avatar/", "/theme-photo/", "/theme.css", "/brand/")) and response.status_code == 200):
             response.headers["Cache-Control"] = "public, max-age=604800" if (request.path.startswith(("/fonts/", "/art/"))
             or request.path in ("/logo.png", "/favicon.png", "/favicon.ico")) and response.status_code == 200 else "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
@@ -636,10 +665,14 @@ def create_app(test_config=None):
         # Anyone's first visit starts the tutorial (the "tour" in page.html); Account can start it again.
         with database.transaction() as tx:
             toured = tx.execute("SELECT tour_done FROM users WHERE id = ?", (g.user["id"],)).fetchone()["tour_done"]
+            report_settings = reports.read(tx)
+            brand = reports.brand(tx) if g.user["role"] in ("admin", "head") else None
         me = {"name": g.user["name"], "email": g.user["email"], "role": g.user["role"], "csrf": g.session["csrf"],
               "fresh": fresh, "stay": g.session["remember"], "initial": avatars.initial(g.user["name"]),
               "avatar": avatars.url(g.user["id"], g.user["avatar_at"]),
-              "tour": not toured, "assistant": assistant.enabled(app)}
+              "tour": not toured, "assistant": assistant.enabled(app), "reports": report_settings}
+        if brand is not None:
+            me["brand"] = brand
         # The developer's bar: the school they have opened and the view they chose (railway-storage.js draws it).
         bar = schools.developer_bar()
         if bar:
@@ -769,6 +802,9 @@ def create_app(test_config=None):
                     # House points are given by admins only (on the Record page and Counted coins), not by HeadTeachers or teachers.
                     if current and coins(state) - coins(json.loads(current["json"])):
                         return jsonify(error="Only the admin can give house points."), 403
+                    # Attendance comes from Journey 2 Jannah, not from a teacher's or HeadTeacher's save.
+                    if current and attendance(state) != attendance(json.loads(current["json"])):
+                        return jsonify(error="Attendance comes from Journey 2 Jannah, so it can't be changed here."), 403
                 saved = update_classroom(db, class_id, state, document["revision"], g.user["id"])
                 if saved:
                     return jsonify(revision=saved)

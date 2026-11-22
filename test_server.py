@@ -4,6 +4,7 @@ The SQLite tests always run. The same tests run against PostgreSQL when
 TEST_DATABASE_URL is set; each test uses its own temporary schema, which is
 dropped afterwards, so existing tables in that database are never touched.
 """
+import base64
 import copy
 import html
 import io
@@ -34,6 +35,7 @@ import assistant
 import auth
 import emails
 import memo_import
+import reports
 import helpdesk
 import server
 import tv
@@ -52,10 +54,11 @@ class FakeMailer:
         self.html = []
         self.tags = []
 
-    def send(self, to, subject, text, html=None, tag=None, background=False):
+    def send(self, to, subject, text, html=None, tag=None, background=False, from_name=None):
         self.sent.append((to, subject, text))
         self.html.append(html)
         self.tags.append(tag)
+        self.from_name = from_name
         return True
 
     def link(self):
@@ -296,6 +299,144 @@ class DashboardTests:
         self.assertEqual(self.write(state=dict(self.state, S=[student])).status_code, 200)
         student["q"] = {"2026-10-10": -2}
         self.assertEqual(self.write(revision=1, state=dict(self.state, S=[student])).status_code, 400)
+
+    def report_student(self, **extra):
+        return dict({"name": "A", "target": 1, "passes": 0, "merits": 0, "warn": 1, "log": [], "lt": [], "lx": [], "ml": [],
+                     "q": {}, "hw": {"2026-10-10": 0, "2026-10-11": 5}, "wl": [{"t": 1790000000000, "v": 1}],
+                     "ja": {"2026-10-10": 1}, "ro": {"t1-2026": {"q": {"ef": 4}, "m": {"pg": 2}}}}, **extra)
+
+    def test_report_records_on_students(self):
+        # Quran homework by day (0 when not done), dated warnings, J2J attendance and teachers' report grades.
+        self.assertEqual(self.write(state=dict(self.state, S=[self.report_student()])).status_code, 200)
+        for key, value in (("hw", {"2026-10-10": 6}), ("hw", {"10 Oct": 3}), ("wl", [{"t": 1, "v": 4}]), ("wl", [{"v": 1}]),
+                           ("ja", {"2026-10-10": 2}), ("ro", {"t1-2026": {"q": {"pg": 3}}}), ("ro", {"t1-2026": {"m": {"ef": 6}}}),
+                           ("ro", {"Term 1": {"q": {"ef": 3}}})):
+            state = dict(self.state, S=[self.report_student(**{key: value})])
+            self.assertEqual(self.write(revision=1, state=state).status_code, 400, (key, value))
+
+    def test_attendance_comes_from_j2j_not_teachers(self):
+        student = self.report_student()
+        self.assertEqual(self.write(state=dict(self.state, S=[student])).status_code, 200)
+        self.add_user("teacher@example.com", classes=["yr3-a"])
+        teacher = self.sign_in("teacher@example.com", "teacher-password-1")
+        refused = self.write(revision=1, state=dict(self.state, S=[dict(student, ja={"2026-10-10": 0})]), client=teacher)
+        self.assertEqual(refused.status_code, 403)
+        self.assertIn("Journey 2 Jannah", refused.get_json()["error"])
+        # Their homework, warnings and report grades save, with the attendance left as it was.
+        changed = dict(student, hw={"2026-10-17": 3}, wl=[], ro={"t1-2026": {"q": {"hw": 2}}})
+        self.assertEqual(self.write(revision=1, state=dict(self.state, S=[changed]), client=teacher).status_code, 200)
+        # The admin (and later the J2J sync) can change it.
+        self.assertEqual(self.write(revision=2, state=dict(self.state, S=[dict(changed, ja={})])).status_code, 200)
+
+    def test_report_settings(self):
+        self.assertIn('"reports": {"terms": [{"id": "t1-2026", "name": "Term 1", "from": "2026-09-12"',
+                      self.client.get("/").get_data(as_text=True))
+        settings = copy.deepcopy(reports.DEFAULTS)
+        settings["expected"] = 10
+        settings["terms"][0]["name"] = "  Autumn   term "
+        saved = self.client.post("/api/report-settings", json=settings, headers=self.headers)
+        self.assertEqual(saved.status_code, 200)
+        self.assertEqual(saved.get_json()["settings"]["terms"][0]["name"], "Autumn term")
+        self.assertIn('"expected": 10', self.client.get("/").get_data(as_text=True))
+        for change in ({"to": "2026-09-01"}, {"from": "12/09/2026"}, {"id": "Term One"}, {"name": ""}):
+            bad = copy.deepcopy(settings)
+            bad["terms"][0].update(change)
+            self.assertEqual(self.client.post("/api/report-settings", json=bad, headers=self.headers).status_code, 400, change)
+        for key, value in (("pct", [30, 30, 70, 90]), ("ratio", [0.7, 0.9, 1.1]), ("expected", 0), ("pass_points", "5")):
+            self.assertEqual(self.client.post("/api/report-settings", json=dict(settings, **{key: value}),
+                                              headers=self.headers).status_code, 400, key)
+        # Only the admin changes them, and only from the dashboard.
+        self.add_user("teacher@example.com")
+        teacher = self.sign_in("teacher@example.com", "teacher-password-1")
+        self.assertEqual(teacher.post("/api/report-settings", json=settings, headers=self.headers).status_code, 403)
+        self.assertEqual(self.client.post("/api/report-settings", json=settings).status_code, 403)
+        self.assertIn('"expected": 10', teacher.get("/").get_data(as_text=True))
+
+    def test_parent_email_on_students(self):
+        student = self.report_student(pe="parent@example.com")
+        self.assertEqual(self.write(state=dict(self.state, S=[student])).status_code, 200)
+        for bad in ("parent", "parent@", "a b@example.com", "<x@example.com>"):
+            self.assertEqual(self.write(revision=1, state=dict(self.state, S=[dict(student, pe=bad)])).status_code, 400, bad)
+
+    def test_report_branding(self):
+        logo = "data:image/png;base64," + base64.b64encode(self.picture((300, 300))).decode()
+        saved = self.client.post("/api/report-branding", json={"name": "  Al-Noor   Academy ", "logo": logo},
+                                 headers=self.headers)
+        self.assertEqual(saved.status_code, 200, saved.get_data(as_text=True))
+        brand = saved.get_json()["brand"]
+        self.assertEqual(brand["name"], "Al-Noor Academy")
+        # With no colour chosen, the logo's own colour is taken (the picture is #3366cc).
+        self.assertTrue(brand["colour"].startswith("#3") and brand["colour"] != reports.DEFAULT_COLOUR, brand)
+        self.assertRegex(brand["logo"], r"^/brand/1/logo-[0-9a-f]{12}\.png$")
+        # The logo is public, so email apps can show it, and only at its current address.
+        picture = self.app.test_client().get(brand["logo"])
+        self.assertEqual((picture.status_code, picture.mimetype), (200, "image/png"))
+        self.assertIn("immutable", picture.headers["Cache-Control"])
+        self.assertEqual(self.app.test_client().get("/brand/1/logo-000000000000.png").status_code, 404)
+        self.assertEqual(self.app.test_client().get(brand["logo"].replace("/brand/1/", "/brand/99/")).status_code, 404)
+        self.assertIn('"brand": {"name": "Al-Noor Academy"', self.client.get("/").get_data(as_text=True))
+        # A colour chosen stays; anything that isn't a picture or a colour is refused.
+        self.assertEqual(self.client.post("/api/report-branding", json={"name": "Al-Noor Academy", "colour": "#2196f3"},
+                                          headers=self.headers).get_json()["brand"]["colour"], "#2196f3")
+        for body in ({"colour": "blue"}, {"logo": "data:image/png;base64,bm90IGEgcGljdHVyZQ=="}, {"test_to": "nobody"}):
+            self.assertEqual(self.client.post("/api/report-branding", json=body, headers=self.headers).status_code, 400, body)
+        self.assertEqual(self.client.post("/api/report-branding", json={"remove_logo": True}, headers=self.headers)
+                         .get_json()["brand"]["logo"], "")
+        # Only the admin changes it; teachers don't get it on their dashboard.
+        self.add_user("teacher@example.com")
+        teacher = self.sign_in("teacher@example.com", "teacher-password-1")
+        self.assertEqual(teacher.post("/api/report-branding", json={"name": "X"}, headers=self.headers).status_code, 403)
+        self.assertNotIn('"brand":', teacher.get("/").get_data(as_text=True))
+
+    def report_payload(self, name="Aisha Khan", i=0, **extra):
+        return dict({"class_id": "yr3-a", "i": i, "name": name, "label": "Yr3A Ustadha Maryam",
+                     "q": {"ef": 4, "mb": 5, "hw": 4, "pr": 3, "fl": None}, "m": {"ef": 3, "mb": 5, "hw": 2, "cp": 3, "pg": 2},
+                     "att": {"p": 9, "n": 10}, "memo": {"passed": 3, "now": "Level 2, target 3"},
+                     "focus": {"f": "Madd", "n": 2}, "qa": 5, "act": True}, **extra)
+
+    def test_report_emails(self):
+        mailer = FakeMailer()
+        self.app.config.update(MAILER=mailer, PUBLIC_URL="https://ilmi.example")
+        pupils = [self.report_student(name="Aisha Khan", pe="aisha.parent@example.com"), self.report_student(name="Yusuf Ali")]
+        self.assertEqual(self.write(state=dict(self.state, S=pupils)).status_code, 200)
+        self.client.post("/api/report-branding", json={"name": "Al-Noor Academy", "colour": "#2196f3"}, headers=self.headers)
+        body = {"term_id": "t1-2026", "to": "parents", "reports": [self.report_payload(), self.report_payload("Yusuf Ali", 1)]}
+        sent = self.client.post("/api/report-emails", json=body, headers=self.headers)
+        self.assertEqual(sent.status_code, 200, sent.get_data(as_text=True))
+        self.assertEqual(sent.get_json(), {"queued": 1, "skipped": [{"name": "Yusuf Ali", "why": "no parent email address"}]})
+        to, subject, text = mailer.sent[-1]
+        self.assertEqual((to, subject), ("aisha.parent@example.com", "Aisha's Term 1 report from Al-Noor Academy"))
+        self.assertEqual((mailer.tags[-1], mailer.from_name), ("term_report", "Al-Noor Academy"))
+        self.assertIn("Effort: 4 out of 5", text)
+        self.assertIn("Attendance: 90% (9 of 10 days)", text)
+        html = mailer.html[-1]
+        for words in ("Al-Noor Academy", "#2196f3", ">Ilmi</a>", "https://ilmi.example/logo.png", "Focus for next term", "Level 2, target 3"):
+            self.assertIn(words, html)
+        # The test address: refused until one is set, then every report goes there and nowhere else.
+        body["to"] = "test"
+        self.assertEqual(self.client.post("/api/report-emails", json=body, headers=self.headers).status_code, 400)
+        self.client.post("/api/report-branding", json={"name": "Al-Noor Academy", "test_to": "check@example.com"}, headers=self.headers)
+        self.assertEqual(self.client.post("/api/report-emails", json=body, headers=self.headers).get_json()["queued"], 2)
+        self.assertEqual([m[0] for m in mailer.sent[-2:]], ["check@example.com"] * 2)
+        # A pupil who isn't at that place in the class any more is skipped, not sent to someone else's parent.
+        moved = dict(body, to="parents", reports=[self.report_payload("Yusuf Ali", 0)])
+        self.assertEqual(self.client.post("/api/report-emails", json=moved, headers=self.headers).get_json()["skipped"][0]["why"],
+                         "not found in their class any more")
+        log = self.client.get("/api/report-emails", headers=self.headers).get_json()["sent"]
+        self.assertEqual([(r["student"], r["recipient"], r["mode"], r["status"]) for r in log][-1],
+                         ("Aisha Khan", "aisha.parent@example.com", "parents", "sent"))
+        # The preview is the same email, sent to no one.
+        preview = self.client.post("/api/report-emails/preview", json={"term_id": "t1-2026", "report": self.report_payload()},
+                                   headers=self.headers).get_json()
+        self.assertEqual(preview["subject"], "Aisha's Term 1 report from Al-Noor Academy")
+        for bad in (dict(body, term_id="nope"), dict(body, to="everyone"), dict(body, reports=[]),
+                    dict(body, reports=[self.report_payload(focus={"f": "Anything", "n": 1})]),
+                    dict(body, reports=[self.report_payload(att={"p": 11, "n": 10})])):
+            self.assertEqual(self.client.post("/api/report-emails", json=bad, headers=self.headers).status_code, 400)
+        self.add_user("head@example.com", role="head")
+        head = self.sign_in("head@example.com", "teacher-password-1")
+        self.assertEqual(head.post("/api/report-emails", json=body, headers=self.headers).status_code, 403)
+        self.assertIn('"brand":', head.get("/").get_data(as_text=True))
 
     def test_memo_tracker_marks(self):
         student = {"name": "A", "target": 1, "passes": 0, "merits": 0, "warn": 0, "log": [], "lt": [], "lx": [], "ml": [],

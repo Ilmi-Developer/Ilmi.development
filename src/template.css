@@ -1948,3 +1948,172 @@ html:not([data-logo]) .ws .tablewrap,html:not([data-logo]) .ws .sheetwrap{box-sh
 @media (prefers-reduced-motion:no-preference){.hpd .hpx,.hpd .hpr,.hpd .hpday{animation:hp-in .32s cubic-bezier(.2,.8,.2,1) both}.hpd .hpr{animation-delay:.06s}.hpd .hpday{animation-delay:calc(.1s + var(--i,0) * .04s)}}
 @keyframes hp-in{from{opacity:0;transform:translateY(6px)}}
 @media (max-width:420px){.hpx-c li{padding:6px 8px}.hpday li{grid-template-columns:minmax(0,1fr) auto}.hpday .t{display:none}}
+
+/* Quran homework: a row under the scores in the picker (hwRow), and its mark in the corner of the day's box. */
+.qc{position:relative}
+.qhwm{position:absolute;top:2px;right:2px;min-width:13px;height:13px;padding:0 3px;border-radius:7px;background:var(--navy);color:#fff;font-size:.5625rem;font-style:normal;font-weight:700;line-height:13px;text-align:center;pointer-events:none}
+.qhwm.no{background:var(--surface-2);color:var(--ink-2);box-shadow:inset 0 0 0 1px var(--line-2)}
+.qpop.qhwp{display:grid;grid-template-columns:repeat(8,auto);gap:8px}
+.qhwr{grid-column:1/-1;display:flex;align-items:center;gap:6px;padding-top:8px;border-top:1px solid var(--line)}
+.qhwl{font-size:.75rem;font-weight:600;color:var(--mute);margin-right:4px}
+.qscard .qhwr{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:16px;padding-top:12px}
+.qscard .qhwl{grid-column:1/-1;text-align:center;font-size:.875rem;margin:0}
+.qpop.qsheet .qhwr button{min-width:0;height:48px;border-radius:var(--r-lg);font-size:1.125rem;font-weight:600}
+.qpop.qsheet .qhwr .qclr{grid-column:1/-1;height:44px;font-size:.9375rem;font-weight:500}
+
+
+/* Reports (repDraw): the Quran sheet's look. One row a pupil on hairlines, each grade a 40px box in the score colours,
+   Effort first in the class-day lane. A pencil marks a grade the teacher set. */
+.repzone{position:relative}
+.repwrap{overflow-x:auto;margin:0 -4px;padding:0 4px}
+.repsheet{width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
+.repsheet thead th{padding:0 8px 8px;font-size:.8125rem;font-weight:500;color:var(--mute);text-align:center;white-space:nowrap;vertical-align:bottom}
+.repsheet thead th.repn,.repsheet thead th.repx{text-align:left}
+.repsheet thead th.repe{color:var(--navy-text);font-weight:600;box-shadow:inset 0 -2px 0 var(--navy)}
+.repsheet tbody th,.repsheet tbody td{padding:6px 8px;border-top:1px solid var(--line);text-align:center;vertical-align:middle}
+.repsheet tbody tr:first-child>*{border-top-color:var(--line-2)}
+.repsheet .repe{width:64px;background:color-mix(in srgb,var(--navy) 6%,transparent)}
+.repsheet tbody tr:last-child .repe{border-radius:0 0 var(--r) var(--r)}
+.repsheet thead .repe{border-radius:var(--r) var(--r) 0 0}
+.repsheet .repg{width:56px}
+.repsheet .repn{text-align:left;font-weight:600;min-width:150px}
+.repsheet .repn .lk{font-weight:600;color:var(--ink);text-decoration-line:none;text-align:left}
+.repsheet .repn .lk:hover,.repsheet .repn .lk:focus-visible{color:var(--navy-text);text-decoration-line:underline;text-underline-offset:3px}
+.repsheet .repn small{display:block;margin-top:1px;font-size:.75rem;font-weight:500;color:var(--mute)}
+.repsheet .repa{width:96px;text-align:right;white-space:nowrap}
+.repsheet .repa b{font-weight:600;color:var(--ink)}
+.repsheet .repa small{display:block;font-size:.75rem;color:var(--mute)}
+.repsheet .repx{text-align:left;font-size:.875rem;color:var(--ink-2);min-width:170px;max-width:260px}
+.repsheet .repx small{color:var(--mute);margin-left:2px}
+.repsheet .mute{color:var(--mute)}
+.repsheet tr.off .repn .lk{color:var(--ink-2)}
+.repsheet tr.off .repb{border-style:dashed}
+.repb{position:relative;display:inline-grid;place-items:center;width:40px;height:40px;padding:0;border-radius:var(--r);border:1px solid var(--line-2);background:var(--surface);font:inherit;font-size:1.0625rem;font-weight:600;color:var(--mute);cursor:pointer;transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease,transform .15s var(--ease)}
+.repb.has{background:var(--c);border-color:color-mix(in srgb,var(--c) 70%,#1d2127);color:#22231b}
+.repb:hover{box-shadow:0 2px 6px -2px rgba(40,38,20,.28);transform:translateY(-1px)}
+.repb:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+.repb[aria-expanded="true"]{box-shadow:inset 0 0 0 2px var(--ink)}
+.repe .repb{width:44px;height:44px;font-size:1.1875rem}
+.repb.drop{animation:repDrop .5s var(--ease)}
+@keyframes repDrop{0%{transform:scale(.82)}60%{transform:scale(1.06)}100%{transform:none}}
+.repov{position:absolute;top:-6px;right:-6px;display:grid;place-items:center;width:16px;height:16px;border-radius:50%;background:var(--navy);color:#fff;box-shadow:0 0 0 2px var(--surface)}
+.repov svg{width:10px;height:10px}
+.repop{gap:6px}
+.qpop.repop:not(.qsheet) button{min-width:36px;height:36px}
+.repop .qclr b{font-weight:700;margin-left:2px}
+.qpop.qsheet.repop .qsb{grid-template-columns:repeat(5,minmax(0,1fr))}
+.repnone{padding:16px 0}
+/* A pupil's term report (repCard) and its printed page (repPage). */
+.rephd{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;margin-bottom:12px}
+.rephd .cap{margin:0}
+.repgl{list-style:none;margin:12px 0 0;padding:0}
+.repgl li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid var(--line);font-size:.9375rem;color:var(--ink-2)}
+.repgl li:first-child{border-top:0}
+.repgl li.ef{color:var(--ink);font-weight:600}
+.repb.sm{width:32px;height:32px;font-size:.9375rem;cursor:default}
+.repb.sm:hover{box-shadow:none;transform:none}
+.repb.sm .repov{top:-5px;right:-5px;width:14px;height:14px}
+.repb.sm .repov svg{width:8px;height:8px}
+.repnote{margin:8px 0 0;font-size:.8125rem;color:var(--ink-2)}
+.repnote.mute{display:flex;align-items:center;gap:6px;color:var(--mute)}
+.repnote .repov{position:static;box-shadow:none}
+/* Report settings: a class Settings page's rows in the drawer. */
+.repsets{max-width:none}
+.repsets .cap{margin:0 0 4px}
+.repterm{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"name rm" "from to";align-items:end;gap:8px 12px}
+.repterm>label:nth-of-type(1){grid-area:name}.repterm>label:nth-of-type(2){grid-area:from}.repterm>label:nth-of-type(3){grid-area:to}
+.repterm input{width:100%}
+.repf{display:flex;flex-direction:column;gap:4px;font-size:.8125rem;font-weight:500;color:var(--ink-2)}
+.repterm .repTx{grid-area:rm;justify-self:end}
+#repW .toolbar .cap{flex:1 1 160px}
+.repq{display:flex;flex-wrap:wrap;gap:8px}
+.repq label{display:flex;flex-direction:column;gap:2px;font-size:.75rem;color:var(--mute);text-align:center}
+.repq input,.repsets .srow>input[type="number"]{width:76px;text-align:center}
+@media (max-width:640px){
+ .repwrap{overflow:visible}
+ .repsheet thead{display:none}
+ .repsheet,.repsheet tbody{display:block}
+ .repsheet tbody tr{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:start;gap:6px 4px;padding:14px 0;border-top:1px solid var(--line)}
+ .repsheet tbody tr:first-child{border-top:0}
+ .repsheet tbody th,.repsheet tbody td{padding:0;border:0;width:auto;background:none;min-width:0;max-width:none}
+ .repsheet .repn{grid-column:1/4;grid-row:1;align-self:center}
+ .repsheet .repa{grid-column:4/6;grid-row:1;align-self:center}
+ .repsheet .repa small{display:inline;margin-left:4px}
+ .repsheet td.repe,.repsheet td.repg{grid-row:2;display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:4px}
+ .repsheet td.repe::after,.repsheet td.repg::after{content:attr(data-l);font-size:.625rem;color:var(--mute);white-space:nowrap}
+ .repsheet td.repe::after{color:var(--navy-text);font-weight:600}
+ .repsheet td.repe .repb{width:44px;height:44px}
+ .repsheet .repx{grid-column:1/-1;grid-row:3}
+ .repsheet .repx:has(.mute:only-child){display:none}
+}
+@media (pointer:coarse){.repb{width:44px;height:44px}}
+html[data-mode="dark"] .repb.has{color:#1c2230}
+
+/* The Reports page (repSchool): every class's table, a class a section under its name. */
+.repfind{flex:1 1 220px;max-width:320px}
+.repmailb{display:inline-flex;align-items:center;gap:8px;margin-left:4px}
+.repmailb .ic{width:18px;height:18px}
+.repsum{margin:-4px 0 8px}
+.repcls{padding:20px 0 4px;border-top:1px solid var(--line)}
+.repcls:first-of-type{border-top:0;padding-top:8px}
+.repch{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;margin-bottom:10px}
+.repch h2{margin:0;font-family:var(--font-display);font-size:1.25rem;font-weight:600;letter-spacing:-.01em}
+.repch h2 .lk{color:var(--ink);text-decoration-line:none}
+.repch h2 .lk:hover,.repch h2 .lk:focus-visible{color:var(--navy-text);text-decoration-line:underline;text-underline-offset:4px}
+.repch .cap{margin:0}
+.rephd .repacts{display:flex;flex-wrap:wrap;gap:8px}
+.rephd .btn .ic,.repacts .btn .ic{width:16px;height:16px;margin-right:6px;vertical-align:-3px}
+/* Emailing reports (repMail): who to, the email as parents see it, then Send. */
+.repmail{display:flex;flex-direction:column;gap:10px}
+.repmail>.cap{margin:0}
+.repwarn{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding:12px 16px;border-radius:var(--r-lg);background:var(--warn-soft);color:var(--warn-ink)}
+.repwarn b{font-weight:700}.repwarn span{font-size:.875rem;grid-column:1}.repwarn .btn{grid-column:2;grid-row:1/3}
+.repchk{cursor:pointer}
+.repchk input{width:20px;height:20px;accent-color:var(--navy)}
+.repprev{border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;background:var(--surface-2)}
+.repprevh{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--surface)}
+.repprevh label{display:flex;align-items:center;gap:8px;font-size:.8125rem;font-weight:600;color:var(--ink-2)}
+.repprevh select{max-width:220px}
+.repprevh .cap{margin:0;flex:1 1 200px;font-size:.8125rem}
+.repprev iframe{display:block;width:100%;height:560px;border:0;background:#fff}
+.repsend{position:sticky;bottom:-24px;z-index:2;display:flex;justify-content:flex-end;gap:8px;margin:0 -24px;padding:16px 24px;background:var(--surface);border-top:1px solid var(--line)}
+@media (max-width:560px){.repsend{bottom:-16px;margin:0 -16px;padding:12px 16px}}
+.replog{list-style:none;margin:0;padding:0}
+.replog li{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:4px 12px;padding:8px 0;border-top:1px solid var(--line);font-size:.875rem}
+.replog li:first-child{border-top:0}
+.replog li>span:first-child{display:flex;flex-direction:column;min-width:0}
+.replog small{color:var(--mute);font-size:.75rem;overflow:hidden;text-overflow:ellipsis}
+.replog .pill.ok{background:var(--sage-soft);color:var(--sage-ink)}
+.replog .pill.bad{background:var(--bad-soft);color:var(--bad-ink)}
+/* School branding in Report settings: the logo on the brand colour, as the email's band shows it. */
+.repbrand{align-items:center;flex-wrap:nowrap;gap:16px}
+.replogo{flex:none;display:grid;place-items:center;width:88px;height:88px;border-radius:var(--r-lg);background:var(--bc);overflow:hidden}
+.replogo img{width:64px;height:64px;object-fit:contain;border-radius:14px}
+.replogo span{font-size:.75rem;font-weight:600;color:#fff;opacity:.85}
+.repbf{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
+.repbf input[type="text"]{width:100%}
+.repbr{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.repup{cursor:pointer}
+.repcol{display:inline-flex;align-items:center;gap:8px;font-size:.8125rem;font-weight:500;color:var(--ink-2);cursor:pointer}
+.repcol input{width:36px;height:36px;padding:2px;border:1px solid var(--line-2);border-radius:var(--r);background:var(--surface);cursor:pointer}
+.reptest{flex:1 1 220px;min-width:200px;max-width:320px}
+@media (max-width:640px){
+ .repfind{max-width:none;order:3;flex-basis:100%}
+ .repmailb{order:2}
+ .repbrand{flex-wrap:wrap}
+ .repprev iframe{height:480px}
+}
+/* A pupil's report: four figures, centred, over the subject cards. */
+.sxfig.repfig{grid-template-columns:repeat(4,minmax(0,1fr))}
+.repfig .sxf{align-items:center;text-align:center}
+.repfig .sxf b,.repfig .sxf small{max-width:100%}
+@media (max-width:820px){.sxfig.repfig{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media print{.prp .sxfig.repfig{grid-template-columns:repeat(4,1fr)}}
+.sxfig.repfig .sxf{--bg-f:var(--surface);--ink-f:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.sxfig.repfig .sxf span,.sxfig.repfig .sxf small{color:var(--mute);opacity:1}
+.sxfig.repfig .sxf b{font-family:var(--font-display);font-weight:600}
+@media print{.prp .sxfig.repfig .sxf{background:#fff;box-shadow:inset 0 0 0 1px #e4e7ee}}
+/* In a pupil's report the grades are plain numbers, with Effort on the olive, as in the parents' email. */
+.repgl .repb.sm,.repgl .repb.sm.has{background:none;border:0;color:var(--ink);font-size:1rem;font-weight:700}
+.repgl li.ef .repb.sm.has{background:var(--navy);color:#fff;border-radius:var(--r)}
+@media print{.prp .repgl li.ef .repb.sm.has{background:#4d5a2c;color:#fff}}

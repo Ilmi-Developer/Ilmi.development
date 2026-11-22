@@ -263,6 +263,23 @@ recording starts from the Quran tab.
   level with empty levels named once in a line instead of zero rows) and
   Pass history (passes per week, the history and Add a
   past pass).
+- **Reports**: a term's grades in the Quran sheet's look: one row a pupil on hairlines, each grade a 40px box
+  in the score colours, Effort first in the class-day lane, then attendance and the focus area or targets passed.
+  A box opens the Quran score picker (1 to 5, and Worked out to give a grade back; a bottom sheet on phones); a
+  small olive pencil marks a grade the teacher set. Print, the admin's Report settings (rows like Settings, in the
+  drawer) and the rules ("?") are the toolbar's icons. A name opens the term report laid out like Statistics, with
+  Print report. On phones each pupil is a name and attendance line, the five boxes labelled under them, then the note.
+- **Reports page** (admins and HeadTeachers, in the menu): the class tab's table for every class, a class a section
+  under its name in Fraunces with its pupils with lessons and average Effort; a search; and, for the admin, Email
+  reports (the one primary button). Emailing is a tile: Send to (Test address or Parents), Include pupils with no
+  lessons, the email itself in a frame for any pupil, then Send in a bar that stays at the foot, and Sent so far.
+- **Term report emails** (`templates/email/report.html`) are the school's, not Ilmi's: its colour as a band across
+  the top with its logo and name (white type where the colour reaches 3:1), a small white Ilmi tag in the top right
+  corner, three figures in white boxes with a hairline, then Quran and Memorisation as rows with each grade a number
+  beside five marks. The school's colour is the only colour: the band, the Effort chip and the marks filled in;
+  everything else is ink on white on a neutral grey. Under 520px the marks are dropped and the figures shrink to stay
+  three across. A pupil's report in the dashboard follows it: neutral figure boxes and plain numbers, Effort on the
+  olive.
 - **Settings**: one column of rounded rows in the Memo card style: class
   name, first class day, adding students (teachers only), then reset and delete.
 
