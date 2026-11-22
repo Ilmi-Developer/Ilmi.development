@@ -300,13 +300,10 @@ def render_report(report, term, school):
                  "lead": key == "ef"} for key, label in LABELS[k]]
         notes = []
         if k == "q":
-            if report["qa"]:
-                notes.append(("Quran level", f"{'Tajweed' if report['qa'] > QAIDAH_BOOK else 'Qaidah'} Book, level {report['qa']}"))
+            # The Quran level and targets passed are figures at the top, so the notes don't repeat them.
             if report["focus"]:
                 notes.append(("Focus for next term", report["focus"]["f"]))
         elif report["memo"]:
-            passed = report["memo"]["passed"]
-            notes.append(("This term", f"{passed} target{'s' if passed != 1 else ''} passed"))
             notes.append(("Working on", report["memo"]["now"]))
         sections.append({"title": title, "rows": rows, "notes": notes})
     att = report["att"]
@@ -316,7 +313,8 @@ def render_report(report, term, school):
                "pupil": report["name"], "first": first, "label": report["label"], "term": term["name"],
                "dates": f"{_day_text(term['from'], term['from'][:4] != term['to'][:4])} to {_day_text(term['to'])}",
                "attendance": f"{round(100 * att['p'] / att['n'])}%" if att else "", "att": att,
-               "effort_q": report["grades"]["q"]["ef"], "effort_m": report["grades"]["m"]["ef"],
+               "level": report["qa"] or "", "book": ("Tajweed Book" if report["qa"] > QAIDAH_BOOK else "Qaidah Book") if report["qa"] else "",
+               "passed": report["memo"]["passed"] if report["memo"] else "",
                "colours": GRADE_COLOURS, "sections": sections, "act": report["act"],
                "support_email": current_app.config.get("SUPPORT_EMAIL", "")}
     subject = f"{first}'s {term['name']} report from {context['school']}"

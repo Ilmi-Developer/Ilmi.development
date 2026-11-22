@@ -77,13 +77,15 @@
   {# Three figures. #}
   <tr><td class="pad" style="padding:20px 26px 6px">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+      {# Figures the grades below don't show; each grade, Effort included, is in its subject. #}
       {% for title, value, small in [("Attendance", attendance, (att.p ~ " of " ~ att.n ~ " days") if att else "Not recorded yet"),
-                                       ("Quran effort", effort_q, "out of 5"), ("Memorisation effort", effort_m, "out of 5")] %}
+                                       ("Quran level", level, book or "Not tested yet"),
+                                       ("Targets passed", passed, "this term" if passed != "" else "No lessons yet")] %}
       <td class="fig" width="33%" valign="top" style="padding:0 6px">
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="{{ soft }}" style="background-color:{{ soft }};border-radius:14px"><tr>
-          <td class="figp" style="padding:14px 16px 13px;font-family:{{ sans }}">
+          <td class="figp" align="center" style="padding:14px 12px 13px;font-family:{{ sans }};text-align:center">
             <span class="figl" style="display:block;font-size:12px;font-weight:700;line-height:1.3;color:#44453a">{{ title }}</span>
-            <span class="fign" style="display:block;margin-top:4px;font-family:{{ serif }};font-size:30px;font-weight:600;line-height:1.05;color:#22231b">{{ value if value else "–" }}</span>
+            <span class="fign" style="display:block;margin-top:4px;font-family:{{ serif }};font-size:30px;font-weight:600;line-height:1.05;color:#22231b">{{ value if value != "" else "–" }}</span>
             <span style="display:block;margin-top:3px;font-size:12px;line-height:1.3;color:#67654f">{{ small }}</span>
           </td>
         </tr></table>

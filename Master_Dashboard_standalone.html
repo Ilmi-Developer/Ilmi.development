@@ -2812,6 +2812,12 @@ html[data-mode="dark"] .repb.has{color:#1c2230}
  .repbrand{flex-wrap:wrap}
  .repprev iframe{height:480px}
 }
+/* A pupil's report: four figures, centred, over the subject cards. */
+.sxfig.repfig{grid-template-columns:repeat(4,minmax(0,1fr))}
+.repfig .sxf{align-items:center;text-align:center}
+.repfig .sxf b,.repfig .sxf small{max-width:100%}
+@media (max-width:820px){.sxfig.repfig{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media print{.prp .sxfig.repfig{grid-template-columns:repeat(4,1fr)}}
 </style></head><body>
 <a class="skip" href="#main">Skip to main content</a>
 <div class="shell">
@@ -4415,14 +4421,15 @@ function repPick(btn){repPickClose();var c=btn.dataset.rc,i=+btn.dataset.ri,key=
   p.style.left=x+"px";p.style.top=(a.top-o.top+(a.height-p.offsetHeight)/2)+"px"}
  btn.setAttribute("aria-expanded","true");(p.querySelector('[aria-pressed="true"]')||p.querySelector("[data-rv]")).focus({preventScroll:true})}
 /* One pupil's term report: figures like Statistics, then a card a subject. */
-function repFigs(r){var q=r.q.f.ef,m=r.m.f.ef;
- var F=[["Attendance",r.att?r.att.pct+"%":"–",r.att?r.att.p+" of "+plural(r.att.n,"day"):"not recorded","mi"],["Quran effort",q==null?"–":q,"out of 5","co"],
-  ["Memorisation effort",m==null?"–":m,"out of 5","sk"],["Targets passed",r.act?r.memo.passed:"–",r.act?repNow(r.memo):"no lessons","la"],
+function repFigs(r){
+ /* Only what the subject cards under them don't show: each grade, Effort included, is in its card. */
+ var F=[["Attendance",r.att?r.att.pct+"%":"–",r.att?r.att.p+" of "+plural(r.att.n,"day"):"not recorded","mi"],
+  ["Targets passed",r.act?r.memo.passed:"–",r.act?repNow(r.memo):"no lessons","la"],
   ["Quran level",r.s.qa?r.s.qa:"–",r.s.qa?(r.s.qa>QBOOK?"Tajweed Book":"Qaidah Book"):"not tested yet","bu"],["Focus next term",r.focus?r.focus.f:"–",r.focus?plural(r.focus.n,"time"):"none yet","pe"]];
- return '<div class="sxfig">'+F.map(function(f,i){return '<div class="sxf '+f[3]+'" style="--i:'+i+'"><span>'+f[0]+'</span><b title="'+esc(String(f[1]))+'">'+esc(String(f[1]))+'</b><small>'+esc(f[2])+'</small></div>'}).join("")+'</div>'}
+ return '<div class="sxfig repfig">'+F.map(function(f,i){return '<div class="sxf '+f[3]+'" style="--i:'+i+'"><span>'+f[0]+'</span><b title="'+esc(String(f[1]))+'">'+esc(String(f[1]))+'</b><small>'+esc(f[2])+'</small></div>'}).join("")+'</div>'}
 function repSub(r,k){var cols=repCols(k),g=r[k],any=cols.some(function(x){return g.o[x[0]]!=null});
  return '<section class="sxc repsub"><h3>'+(k==="q"?"Quran":"Memorisation")+'</h3><ul class="repgl">'+cols.map(function(x){return '<li'+(x[0]==="ef"?' class="ef"':'')+'><span>'+esc(x[1])+'</span>'+repBox("",r,0,k,x[0],1)+'</li>'}).join("")+'</ul>'
-  +(k==="m"&&r.act?'<p class="repnote">'+esc(repNote(r.memo,NB-1,bl))+'</p>':'')+(any?'<p class="repnote mute"><i class="repov" aria-hidden="true">'+REPI.pen+'</i> Set by the teacher</p>':'')+'</section>'}
+  +(any?'<p class="repnote mute"><i class="repov" aria-hidden="true">'+REPI.pen+'</i> Set by the teacher</p>':'')+'</section>'}
 function repCard(c,i){var r=repRows(c)[i],T=repTerm();if(!r)return;
  drawer(r.s.name,'<div class="rephd"><p class="cap">'+esc(cname(ST[c].name))+' · '+esc(T.name)+', '+esc(repRange(T))+(r.act?'':' · no lessons recorded')+'</p><span class="repacts">'
   +(repAdmin()?'<button type="button" class="btn sm" data-rmail="one" data-rc="'+esc(c)+'" data-ri="'+i+'">'+REPI.ml+'Email to parent</button>':'')

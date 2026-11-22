@@ -9,7 +9,9 @@ No lessons were recorded for {{ first }} this term.
 {{ pupil }}
 
 Attendance: {{ (attendance ~ " (" ~ att.p ~ " of " ~ att.n ~ " days)") if att else "not recorded yet" }}
-{% for section in sections %}
+{% if level %}Quran level: {{ book }}, level {{ level }}
+{% endif %}{% if passed != "" %}Targets passed this term: {{ passed }}
+{% endif %}{% for section in sections %}
 {{ section.title }}
 {% for row in section.rows %}- {{ row.label }}: {{ (row.grade ~ " out of 5") if row.grade else "no grade" }}
 {% endfor %}{% for label, value in section.notes %}- {{ label }}: {{ value }}
