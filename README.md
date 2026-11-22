@@ -79,6 +79,20 @@ homework (0 to 5, 0 when not done); it is kept with the pupil but doesn't change
 (stored on each pupil by class day; teachers can't change it). The term dates and every number above are the admin's
 **Report settings** under the table (`reports.py`). `node tools/report_check.js` checks the calculations.
 
+### The Reports page and emailing reports
+
+Admins and HeadTeachers have **Reports** in the menu: every class's term grades on one page, a class a section (its
+name, how many pupils had lessons and the class's average Effort), with a search for a class, teacher or pupil. Grades
+can be set there as on a class's tab, and every report can be printed.
+
+The admin emails each pupil's term report to their parents from **Email reports** (or a class's mail icon, or Email
+to parent on one pupil's report). The email carries the school's own name, logo and colour, which the admin sets under
+**School branding** in Report settings, with a small Ilmi tag in its top right corner. Reports go either to the **test
+address** set there (to check them first) or to the **parent email** on each pupil's details (a new detail, also read
+from a "Parent Email" column in the student CSV); pupils without one are skipped. The server finds each address
+itself, sends one email after another, and keeps a record of each (Sent so far). Email needs `RESEND_API_KEY` and
+`MAIL_FROM`; reports are sent from that address as "School name via Ilmi".
+
 ## House points
 
 Every student belongs to one of three houses: **Makkah**, **Al-Aqsa** or

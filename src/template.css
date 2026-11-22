@@ -1964,7 +1964,7 @@ html:not([data-logo]) .ws .tablewrap,html:not([data-logo]) .ws .sheetwrap{box-sh
 
 /* Reports (repDraw): the Quran sheet's look. One row a pupil on hairlines, each grade a 40px box in the score colours,
    Effort first in the class-day lane. A pencil marks a grade the teacher set. */
-#repW{position:relative}
+.repzone{position:relative}
 .repwrap{overflow-x:auto;margin:0 -4px;padding:0 4px}
 .repsheet{width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
 .repsheet thead th{padding:0 8px 8px;font-size:.8125rem;font-weight:500;color:var(--mute);text-align:center;white-space:nowrap;vertical-align:bottom}
@@ -2028,7 +2028,7 @@ html:not([data-logo]) .ws .tablewrap,html:not([data-logo]) .ws .sheetwrap{box-sh
 #repW .toolbar .cap{flex:1 1 160px}
 .repq{display:flex;flex-wrap:wrap;gap:8px}
 .repq label{display:flex;flex-direction:column;gap:2px;font-size:.75rem;color:var(--mute);text-align:center}
-.repq input,.repsets .srow>input{width:76px;text-align:center}
+.repq input,.repsets .srow>input[type="number"]{width:76px;text-align:center}
 @media (max-width:640px){
  .repwrap{overflow:visible}
  .repsheet thead{display:none}
@@ -2048,3 +2048,58 @@ html:not([data-logo]) .ws .tablewrap,html:not([data-logo]) .ws .sheetwrap{box-sh
 }
 @media (pointer:coarse){.repb{width:44px;height:44px}}
 html[data-mode="dark"] .repb.has{color:#1c2230}
+
+/* The Reports page (repSchool): every class's table, a class a section under its name. */
+.repfind{flex:1 1 220px;max-width:320px}
+.repmailb{display:inline-flex;align-items:center;gap:8px;margin-left:4px}
+.repmailb .ic{width:18px;height:18px}
+.repsum{margin:-4px 0 8px}
+.repcls{padding:20px 0 4px;border-top:1px solid var(--line)}
+.repcls:first-of-type{border-top:0;padding-top:8px}
+.repch{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;margin-bottom:10px}
+.repch h2{margin:0;font-family:var(--font-display);font-size:1.25rem;font-weight:600;letter-spacing:-.01em}
+.repch h2 .lk{color:var(--ink);text-decoration-line:none}
+.repch h2 .lk:hover,.repch h2 .lk:focus-visible{color:var(--navy-text);text-decoration-line:underline;text-underline-offset:4px}
+.repch .cap{margin:0}
+.rephd .repacts{display:flex;flex-wrap:wrap;gap:8px}
+.rephd .btn .ic,.repacts .btn .ic{width:16px;height:16px;margin-right:6px;vertical-align:-3px}
+/* Emailing reports (repMail): who to, the email as parents see it, then Send. */
+.repmail{display:flex;flex-direction:column;gap:10px}
+.repmail>.cap{margin:0}
+.repwarn{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding:12px 16px;border-radius:var(--r-lg);background:var(--warn-soft);color:var(--warn-ink)}
+.repwarn b{font-weight:700}.repwarn span{font-size:.875rem;grid-column:1}.repwarn .btn{grid-column:2;grid-row:1/3}
+.repchk{cursor:pointer}
+.repchk input{width:20px;height:20px;accent-color:var(--navy)}
+.repprev{border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;background:var(--surface-2)}
+.repprevh{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--surface)}
+.repprevh label{display:flex;align-items:center;gap:8px;font-size:.8125rem;font-weight:600;color:var(--ink-2)}
+.repprevh select{max-width:220px}
+.repprevh .cap{margin:0;flex:1 1 200px;font-size:.8125rem}
+.repprev iframe{display:block;width:100%;height:560px;border:0;background:#fff}
+.repsend{position:sticky;bottom:-24px;z-index:2;display:flex;justify-content:flex-end;gap:8px;margin:0 -24px;padding:16px 24px;background:var(--surface);border-top:1px solid var(--line)}
+@media (max-width:560px){.repsend{bottom:-16px;margin:0 -16px;padding:12px 16px}}
+.replog{list-style:none;margin:0;padding:0}
+.replog li{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:4px 12px;padding:8px 0;border-top:1px solid var(--line);font-size:.875rem}
+.replog li:first-child{border-top:0}
+.replog li>span:first-child{display:flex;flex-direction:column;min-width:0}
+.replog small{color:var(--mute);font-size:.75rem;overflow:hidden;text-overflow:ellipsis}
+.replog .pill.ok{background:var(--sage-soft);color:var(--sage-ink)}
+.replog .pill.bad{background:var(--bad-soft);color:var(--bad-ink)}
+/* School branding in Report settings: the logo on the brand colour, as the email's band shows it. */
+.repbrand{align-items:center;flex-wrap:nowrap;gap:16px}
+.replogo{flex:none;display:grid;place-items:center;width:88px;height:88px;border-radius:var(--r-lg);background:var(--bc);overflow:hidden}
+.replogo img{width:64px;height:64px;object-fit:contain;border-radius:14px}
+.replogo span{font-size:.75rem;font-weight:600;color:#fff;opacity:.85}
+.repbf{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
+.repbf input[type="text"]{width:100%}
+.repbr{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.repup{cursor:pointer}
+.repcol{display:inline-flex;align-items:center;gap:8px;font-size:.8125rem;font-weight:500;color:var(--ink-2);cursor:pointer}
+.repcol input{width:36px;height:36px;padding:2px;border:1px solid var(--line-2);border-radius:var(--r);background:var(--surface);cursor:pointer}
+.reptest{flex:1 1 220px;min-width:200px;max-width:320px}
+@media (max-width:640px){
+ .repfind{max-width:none;order:3;flex-basis:100%}
+ .repmailb{order:2}
+ .repbrand{flex-wrap:wrap}
+ .repprev iframe{height:480px}
+}

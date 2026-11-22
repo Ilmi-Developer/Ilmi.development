@@ -13,6 +13,7 @@ and a plain-text part (<name>.txt) with the same words. Subjects are here.
 | test             | An admin sends a test email from Manage users.                          |
 | help_reply       | An admin answers a Help or Requests message on FAQs and picks email.    |
 | help_summary     | Sundays at 12:00 London time: the week's Help or Requests (helpdesk.py). |
+| report (own)     | An admin emails term reports from the Reports page (reports.py, which renders and sends it). |
 
 PREVIEWS holds sample details for each email, for the admin preview pages and the tests.
 """

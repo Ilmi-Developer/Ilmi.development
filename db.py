@@ -515,6 +515,22 @@ def _m24_finance_books(db, postgres):
     db.execute(q.replace("?", "%s") if postgres else q, ("General fund", "Money the madrasah can spend on anything", at))
 
 
+def _m25_report_emails(db, postgres):
+    # Term reports emailed to parents from the Reports page (reports.py): one row a report, kept as a record of what
+    # went to whom. status: queued, sent or failed. mode: test (to the test address) or parents.
+    t = _types(postgres)
+    db.execute(f"""CREATE TABLE report_emails (
+        id {t['id']},
+        sent_at BIGINT NOT NULL,
+        term_id TEXT NOT NULL,
+        class_id TEXT NOT NULL,
+        student TEXT NOT NULL,
+        recipient TEXT NOT NULL,
+        mode TEXT NOT NULL,
+        status TEXT NOT NULL,
+        sent_by {t['ref']} REFERENCES users (id) ON DELETE SET NULL)""")
+
+
 def _c1_schools(db, postgres):
     t = _types(postgres)
     # The schools. A school's id names its database: the first school keeps the site's original tables, the
@@ -534,7 +550,7 @@ MIGRATIONS = [_m1_classrooms, _m2_accounts, _m3_tv_screens, _m4_tv_settings, _m5
               _m7_avatars, _m8_tutorial, _m9_tutorial_again, _m10_board_links, _m11_login_codes, _m12_stay_signed_in,
               _m13_presenter_shares, _m14_presenter_links, _m15_trusted_devices, _m16_head_teachers, _m17_dark_mode,
               _m18_assistant, _m19_assistant_tokens, _m20_themes, _m21_site_settings, _m22_schools, _m23_finance,
-              _m24_finance_books]
+              _m24_finance_books, _m25_report_emails]
 # Run after MIGRATIONS on the control database only, and recorded in its `control_migrations`.
 CONTROL_MIGRATIONS = [_c1_schools]
 SCHEMA = re.compile(r"[a-z_][a-z0-9_]{0,62}")

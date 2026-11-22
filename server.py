@@ -51,7 +51,7 @@ from mailer import Mailer
 ROOT = Path(__file__).resolve().parent
 CLASS_ID = re.compile(r"[a-z0-9][a-z0-9-]{0,63}")
 DAY = re.compile(r"\d{4}-\d{2}-\d{2}")
-DETAILS = ("sid", "fid", "gender", "year", "sy", "ist", "dob")
+DETAILS = ("sid", "fid", "gender", "year", "sy", "ist", "dob", "pe")
 # Student IDs given by the school, like SE263; new students get the next one.
 STUDENT_NUMBER = re.compile(r"SE(\d+)", re.IGNORECASE)
 MAX_CLASSES = 500
@@ -84,7 +84,7 @@ ART = {"paper.webp", "wash-band.webp", "wash-cloud.webp", "wash-low.webp", "wash
 # pages can load them before any school is open.
 SHELL_FILES = {"/developer.css", "/menu.js", "/dock.js", "/warm-tooltip.js", "/avatar.js", "/theme.js"}
 # /tv/<token> is a TV screen link; tv.py checks the token.
-PUBLIC_PREFIXES = ("/invite/", "/reset/", "/tv/", "/present/", "/fonts/", "/art/")
+PUBLIC_PREFIXES = ("/invite/", "/reset/", "/tv/", "/present/", "/fonts/", "/art/", "/brand/")
 
 
 def coins(state):
@@ -151,6 +151,9 @@ def valid_student(student, levels, juz_items):
     if not all(isinstance(student.get(k, ""), str) for k in DETAILS):
         return False
     if student.get("dob", "") and not DAY.fullmatch(student["dob"]):
+        return False
+    # A parent's email address ("pe"), where the term report is sent.
+    if student.get("pe", "") and not reports.EMAIL.fullmatch(student["pe"]):
         return False
     # Details changed by hand on the profile ("ed"), which a later CSV upload leaves alone, and the earlier
     # Student IDs and names it had ("xid", "xn"), so the upload still recognises the student.
@@ -516,7 +519,7 @@ def create_app(test_config=None):
         # The font files are public and never change; everything else is private.
         # The logo is public too, and email apps fetch it for every email they show.
         # A profile picture sets its own (private) caching, as its address changes with the picture.
-        if not (request.path.startswith(("/avatar/", "/theme-photo/", "/theme.css")) and response.status_code == 200):
+        if not (request.path.startswith(("/avatar/", "/theme-photo/", "/theme.css", "/brand/")) and response.status_code == 200):
             response.headers["Cache-Control"] = "public, max-age=604800" if (request.path.startswith(("/fonts/", "/art/"))
             or request.path in ("/logo.png", "/favicon.png", "/favicon.ico")) and response.status_code == 200 else "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
@@ -663,10 +666,13 @@ def create_app(test_config=None):
         with database.transaction() as tx:
             toured = tx.execute("SELECT tour_done FROM users WHERE id = ?", (g.user["id"],)).fetchone()["tour_done"]
             report_settings = reports.read(tx)
+            brand = reports.brand(tx) if g.user["role"] in ("admin", "head") else None
         me = {"name": g.user["name"], "email": g.user["email"], "role": g.user["role"], "csrf": g.session["csrf"],
               "fresh": fresh, "stay": g.session["remember"], "initial": avatars.initial(g.user["name"]),
               "avatar": avatars.url(g.user["id"], g.user["avatar_at"]),
               "tour": not toured, "assistant": assistant.enabled(app), "reports": report_settings}
+        if brand is not None:
+            me["brand"] = brand
         # The developer's bar: the school they have opened and the view they chose (railway-storage.js draws it).
         bar = schools.developer_bar()
         if bar:

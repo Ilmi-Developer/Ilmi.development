@@ -2673,7 +2673,7 @@ html:not([data-logo]) .ws .tablewrap,html:not([data-logo]) .ws .sheetwrap{box-sh
 
 /* Reports (repDraw): the Quran sheet's look. One row a pupil on hairlines, each grade a 40px box in the score colours,
    Effort first in the class-day lane. A pencil marks a grade the teacher set. */
-#repW{position:relative}
+.repzone{position:relative}
 .repwrap{overflow-x:auto;margin:0 -4px;padding:0 4px}
 .repsheet{width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
 .repsheet thead th{padding:0 8px 8px;font-size:.8125rem;font-weight:500;color:var(--mute);text-align:center;white-space:nowrap;vertical-align:bottom}
@@ -2737,7 +2737,7 @@ html:not([data-logo]) .ws .tablewrap,html:not([data-logo]) .ws .sheetwrap{box-sh
 #repW .toolbar .cap{flex:1 1 160px}
 .repq{display:flex;flex-wrap:wrap;gap:8px}
 .repq label{display:flex;flex-direction:column;gap:2px;font-size:.75rem;color:var(--mute);text-align:center}
-.repq input,.repsets .srow>input{width:76px;text-align:center}
+.repq input,.repsets .srow>input[type="number"]{width:76px;text-align:center}
 @media (max-width:640px){
  .repwrap{overflow:visible}
  .repsheet thead{display:none}
@@ -2757,6 +2757,61 @@ html:not([data-logo]) .ws .tablewrap,html:not([data-logo]) .ws .sheetwrap{box-sh
 }
 @media (pointer:coarse){.repb{width:44px;height:44px}}
 html[data-mode="dark"] .repb.has{color:#1c2230}
+
+/* The Reports page (repSchool): every class's table, a class a section under its name. */
+.repfind{flex:1 1 220px;max-width:320px}
+.repmailb{display:inline-flex;align-items:center;gap:8px;margin-left:4px}
+.repmailb .ic{width:18px;height:18px}
+.repsum{margin:-4px 0 8px}
+.repcls{padding:20px 0 4px;border-top:1px solid var(--line)}
+.repcls:first-of-type{border-top:0;padding-top:8px}
+.repch{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;margin-bottom:10px}
+.repch h2{margin:0;font-family:var(--font-display);font-size:1.25rem;font-weight:600;letter-spacing:-.01em}
+.repch h2 .lk{color:var(--ink);text-decoration-line:none}
+.repch h2 .lk:hover,.repch h2 .lk:focus-visible{color:var(--navy-text);text-decoration-line:underline;text-underline-offset:4px}
+.repch .cap{margin:0}
+.rephd .repacts{display:flex;flex-wrap:wrap;gap:8px}
+.rephd .btn .ic,.repacts .btn .ic{width:16px;height:16px;margin-right:6px;vertical-align:-3px}
+/* Emailing reports (repMail): who to, the email as parents see it, then Send. */
+.repmail{display:flex;flex-direction:column;gap:10px}
+.repmail>.cap{margin:0}
+.repwarn{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding:12px 16px;border-radius:var(--r-lg);background:var(--warn-soft);color:var(--warn-ink)}
+.repwarn b{font-weight:700}.repwarn span{font-size:.875rem;grid-column:1}.repwarn .btn{grid-column:2;grid-row:1/3}
+.repchk{cursor:pointer}
+.repchk input{width:20px;height:20px;accent-color:var(--navy)}
+.repprev{border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;background:var(--surface-2)}
+.repprevh{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--surface)}
+.repprevh label{display:flex;align-items:center;gap:8px;font-size:.8125rem;font-weight:600;color:var(--ink-2)}
+.repprevh select{max-width:220px}
+.repprevh .cap{margin:0;flex:1 1 200px;font-size:.8125rem}
+.repprev iframe{display:block;width:100%;height:560px;border:0;background:#fff}
+.repsend{position:sticky;bottom:-24px;z-index:2;display:flex;justify-content:flex-end;gap:8px;margin:0 -24px;padding:16px 24px;background:var(--surface);border-top:1px solid var(--line)}
+@media (max-width:560px){.repsend{bottom:-16px;margin:0 -16px;padding:12px 16px}}
+.replog{list-style:none;margin:0;padding:0}
+.replog li{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:4px 12px;padding:8px 0;border-top:1px solid var(--line);font-size:.875rem}
+.replog li:first-child{border-top:0}
+.replog li>span:first-child{display:flex;flex-direction:column;min-width:0}
+.replog small{color:var(--mute);font-size:.75rem;overflow:hidden;text-overflow:ellipsis}
+.replog .pill.ok{background:var(--sage-soft);color:var(--sage-ink)}
+.replog .pill.bad{background:var(--bad-soft);color:var(--bad-ink)}
+/* School branding in Report settings: the logo on the brand colour, as the email's band shows it. */
+.repbrand{align-items:center;flex-wrap:nowrap;gap:16px}
+.replogo{flex:none;display:grid;place-items:center;width:88px;height:88px;border-radius:var(--r-lg);background:var(--bc);overflow:hidden}
+.replogo img{width:64px;height:64px;object-fit:contain;border-radius:14px}
+.replogo span{font-size:.75rem;font-weight:600;color:#fff;opacity:.85}
+.repbf{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
+.repbf input[type="text"]{width:100%}
+.repbr{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.repup{cursor:pointer}
+.repcol{display:inline-flex;align-items:center;gap:8px;font-size:.8125rem;font-weight:500;color:var(--ink-2);cursor:pointer}
+.repcol input{width:36px;height:36px;padding:2px;border:1px solid var(--line-2);border-radius:var(--r);background:var(--surface);cursor:pointer}
+.reptest{flex:1 1 220px;min-width:200px;max-width:320px}
+@media (max-width:640px){
+ .repfind{max-width:none;order:3;flex-basis:100%}
+ .repmailb{order:2}
+ .repbrand{flex-wrap:wrap}
+ .repprev iframe{height:480px}
+}
 </style></head><body>
 <a class="skip" href="#main">Skip to main content</a>
 <div class="shell">
@@ -2772,6 +2827,7 @@ html[data-mode="dark"] .repb.has{color:#1c2230}
   <button class="nav" id="nL" type="button"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>Classes</button>
   <button class="nav" id="nH" type="button"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 13.5A8.5 8.5 0 1 1 10.5 3.5v10z"/><path d="M14 3.2A8.5 8.5 0 0 1 20.8 10H14z"/></svg>House points</button>
   <button class="nav" id="nK" type="button"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5a2.5 2.5 0 0 0 2.5 4"/><path d="M17 6h2.5a2.5 2.5 0 0 1-2.5 4"/></svg>Rankings</button>
+  <button class="nav" id="nP" type="button"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M3.5 9.5h17"/><path d="M3.5 15h17"/><path d="M9.5 9.5v11"/></svg><span>Reports</span></button>
   <button class="nav" id="nB" type="button" hidden title="Show a class's month on the big screen, in a new tab: tops, rankings and the house race"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="m10.5 7.8 4 2.2-4 2.2z"/><path d="M12 16v4"/><path d="M8 20h8"/></svg>Presenter</button>
   <button class="nav" id="nA" type="button" hidden title="Ask Ilmi’s assistant about the site, the syllabus or Islam"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.8C9.6 5.2 6.4 4.8 3.5 5.6v8.6c2.9-.8 6.1-.4 8.5 1.2 2.4-1.6 5.6-2 8.5-1.2V5.6c-2.9-.8-6.1-.4-8.5 1.2z"/><path d="M12 6.8v8.6"/><path d="m7 16.8 10 3.7M17 16.8 7 20.5"/></svg>Ask Ilmi</button>
   <button class="nav" id="nU" type="button"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 9 12 4.5 21.5 9 12 13.5z"/><path d="M6.5 11.2v4.3c1.5 1.5 3.4 2.2 5.5 2.2s4-.7 5.5-2.2v-4.3"/><path d="M21.5 9v5"/></svg>Students</button>
@@ -2813,6 +2869,7 @@ ST002,Yusuf Ali,Male,Year 4,Yr4-B-QM-Sr Zainab,Yr4-B-AI-Br Idris</div>
 <section id="vR" class="ws hide" aria-labelledby="ttl"><div class="recf" id="recF"></div></section>
 <section id="vH" class="ws hide" aria-labelledby="ttl"><div id="hpW"></div></section>
 <section id="vK" class="ws hide" aria-labelledby="ttl"><div id="rkW"></div></section>
+<section id="vP" class="ws hide" aria-labelledby="ttl"><div id="repSW" class="repzone"></div></section>
 <section id="vA" class="ws hide" aria-labelledby="ttl"><div id="aiW"></div></section>
 
 <section id="vQ" class="ws hide" role="tabpanel" aria-labelledby="tQ">
@@ -2867,7 +2924,7 @@ ST002,Yusuf Ali,Male,Year 4,Yr4-B-QM-Sr Zainab,Yr4-B-AI-Br Idris</div>
 </section>
 
 
-<section id="vG" class="ws hide" role="tabpanel" aria-labelledby="tG"><div id="repW"></div></section>
+<section id="vG" class="ws hide" role="tabpanel" aria-labelledby="tG"><div id="repW" class="repzone"></div></section>
 
 <section id="vS" class="ws hide" role="tabpanel" aria-labelledby="tS">
  <div class="sets">
@@ -2996,7 +3053,7 @@ function fromHash(h){if(!h)return null;if(h==="classes")return ["L"];
  /* From Account: "Retake the tutorial" (the Tutorial, near the end). */
  if(h==="tour"){TOURQ=true;return ["M"]}
  /* From the Import page: Classes with "Upload students from a CSV file" open. */
- if(h==="upload-students"&&!STAFF){setTimeout(function(){var u=$("up");if(u){u.open=true;u.scrollIntoView({block:"start"})}},0);return ["L"]}if(h==="students")return ["U"];if(h==="house-points")return [TEACHER?"M":"H"];if(h==="rankings")return [TEACHER?"M":"K"];if(h==="record")return [TEACHER?"M":"R"];
+ if(h==="upload-students"&&!STAFF){setTimeout(function(){var u=$("up");if(u){u.open=true;u.scrollIntoView({block:"start"})}},0);return ["L"]}if(h==="students")return ["U"];if(h==="house-points")return [TEACHER?"M":"H"];if(h==="rankings")return [TEACHER?"M":"K"];if(h==="reports")return [TEACHER?"M":"P"];if(h==="record")return [TEACHER?"M":"R"];
  /* From an admin page's menu: Presenter's class picker over the overview. */
  if(h==="presenter"){setTimeout(presenter,0);return ["M"]}
  /* From an admin page's Search (or Ctrl+K there): the search over the overview. */
@@ -3277,7 +3334,7 @@ function refill(el,html){var a=document.activeElement,key=null;
  el.innerHTML=html;
  if(key){var n=el.querySelector(key);if(n)n.focus()}}
 var DMODE="";
-function details(s){return [["Student ID",s.sid],["Family ID",s.fid],["Date of birth",dobText(s.dob)],["Year group",s.sy],["Gender",s.gender],["House",s.house],["Arabic and Islamic Studies Class",s.ist],["Quran level",s.qa?qaLab(s.qa):""]].map(function(x){return '<dt>'+x[0]+'</dt><dd>'+esc(x[1]||"Not recorded")+'</dd>'}).join("")}
+function details(s){return [["Student ID",s.sid],["Family ID",s.fid],["Parent email",s.pe],["Date of birth",dobText(s.dob)],["Year group",s.sy],["Gender",s.gender],["House",s.house],["Arabic and Islamic Studies Class",s.ist],["Quran level",s.qa?qaLab(s.qa):""]].map(function(x){return '<dt>'+x[0]+'</dt><dd>'+esc(x[1]||"Not recorded")+'</dd>'}).join("")}
 /* Details, history, rename and remove from a student's Memo profile. */
 document.addEventListener("click",function(e){var bt=e.target.closest("[data-a]");if(!bt||!bt.closest("#drwB"))return;var a=bt.dataset.a,i=+bt.dataset.i,s=S[i],c=CID;if(!s)return;
  var nm=fn(s);
@@ -4263,101 +4320,177 @@ function repCalc(L,T,C,focus,dayOf){
 /* "2 passed · on L3 T4", or Complete once the last target is passed. last: the last target's position. */
 function repNote(memo,last,label){return plural(memo.passed,"target")+" passed · "+(memo.end>=last?"Complete":"on "+label(memo.end+1))}
 /* REPORT-CALC END */
-var REPT="",REPK="q",REPP=null;
+var REPT="",REPK="q",REPP=null,REPF="";
 /* The Reports tab looks like the Quran sheet it comes from: one row a pupil, each grade a 40px box in the score
    colours, Effort first in the class-day lane as the grade that sums up the rest. A box opens the same picker as a
    Quran score (a sheet from the bottom on phones). A grade the teacher set carries a small pencil; "Worked out"
    in the picker gives it back. Print, Report settings (the admin's) and the rules ("?") sit in the toolbar's tools,
-   as on the Quran tab; a pupil's name opens their term report, laid out like Statistics, which prints like it. */
+   as on the Quran tab; a pupil's name opens their term report, laid out like Statistics, which prints like it.
+   The admin's and HeadTeachers' Reports page (repSchool, in the menu) shows the same table for every class, a class a
+   section, and the admin emails the reports to parents from it (repMail). */
 var REPI={pr:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3.5h10V9"/><rect x="3.5" y="9" width="17" height="8" rx="2"/><path d="M7 14h10v6.5H7z"/></svg>',
  st:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>',
+ ml:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/></svg>',
  pen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19h3.5L18 9.5a2.5 2.5 0 0 0-3.5-3.5L5 15.5z"/></svg>'};
 /* Short column heads; the full names are in the report and in each box's label. */
 var REPH={ef:"Effort",mb:"Manners",hw:"Homework",pr:"Pronunciation",fl:"Fluency",cp:"Participation",pg:"Progress"};
 function repSet(){return window.ME&&ME.reports&&ME.reports.terms?ME.reports:REPD}
+function repAdmin(){return !!(window.RAILWAY&&window.ME&&ME.role==="admin")}
 /* The term shown: the one chosen, else the latest that has started, else the first. */
 function repTerm(){var T=repSet().terms,t=dk(Date.now()),pick=null;T.forEach(function(x){if(x.id===REPT)pick=x});if(pick)return pick;
  pick=T[0];T.forEach(function(x){if(x.from<=t)pick=x});REPT=pick.id;return pick}
 function repDay(k,y){var p=k.split("-");return new Date(+p[0],+p[1]-1,+p[2],12).toLocaleDateString("en-GB",y?{day:"numeric",month:"short",year:"numeric"}:{day:"numeric",month:"short"})}
 function repRange(T){return repDay(T.from,T.from.slice(0,4)!==T.to.slice(0,4))+' to '+repDay(T.to,1)}
-function repRows(){return repCalc(S,repTerm(),repSet(),FOCUS,dk)}
+function repRows(c){return repCalc(ST[c]?ST[c].S:[],repTerm(),repSet(),FOCUS,dk)}
 function repCols(k){return k==="q"?REPQ:REPM}
-function repLab(key){return (REPK==="q"?REPQ:REPM).filter(function(c){return c[0]===key})[0][1]}
+function repLab(k,key){return repCols(k).filter(function(c){return c[0]===key})[0][1]}
+/* "Level 2, target 3", a Juz item as it is written, or Book complete. */
+function repNow(memo){if(memo.end>=NB-1)return "Book complete";var n=memo.end+1,m=/^L(\d+) T(\d+)$/.exec(bl(n));return m?"Level "+m[1]+", target "+m[2]:bl(n)}
 function repExtra(r,k){return k==="q"?(r.focus?esc(r.focus.f)+' <small>'+r.focus.n+'×</small>':''):(r.act?esc(repNote(r.memo,NB-1,bl)):'')}
 /* One grade box. sm: the smaller, static box of a report. */
-function repBox(r,i,k,key,sm){var g=r[k],f=g.f[key],c=g.c[key],ov=g.o[key]!=null,lab=repCols(k).filter(function(x){return x[0]===key})[0][1];
+function repBox(c,r,i,k,key,sm){var g=r[k],f=g.f[key],cv=g.c[key],ov=g.o[key]!=null,lab=repLab(k,key);
  var inner=(f==null?'<span aria-hidden="true">–</span>':f)+(ov?'<i class="repov" aria-hidden="true">'+REPI.pen+'</i>':'');
  if(sm)return '<span class="repb sm'+(f==null?'':' has')+(ov?' ov':'')+'"'+(f==null?'':' style="--c:'+QC[f]+'"')+'>'+inner+'</span>';
- return '<button type="button" class="repb'+(f==null?'':' has')+(ov?' ov':'')+'" data-ri="'+i+'" data-rg="'+key+'"'+(f==null?'':' style="--c:'+QC[f]+'"')+' aria-haspopup="true" aria-expanded="false"'
-  +' aria-label="'+esc(lab+' for '+r.s.name+': '+(f==null?'no grade':f+' out of 5')+(ov?', set by you, worked out '+(c==null?'as blank':c):'')+'. Change')+'"'
-  +' title="'+esc(ov?'You set this. Worked out: '+(c==null?'none':c):f==null?'Not enough records this term':'Worked out from this term\'s records')+'">'+inner+'</button>'}
-function repDraw(){var w=$("repW");if(!w||!CID)return;repPickClose();var C=repSet(),T=repTerm(),R=repRows(),cols=repCols(REPK),act=R.filter(function(r){return r.act}).length,
-  foc=document.activeElement&&w.contains(document.activeElement)?document.activeElement:null,fk=foc&&foc.dataset?(foc.dataset.ri||"")+"|"+(foc.dataset.rg||"")+"|"+(foc.dataset.rt||foc.dataset.rk||""):"",
-  admin=window.RAILWAY&&window.ME&&ME.role==="admin";
- var h='<div class="toolbar"><div class="seg" id="repTs" role="group" aria-label="Term">'+C.terms.map(function(x){return '<button type="button" data-rt="'+esc(x.id)+'" aria-pressed="'+(x.id===T.id)+'">'+esc(x.name)+'</button>'}).join("")+'</div>'
-  +'<div class="seg" id="repKs" role="group" aria-label="Subject"><button type="button" data-rk="q" aria-pressed="'+(REPK==="q")+'">Quran</button><button type="button" data-rk="m" aria-pressed="'+(REPK==="m")+'">Memorisation</button></div>'
-  +'<p class="cap">'+esc(repRange(T))+' · <b>'+act+'</b> of '+plural(S.length,"pupil")+' with lessons</p>'
-  +'<div class="tools"><button type="button" class="ibtn" id="repPrintAll" aria-label="Print the term reports for the class" title="Print term reports"'+(S.length?'':' disabled')+'>'+REPI.pr+'</button>'
-  +(admin?'<button type="button" class="ibtn" id="repSetB" aria-haspopup="dialog" aria-label="Report settings" title="Report settings">'+REPI.st+'</button>':'')
-  +'<details class="help"><summary aria-label="How the report grades work">?</summary><div class="hb"><p>Every grade is worked out from what the class recorded between the term\'s first and last day. Effort is the average of the other four, to the nearest whole grade.</p>'
-  +'<p>Tap a grade (or select it and type 1 to 5) to give your own. A pencil marks the grades you set; <b>Worked out</b> in the picker, or Backspace, gives the grade back.</p>'
-  +'<p>Pupils with no lessons recorded this term get no grades and aren\'t counted in the class averages. Attendance comes from Journey 2 Jannah.</p></div></details></div></div>';
- if(!S.length){w.innerHTML=h+'<p class="none repnone">No students yet. An admin adds them on the Students page.</p>';return}
- h+='<div class="repwrap"><table class="repsheet"><caption class="sr-only">'+(REPK==="q"?"Quran":"Memorisation")+' report grades, '+esc(T.name)+'</caption><thead><tr><th scope="col" class="repn">Pupil</th>'
-  +cols.map(function(c){return '<th scope="col" class="'+(c[0]==="ef"?'repe':'repg')+'" title="'+esc(c[1])+'">'+esc(REPH[c[0]])+'</th>'}).join("")
+ return '<button type="button" class="repb'+(f==null?'':' has')+(ov?' ov':'')+'" data-rc="'+esc(c)+'" data-ri="'+i+'" data-rg="'+key+'"'+(f==null?'':' style="--c:'+QC[f]+'"')+' aria-haspopup="true" aria-expanded="false"'
+  +' aria-label="'+esc(lab+' for '+r.s.name+': '+(f==null?'no grade':f+' out of 5')+(ov?', set by you, worked out '+(cv==null?'as blank':cv):'')+'. Change')+'"'
+  +' title="'+esc(ov?'You set this. Worked out: '+(cv==null?'none':cv):f==null?'Not enough records this term':'Worked out from this term\'s records')+'">'+inner+'</button>'}
+/* The table of one class: a row a pupil. */
+function repTable(c,R){var cols=repCols(REPK),T=repTerm();
+ var h='<div class="repwrap"><table class="repsheet"><caption class="sr-only">'+esc(cname(ST[c].name))+', '+(REPK==="q"?"Quran":"Memorisation")+' report grades, '+esc(T.name)+'</caption><thead><tr><th scope="col" class="repn">Pupil</th>'
+  +cols.map(function(x){return '<th scope="col" class="'+(x[0]==="ef"?'repe':'repg')+'" title="'+esc(x[1])+'">'+esc(REPH[x[0]])+'</th>'}).join("")
   +'<th scope="col" class="repa">Attendance</th><th scope="col" class="repx">'+(REPK==="q"?'Focus for next term':'This term')+'</th></tr></thead><tbody>';
- R.forEach(function(r,i){var x=repExtra(r,REPK);
-  h+='<tr'+(r.act?'':' class="off"')+'><th scope="row" class="repn"><button type="button" class="lk" data-rp="'+i+'" aria-haspopup="dialog">'+esc(r.s.name)+'</button>'+(r.act?'':'<small>No lessons this term</small>')+'</th>'
-   +cols.map(function(c){return '<td class="'+(c[0]==="ef"?'repe':'repg')+'" data-l="'+esc(REPH[c[0]])+'">'+repBox(r,i,REPK,c[0])+'</td>'}).join("")
+ R.forEach(function(r,i){if(r.hide)return;var x=repExtra(r,REPK);
+  h+='<tr'+(r.act?'':' class="off"')+'><th scope="row" class="repn"><button type="button" class="lk" data-rc="'+esc(c)+'" data-rp="'+i+'" aria-haspopup="dialog">'+esc(r.s.name)+'</button>'+(r.act?'':'<small>No lessons this term</small>')+'</th>'
+   +cols.map(function(x){return '<td class="'+(x[0]==="ef"?'repe':'repg')+'" data-l="'+esc(REPH[x[0]])+'">'+repBox(c,r,i,REPK,x[0])+'</td>'}).join("")
    +'<td class="repa">'+(r.att?'<b>'+r.att.pct+'%</b><small>'+r.att.p+' of '+r.att.n+'</small>':'<span class="mute">–</span>')+'</td>'
    +'<td class="repx">'+(x||'<span class="mute">–</span>')+'</td></tr>'});
- w.innerHTML=h+'</tbody></table></div>';
- if(fk){var n=fk.split("|"),el=n[0]&&n[1]?w.querySelector('.repb[data-ri="'+n[0]+'"][data-rg="'+n[1]+'"]'):n[2]?w.querySelector('[data-rt="'+n[2]+'"],[data-rk="'+n[2]+'"]'):null;if(el)el.focus()}}
+ return h+'</tbody></table></div>'}
+function repHelp(){return '<details class="help"><summary aria-label="How the report grades work">?</summary><div class="hb"><p>Every grade is worked out from what the class recorded between the term\'s first and last day. Effort is the average of the other four, to the nearest whole grade.</p>'
+ +'<p>Tap a grade (or select it and type 1 to 5) to give your own. A pencil marks the grades you set; <b>Worked out</b> in the picker, or Backspace, gives the grade back.</p>'
+ +'<p>Pupils with no lessons recorded this term get no grades and aren\'t counted in the class averages. Attendance comes from Journey 2 Jannah.</p></div></details>'}
+function repSegs(){var C=repSet(),T=repTerm();return '<div class="seg" data-rs="t" role="group" aria-label="Term">'+C.terms.map(function(x){return '<button type="button" data-rt="'+esc(x.id)+'" aria-pressed="'+(x.id===T.id)+'">'+esc(x.name)+'</button>'}).join("")+'</div>'
+ +'<div class="seg" data-rs="k" role="group" aria-label="Subject"><button type="button" data-rk="q" aria-pressed="'+(REPK==="q")+'">Quran</button><button type="button" data-rk="m" aria-pressed="'+(REPK==="m")+'">Memorisation</button></div>'}
+/* Focus stays where it was when a table is drawn again. */
+function repFocusKey(w){var f=document.activeElement&&w.contains(document.activeElement)?document.activeElement:null;return f&&f.dataset?[f.dataset.rc||"",f.dataset.ri||"",f.dataset.rg||"",f.dataset.rt||f.dataset.rk||"",f.id||""]:null}
+function repFocusBack(w,k){if(!k)return;var el=k[2]?w.querySelector('.repb[data-rc="'+k[0]+'"][data-ri="'+k[1]+'"][data-rg="'+k[2]+'"]'):k[3]?w.querySelector('[data-rt="'+k[3]+'"],[data-rk="'+k[3]+'"]'):k[4]?$(k[4]):null;if(el)el.focus()}
+function repDraw(){var w=$("repW");if(!w||!CID)return;repPickClose();var T=repTerm(),R=repRows(CID),act=R.filter(function(r){return r.act}).length,fk=repFocusKey(w);
+ var h='<div class="toolbar">'+repSegs()+'<p class="cap">'+esc(repRange(T))+' · <b>'+act+'</b> of '+plural(S.length,"pupil")+' with lessons</p>'
+  +'<div class="tools"><button type="button" class="ibtn" data-rprint="class" aria-label="Print the term reports for the class" title="Print term reports"'+(S.length?'':' disabled')+'>'+REPI.pr+'</button>'
+  +(repAdmin()?'<button type="button" class="ibtn" data-rmail="class" aria-haspopup="dialog" aria-label="Email the term reports for the class" title="Email term reports"'+(S.length?'':' disabled')+'>'+REPI.ml+'</button><button type="button" class="ibtn" data-rset="1" aria-haspopup="dialog" aria-label="Report settings" title="Report settings">'+REPI.st+'</button>':'')
+  +repHelp()+'</div></div>';
+ w.innerHTML=h+(S.length?repTable(CID,R):'<p class="none repnone">No students yet. An admin adds them on the Students page.</p>');repFocusBack(w,fk)}
+/* The whole school: every class's table, a class a section, with its teacher's class name as the heading, how many
+   pupils had lessons and the class's average Effort. The search narrows it to classes, teachers or pupils. */
+function repClasses(){return CIDS.slice().sort(function(a,b){return cname(ST[a].name).localeCompare(cname(ST[b].name),undefined,{numeric:true,sensitivity:"base"})})}
+function repSchool(){var w=$("repSW");if(!w)return;repPickClose();var T=repTerm(),fk=repFocusKey(w),q=nkey(REPF),all=0,acts=0,shown=0,body="";
+ repClasses().forEach(function(c){var R=repRows(c),cn=cname(ST[c].name),hitC=!q||nkey(cn).indexOf(q)>=0||nkey(ST[c].name).indexOf(q)>=0;
+  R.forEach(function(r){r.hide=!hitC&&nkey(r.s.name).indexOf(q)<0});var V=R.filter(function(r){return !r.hide});
+  all+=R.length;acts+=R.filter(function(r){return r.act}).length;if(!V.length)return;shown++;
+  var A=R.filter(function(r){return r.act}),ef=A.map(function(r){return r[REPK].f.ef}).filter(function(v){return v!=null}),av=ef.length?(ef.reduce(function(a,b){return a+b},0)/ef.length).toFixed(1):"–";
+  body+='<section class="repcls" aria-label="'+esc(cn)+'"><div class="repch"><h2><button type="button" class="lk" data-open="'+esc(c)+'" data-tab="G">'+esc(cn)+'</button></h2>'
+   +'<p class="cap"><b>'+A.length+'</b> of '+plural(R.length,"pupil")+' with lessons · average Effort <b>'+av+'</b></p></div>'+(R.length?repTable(c,R):'<p class="none">No students yet.</p>')+'</section>'});
+ var h='<div class="toolbar">'+repSegs()+'<input type="search" class="repfind" id="repQ" placeholder="Find a class, teacher or pupil…" aria-label="Find a class, teacher or pupil" autocomplete="off" value="'+esc(REPF)+'">'
+  +'<div class="tools"><button type="button" class="ibtn" data-rprint="all" aria-label="Print every term report" title="Print every term report"'+(all?'':' disabled')+'>'+REPI.pr+'</button>'
+  +(repAdmin()?'<button type="button" class="ibtn" data-rset="1" aria-haspopup="dialog" aria-label="Report settings" title="Report settings">'+REPI.st+'</button>':'')+repHelp()
+  +(repAdmin()?'<button type="button" class="btn p sm repmailb" data-rmail="all" aria-haspopup="dialog"'+(all?'':' disabled')+'>'+REPI.ml+'Email reports</button>':'')+'</div></div>'
+  +'<p class="cap repsum">'+esc(T.name)+', '+esc(repRange(T))+' · '+plural(CIDS.length,"class","classes")+' · <b>'+acts+'</b> of '+plural(all,"pupil")+' with lessons</p>';
+ w.innerHTML=h+(shown?body:'<p class="none repnone">'+(CIDS.length?'Nothing matches “'+esc(REPF)+'”.':'No classes yet.')+'</p>');
+ repFocusBack(w,fk);if(fk&&fk[4]==="repQ"){var i=$("repQ");i.setSelectionRange(i.value.length,i.value.length)}}
+function repRedraw(){if(PAGE==="P")repSchool();else repDraw()}
+function repZone(){return PAGE==="P"?$("repSW"):$("repW")}
 /* A teacher's grade: set it, or 0 for the worked-out one again. Empty term and subject entries are taken away. */
-function repOver(i,key,v){var s=S[i],T=repTerm();if(!s)return;if(!s.ro)s.ro={};var t=s.ro[T.id]||(s.ro[T.id]={}),g=t[REPK]||(t[REPK]={});
+function repOver(c,i,key,v){var s=ST[c]&&ST[c].S[i],T=repTerm();if(!s)return;if(!s.ro)s.ro={};var t=s.ro[T.id]||(s.ro[T.id]={}),g=t[REPK]||(t[REPK]={});
  if(v)g[key]=v;else delete g[key];if(!Object.keys(g).length)delete t[REPK];if(!Object.keys(t).length)delete s.ro[T.id];if(!Object.keys(s.ro).length)delete s.ro;
- save();repDraw();var b=$("repW").querySelector('.repb[data-ri="'+i+'"][data-rg="'+key+'"]');if(b){b.focus();repDrop(b)}}
+ persist(c);repRedraw();var b=repZone().querySelector('.repb[data-rc="'+c+'"][data-ri="'+i+'"][data-rg="'+key+'"]');if(b){b.focus();repDrop(b)}}
 function repDrop(b){if(QM.matches||!b.classList.contains("has"))return;b.classList.add("drop");setTimeout(function(){b.classList.remove("drop")},900)}
 /* The grade picker: 1 to 5 in the score colours, beside the box like a Quran score's (a bottom sheet under 600px). */
 function repPickClose(back){var p=$("repPop");if(p)p.remove();if(REPP){REPP.setAttribute("aria-expanded","false");if(back&&document.contains(REPP))REPP.focus()}REPP=null}
-function repPick(btn){repPickClose();var R=repRows(),i=+btn.dataset.ri,key=btn.dataset.rg,r=R[i];if(!r)return;
- var g=r[REPK],f=g.f[key],c=g.c[key],ov=g.o[key]!=null,lab=repLab(key),W=$("repW");REPP=btn;
+function repPick(btn){repPickClose();var c=btn.dataset.rc,i=+btn.dataset.ri,key=btn.dataset.rg,r=repRows(c)[i];if(!r)return;
+ var g=r[REPK],f=g.f[key],cv=g.c[key],ov=g.o[key]!=null,lab=repLab(REPK,key),W=btn.closest(".repzone");REPP=btn;
  var bs=[1,2,3,4,5].map(function(n){return '<button type="button" data-rv="'+n+'" style="--c:'+QC[n]+'" aria-pressed="'+(f===n)+'">'+n+'</button>'}).join("")
-  +(ov?'<button type="button" class="qclr" data-rv="0">Worked out'+(c==null?'':' <b>'+c+'</b>')+'</button>':'');
+  +(ov?'<button type="button" class="qclr" data-rv="0">Worked out'+(cv==null?'':' <b>'+cv+'</b>')+'</button>':'');
  var p=document.createElement("div");p.id="repPop";
  if(matchMedia("(max-width:599.98px)").matches){p.className="qpop qsheet repop";
-  p.innerHTML='<div class="qsc" data-rx aria-hidden="true"></div><div class="qscard" role="group" aria-label="'+esc(lab+' for '+r.s.name)+'"><div class="qsh"><b>'+esc(r.s.name)+'</b><small>'+esc(lab)+(ov?' · worked out '+(c==null?'–':c):'')+'</small></div><div class="qsb">'+bs+'</div></div>';W.appendChild(p)}
+  p.innerHTML='<div class="qsc" data-rx aria-hidden="true"></div><div class="qscard" role="group" aria-label="'+esc(lab+' for '+r.s.name)+'"><div class="qsh"><b>'+esc(r.s.name)+'</b><small>'+esc(lab)+(ov?' · worked out '+(cv==null?'–':cv):'')+'</small></div><div class="qsb">'+bs+'</div></div>';W.appendChild(p)}
  else{p.className="qpop repop";p.setAttribute("role","group");p.setAttribute("aria-label",lab+" for "+r.s.name);p.innerHTML=bs;W.appendChild(p);
   var a=btn.getBoundingClientRect(),o=W.getBoundingClientRect(),x=a.right-o.left+8;if(x+p.offsetWidth>W.clientWidth)x=Math.max(0,a.left-o.left-p.offsetWidth-8);
   p.style.left=x+"px";p.style.top=(a.top-o.top+(a.height-p.offsetHeight)/2)+"px"}
  btn.setAttribute("aria-expanded","true");(p.querySelector('[aria-pressed="true"]')||p.querySelector("[data-rv]")).focus({preventScroll:true})}
 /* One pupil's term report: figures like Statistics, then a card a subject. */
-function repFigs(r){var q=r.q.f.ef,m=r.m.f.ef,end=r.memo.end>=NB-1;
+function repFigs(r){var q=r.q.f.ef,m=r.m.f.ef;
  var F=[["Attendance",r.att?r.att.pct+"%":"–",r.att?r.att.p+" of "+plural(r.att.n,"day"):"From Journey 2 Jannah","mi"],["Quran effort",q==null?"–":q,"out of 5","co"],
-  ["Memorisation effort",m==null?"–":m,"out of 5","sk"],["Targets passed",r.act?r.memo.passed:"–",r.act?(end?"Book complete":"now on "+bl(r.memo.end+1)):"no lessons","la"],
+  ["Memorisation effort",m==null?"–":m,"out of 5","sk"],["Targets passed",r.act?r.memo.passed:"–",r.act?repNow(r.memo):"no lessons","la"],
   ["Quran level",r.s.qa?r.s.qa:"–",r.s.qa?(r.s.qa>QBOOK?"Tajweed Book":"Qaidah Book"):"not tested yet","bu"],["Focus next term",r.focus?r.focus.f:"–",r.focus?"ticked on "+plural(r.focus.n,"level test"):"none ticked","pe"]];
  return '<div class="sxfig">'+F.map(function(f,i){return '<div class="sxf '+f[3]+'" style="--i:'+i+'"><span>'+f[0]+'</span><b title="'+esc(String(f[1]))+'">'+esc(String(f[1]))+'</b><small>'+esc(f[2])+'</small></div>'}).join("")+'</div>'}
-function repSub(r,k){var cols=repCols(k),g=r[k],any=cols.some(function(c){return g.o[c[0]]!=null});
- return '<section class="sxc repsub"><h3>'+(k==="q"?"Quran":"Memorisation")+'</h3><ul class="repgl">'+cols.map(function(c){return '<li'+(c[0]==="ef"?' class="ef"':'')+'><span>'+esc(c[1])+'</span>'+repBox(r,0,k,c[0],1)+'</li>'}).join("")+'</ul>'
+function repSub(r,k){var cols=repCols(k),g=r[k],any=cols.some(function(x){return g.o[x[0]]!=null});
+ return '<section class="sxc repsub"><h3>'+(k==="q"?"Quran":"Memorisation")+'</h3><ul class="repgl">'+cols.map(function(x){return '<li'+(x[0]==="ef"?' class="ef"':'')+'><span>'+esc(x[1])+'</span>'+repBox("",r,0,k,x[0],1)+'</li>'}).join("")+'</ul>'
   +(k==="m"&&r.act?'<p class="repnote">'+esc(repNote(r.memo,NB-1,bl))+'</p>':'')+(any?'<p class="repnote mute"><i class="repov" aria-hidden="true">'+REPI.pen+'</i> Set by the teacher</p>':'')+'</section>'}
-function repCard(i){var r=repRows()[i],T=repTerm();if(!r)return;
- drawer(r.s.name,'<div class="rephd"><p class="cap">'+esc(cname(ST[CID].name))+' · '+esc(T.name)+', '+esc(repRange(T))+(r.act?'':' · no lessons recorded')+'</p>'
-  +'<button type="button" class="btn p sm sxpr" data-rprint="'+i+'">'+REPI.pr+'Print report</button></div>'+repFigs(r)+'<div class="sxg">'+repSub(r,"q")+repSub(r,"m")+'</div>',2)}
-function repPage(r,T){var s=r.s,h=s.house;
+function repCard(c,i){var r=repRows(c)[i],T=repTerm();if(!r)return;
+ drawer(r.s.name,'<div class="rephd"><p class="cap">'+esc(cname(ST[c].name))+' · '+esc(T.name)+', '+esc(repRange(T))+(r.act?'':' · no lessons recorded')+'</p><span class="repacts">'
+  +(repAdmin()?'<button type="button" class="btn sm" data-rmail="one" data-rc="'+esc(c)+'" data-ri="'+i+'">'+REPI.ml+'Email to parent</button>':'')
+  +'<button type="button" class="btn p sm sxpr" data-rprint="one" data-rc="'+esc(c)+'" data-ri="'+i+'">'+REPI.pr+'Print report</button></span></div>'+repFigs(r)+'<div class="sxg">'+repSub(r,"q")+repSub(r,"m")+'</div>',2)}
+function repPage(c,r,T){var s=r.s,h=s.house;
  return '<section class="prp"><header class="prh"><span class="prb ilmi"><b>Ilmi</b><span lang="ar" dir="rtl">علمي</span></span><span class="prt">Term report</span><span class="prdt">'+esc(T.name)+'</span></header>'
-  +'<div class="prn"><h1>'+esc(s.name)+'</h1><p>'+esc(cname(ST[CID].name))+(s.sy?' · '+esc(s.sy):'')+(h?' · <span class="sxh h-'+esc(h)+'"><i></i>'+esc(h)+'</span>':'')+(s.sid?' · '+esc(s.sid):'')+'</p><p class="prper">'+esc(T.name)+': '+esc(repRange(T))+'</p></div>'
+  +'<div class="prn"><h1>'+esc(s.name)+'</h1><p>'+esc(cname(ST[c].name))+(s.sy?' · '+esc(s.sy):'')+(h?' · <span class="sxh h-'+esc(h)+'"><i></i>'+esc(h)+'</span>':'')+(s.sid?' · '+esc(s.sid):'')+'</p><p class="prper">'+esc(T.name)+': '+esc(repRange(T))+'</p></div>'
   +repFigs(r)+'<div class="sxg">'+repSub(r,"q")+repSub(r,"m")+'</div><div class="prc"><b>Teacher\'s comments</b><i></i><i></i><i></i></div><footer class="prf">Ilmi</footer></section>'}
-function repPrint(ix){var R=repRows(),T=repTerm(),P=$("prt");if(!P){P=document.createElement("div");P.id="prt";P.setAttribute("aria-hidden","true");document.body.appendChild(P)}
- P.innerHTML=ix.map(function(i){return repPage(R[i],T)}).join("");document.documentElement.classList.add("printing");
+/* Prints term reports: L is a list of [class, pupil index]. */
+function repPrint(L){var T=repTerm(),P=$("prt"),rows={};if(!L.length)return;if(!P){P=document.createElement("div");P.id="prt";P.setAttribute("aria-hidden","true");document.body.appendChild(P)}
+ P.innerHTML=L.map(function(x){var R=rows[x[0]]||(rows[x[0]]=repRows(x[0]));return repPage(x[0],R[x[1]],T)}).join("");document.documentElement.classList.add("printing");
  var done=function(){document.documentElement.classList.remove("printing");P.innerHTML="";removeEventListener("afterprint",done)};addEventListener("afterprint",done);
  setTimeout(function(){window.print();if(!("onafterprint" in window))done()},60)}
-/* The admin's report settings, in rows like a class's Settings: the terms, then the numbers the grades use. */
+function repPupils(scope,c,i){var L=[];if(scope==="one")return [[c,i]];(scope==="all"?repClasses():[c]).forEach(function(k){ST[k].S.forEach(function(_,j){L.push([k,j])})});return L}
+/* ---- Emailing reports to parents (the admin's) ----
+   The drawer: who it goes to (the test address in Report settings, or each pupil's parent email on their details),
+   whether pupils with no lessons this term are left out, the email itself for any pupil, then Send. The server finds
+   every address itself and sends one email after another; Sent so far lists how each went. */
+var REPM_={scope:"all",c:"",i:0,to:"test",off:false,pv:0};
+function repPayload(c,i,r){return {class_id:c,i:i,name:r.s.name,label:cname(ST[c].name),q:r.q.f,m:r.m.f,att:r.att?{p:r.att.p,n:r.att.n}:null,
+ memo:r.act?{passed:r.memo.passed,now:repNow(r.memo)}:null,focus:r.focus?{f:r.focus.f,n:r.focus.n}:null,qa:r.s.qa||0,act:r.act}}
+function repMailList(){var o=REPM_,rows={},L=[];repPupils(o.scope,o.c,o.i).forEach(function(x){var R=rows[x[0]]||(rows[x[0]]=repRows(x[0])),r=R[x[1]];if(!r)return;
+  if(!r.act&&!o.off&&o.scope!=="one")return;L.push({c:x[0],i:x[1],r:r,pe:r.s.pe||""})});return L}
+function repMail(scope,c,i){REPM_.scope=scope;REPM_.c=c||"";REPM_.i=i||0;REPM_.pv=0;drawer(scope==="one"?"Email the report":"Email term reports","",1);DMODE="repmail";repMailDraw();repMailPreview()}
+function repMailDraw(){var o=REPM_,B=(window.ME&&ME.brand)||{},T=repTerm(),L=repMailList(),withPe=L.filter(function(x){return x.pe}).length,n=o.to==="test"?L.length:withPe,b=$("drwB");if(!b)return;
+ var who=o.scope==="one"?esc(L[0]?L[0].r.s.name:""):o.scope==="class"?esc(cname(ST[o.c].name)):"every class";
+ var h='<div class="repmail"><p class="cap">'+esc(T.name)+' reports for '+who+', '+esc(repRange(T))+'.</p>'
+  +(!B.logo||!B.name?'<div class="repwarn" role="note"><b>Add your school\'s branding</b><span>Parents see your school\'s name, logo and colour at the top of each report. Set them in Report settings.</span><button type="button" class="btn sm" data-rset="1">Report settings</button></div>':'')
+  +'<div class="srow"><div class="sl"><b>Send to</b><span class="sub">'+(o.to==="test"?'Every report goes to '+(B.test_to?'<b>'+esc(B.test_to)+'</b>':'the test address, which isn\'t set yet')+', so you can check them first.':withPe+' of '+plural(L.length,"pupil")+(withPe===1?' has':' have')+' a parent email on their details. The rest are skipped.')+'</span></div>'
+  +'<div class="seg" role="group" aria-label="Send to"><button type="button" data-rto="test" aria-pressed="'+(o.to==="test")+'">Test address</button><button type="button" data-rto="parents" aria-pressed="'+(o.to==="parents")+'">Parents</button></div></div>'
+  +(o.scope!=="one"?'<label class="srow repchk"><span class="sl"><b>Include pupils with no lessons</b><span class="sub">Their reports have blank grades.</span></span><input type="checkbox" id="repOff"'+(o.off?' checked':'')+'></label>':'')
+  +'<div class="repprev"><div class="repprevh"><label>Preview'+(L.length>1?'<select id="repPv">'+L.map(function(x,k){return '<option value="'+k+'"'+(k===o.pv?' selected':'')+'>'+esc(x.r.s.name)+'</option>'}).join("")+'</select>':'')+'</label><span class="cap" id="repSubj"></span></div>'
+  +'<iframe id="repFrame" title="The email as parents will see it" sandbox="allow-popups"></iframe></div>'
+  +'<div class="acts repsend"><button type="button" class="btn" data-rsent="1">Sent so far</button><button type="button" class="btn p" id="repGo"'+(n&&(o.to!=="test"||B.test_to)?'':' disabled')+'>'+(n?'Send '+plural(n,"report"):'Nothing to send')+'</button></div>'
+  +'<div id="repLog"></div></div>';
+ b.innerHTML=h}
+function repApi(url,body){return fetch(url,{method:body?"POST":"GET",credentials:"same-origin",headers:body?{"Content-Type":"application/json","X-Dashboard-Request":"1"}:{},body:body?JSON.stringify(body):undefined})
+ .then(function(r){return r.json().catch(function(){return {}}).then(function(j){if(!r.ok)throw new Error(j.error||"Something went wrong. Try again.");return j})})}
+function repMailPreview(){var L=repMailList(),x=L[REPM_.pv]||L[0],f=$("repFrame");if(!f)return;if(!x){f.srcdoc='<p style="font:14px sans-serif;color:#67654f;padding:24px">No reports to show.</p>';return}
+ repApi("/api/report-emails/preview",{term_id:repTerm().id,report:repPayload(x.c,x.i,x.r)}).then(function(j){if(!$("repFrame"))return;$("repFrame").srcdoc=j.html.replace(/<link [^>]*fonts\.googleapis[^>]*>/,"");$("repSubj").textContent=j.subject},function(e){toast(e.message,1)})}
+function repMailSend(){var o=REPM_,L=repMailList().filter(function(x){return o.to==="test"||x.pe}),B=(window.ME&&ME.brand)||{};if(!L.length)return;
+ ask((o.to==="test"?"Send "+plural(L.length,"report")+" to "+B.test_to+"?":"Email "+plural(L.length,"report")+" to parents? Each goes to the parent email on the pupil's details."),"Send",function(){
+  var g=$("repGo");if(g){g.disabled=true;g.textContent="Sending…"}
+  repApi("/api/report-emails",{term_id:repTerm().id,to:o.to,reports:L.map(function(x){return repPayload(x.c,x.i,x.r)})}).then(function(j){
+   toast(plural(j.queued,"report")+" on the way"+(j.skipped.length?", "+j.skipped.length+" skipped":""));if(g){g.textContent="Sent";}repMailLog(j.skipped)},
+   function(e){toast(e.message,1);if(g){g.disabled=false;g.textContent="Send "+plural(L.length,"report")}})})}
+function repMailLog(skipped){var box=$("repLog");if(!box)return;box.innerHTML='<p class="cap">Loading…</p>';
+ repApi("/api/report-emails").then(function(j){if(!$("repLog"))return;var S2=j.sent||[];
+  $("repLog").innerHTML=(skipped&&skipped.length?'<p class="cap">Skipped: '+skipped.map(function(x){return esc(x.name)+' ('+esc(x.why)+')'}).join(", ")+'.</p>':'')
+   +'<h3 class="seth">Sent so far</h3>'+(S2.length?'<ul class="replog">'+S2.map(function(x){return '<li><span><b>'+esc(x.student)+'</b><small>'+esc(x.recipient)+(x.mode==="test"?' · test':'')+'</small></span><span class="pill'+(x.status==="failed"?' bad':x.status==="sent"?' ok':'')+'">'+(x.status==="sent"?'Sent':x.status==="failed"?'Not sent':'Sending')+'</span><small>'+esc(ds(x.sent_at*1000))+'</small></li>'}).join("")+'</ul>':'<p class="none">No reports have been emailed yet.</p>')},
+  function(e){if($("repLog"))$("repLog").innerHTML='<p class="cap">'+esc(e.message)+'</p>'}).then(function(){var x=$("repLog");if(x&&x.firstChild)x.scrollIntoView({block:"start",behavior:QM.matches?"auto":"smooth"})})}
+/* The admin's report settings, in rows like a class's Settings: the school's branding for the emails, the terms, then
+   the numbers the grades use. */
 function repNum(id,v,step,lab){return '<input type="number" id="'+id+'" value="'+v+'" step="'+(step||1)+'" inputmode="decimal" aria-label="'+esc(lab)+'">'}
 function repTermRow(x){return '<div class="srow repterm" data-tid="'+esc(x.id)+'"><label class="repf">Name<input type="text" class="repTn" maxlength="30" value="'+esc(x.name)+'"></label>'
  +'<label class="repf">First day<input type="date" class="repTf" value="'+esc(x.from)+'"></label><label class="repf">Last day<input type="date" class="repTt" value="'+esc(x.to)+'"></label>'
  +'<button type="button" class="btn sm quiet repTx" aria-label="Remove '+esc(x.name)+'">Remove</button></div>'}
-function repSettingsOpen(){var C=repSet(),grades=function(pre,vals,step,what){return '<span class="repq">'+vals.map(function(v,k){return '<label><small>'+(k+2)+'</small>'+repNum(pre+k,v,step,what+" for grade "+(k+2))+'</label>'}).join("")+'</span>'};
+var REPLOGO=null;
+function repSettingsOpen(){var C=repSet(),B=(window.ME&&ME.brand)||{},grades=function(pre,vals,step,what){return '<span class="repq">'+vals.map(function(v,k){return '<label><small>'+(k+2)+'</small>'+repNum(pre+k,v,step,what+" for grade "+(k+2))+'</label>'}).join("")+'</span>'};REPLOGO=null;
  drawer("Report settings",'<div class="sets repsets"><p class="cap">For every class\'s term reports. Each term runs from its first day to its last, both included.</p>'
+  +'<h3 class="seth">School branding</h3><p class="cap">What parents see at the top of each emailed report.</p>'
+  +'<div class="srow repbrand"><div class="replogo" id="repLogoP" style="--bc:'+esc(B.colour||"#4d5a2c")+'">'+(B.logo?'<img src="'+esc(B.logo)+'" alt="">':'<span>No logo</span>')+'</div>'
+  +'<div class="repbf"><label class="repf">School name<input type="text" id="repBn" maxlength="80" value="'+esc(B.name||"")+'" placeholder="Your school\'s name"></label>'
+  +'<div class="repbr"><label class="btn sm repup">Choose logo<input type="file" id="repBl" accept="image/png,image/jpeg,image/webp" hidden></label>'
+  +(B.logo?'<button type="button" class="btn sm quiet" id="repBx">Remove logo</button>':'')+'<label class="repcol"><input type="color" id="repBc" value="'+esc(B.colour||"#4d5a2c")+'" aria-label="Brand colour"><span>Brand colour</span></label></div></div></div>'
+  +'<div class="srow"><div class="sl"><b><label for="repBt">Test address</label></b><span class="sub">Reports you send as a test go here instead of to parents.</span></div><input type="email" id="repBt" class="reptest" value="'+esc(B.test_to||"")+'" placeholder="name@example.com"></div>'
   +'<h3 class="seth">Terms</h3><div id="repTermsF">'+C.terms.map(repTermRow).join("")+'</div><div class="sact"><button type="button" class="btn sm quiet" id="repAddT">Add a term</button></div>'
   +'<h3 class="seth">Memorisation</h3>'
   +'<div class="srow"><div class="sl"><b><label for="repExp">Targets expected per term</label></b><span class="sub">Progress is the share of these passed.</span></div>'+repNum("repExp",C.expected,1,"Targets expected per term")+'</div>'
@@ -4372,40 +4505,54 @@ function repSaveSettings(){var rows=Array.prototype.slice.call(document.querySel
  var terms=rows.map(function(r){var name=r.querySelector(".repTn").value.trim(),f=r.querySelector(".repTf").value,t=r.querySelector(".repTt").value,id=r.dataset.tid||repSlug(name,f,ids);ids.push(id);return {id:id,name:name,from:f,to:t}});
  var nv=function(id){return Number($(id).value)},body={terms:terms,expected:nv("repExp"),test_points:nv("repTp"),pass_points:nv("repPp"),
   pct:[0,1,2,3].map(function(k){return nv("repPc"+k)}),ratio:[0,1,2,3].map(function(k){return nv("repRa"+k)})};
+ var brand={name:$("repBn").value.trim(),colour:$("repBc").value,test_to:$("repBt").value.trim()};if(REPLOGO==="x")brand.remove_logo=true;else if(REPLOGO)brand.logo=REPLOGO;
  if(!terms.length){toast("Keep at least one term",1);return}
- var b=$("repSave");b.disabled=true;b.textContent="Saving…";
- fetch("/api/report-settings",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json","X-Dashboard-Request":"1"},body:JSON.stringify(body)})
-  .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})}).then(function(x){b.disabled=false;b.textContent="Save report settings";if(!x.ok){toast(x.j.error||"The settings weren't saved",1);return}
-   ME.reports=x.j.settings;repDraw();closeDrawer();toast("Report settings saved")},function(){b.disabled=false;b.textContent="Save report settings";toast("The settings weren't saved. Check your connection.",1)})}
-$("vG").addEventListener("click",function(e){
+ if(brand.test_to&&!EMAILRX.test(brand.test_to)){toast("Enter the test address in full, like name@example.com.",1);$("repBt").focus();return}
+ var b=$("repSave"),back=function(){b.disabled=false;b.textContent="Save report settings"};b.disabled=true;b.textContent="Saving…";
+ repApi("/api/report-settings",body).then(function(j){ME.reports=j.settings;return repApi("/api/report-branding",brand)}).then(function(j){ME.brand=j.brand;back();repRedraw();closeDrawer();toast("Report settings saved")},function(e){back();toast(e.message,1)})}
+/* Clicks and keys, the same on a class's Reports tab and on the Reports page. */
+function repClick(e){
  if(e.target.closest("#repPop [data-rx]")){repPickClose(1);return}
- var v=e.target.closest("#repPop [data-rv]");if(v&&REPP){var i=+REPP.dataset.ri,k=REPP.dataset.rg;repPickClose();repOver(i,k,+v.dataset.rv);return}
+ var v=e.target.closest("#repPop [data-rv]");if(v&&REPP){var c=REPP.dataset.rc,i=+REPP.dataset.ri,k=REPP.dataset.rg;repPickClose();repOver(c,i,k,+v.dataset.rv);return}
  var b=e.target.closest("button");if(!b)return;
  if(b.classList.contains("repb")){if(REPP===b){repPickClose(1);return}repPick(b);return}
- if(b.dataset.rt){REPT=b.dataset.rt;repDraw();return}
- if(b.dataset.rk){REPK=b.dataset.rk;repDraw();return}
- if(b.dataset.rp){repCard(+b.dataset.rp);return}
- if(b.id==="repPrintAll"){repPrint(S.map(function(_,i){return i}));return}
- if(b.id==="repSetB")repSettingsOpen()});
-/* Keys as on the Quran sheet: 1 to 5 sets the grade, Backspace gives the worked-out one back, the arrows move. */
-$("vG").addEventListener("keydown",function(e){var pop=e.target.closest("#repPop");
+ if(b.dataset.rt){REPT=b.dataset.rt;repRedraw();return}
+ if(b.dataset.rk){REPK=b.dataset.rk;repRedraw();return}
+ if(b.dataset.rp){repCard(b.dataset.rc,+b.dataset.rp);return}
+ if(b.dataset.rprint){repPrint(repPupils(b.dataset.rprint==="all"?"all":b.dataset.rprint==="one"?"one":"class",b.dataset.rc||CID,+b.dataset.ri));return}
+ if(b.dataset.rmail){repMail(b.dataset.rmail,b.dataset.rmail==="class"?CID:b.dataset.rc,+b.dataset.ri);return}
+ if(b.dataset.rset)repSettingsOpen()}
+function repKey(e){var pop=e.target.closest("#repPop");
  if(pop){var bs=Array.prototype.slice.call(pop.querySelectorAll("button")),j=bs.indexOf(e.target);
   if(e.key==="Escape"){e.preventDefault();e.stopPropagation();repPickClose(1)}
   else if(e.key==="ArrowRight"||e.key==="ArrowLeft"){e.preventDefault();bs[(j+(e.key==="ArrowRight"?1:-1)+bs.length)%bs.length].focus()}
-  else if(/^[1-5]$/.test(e.key)&&REPP){e.preventDefault();var i=+REPP.dataset.ri,k=REPP.dataset.rg;repPickClose();repOver(i,k,+e.key)}
+  else if(/^[1-5]$/.test(e.key)&&REPP){e.preventDefault();var c=REPP.dataset.rc,i=+REPP.dataset.ri,k=REPP.dataset.rg;repPickClose();repOver(c,i,k,+e.key)}
   else if(e.key==="Tab")trap(e,pop);return}
- var b=e.target.closest(".repb");if(!b)return;var i=+b.dataset.ri,k=b.dataset.rg,ks=repCols(REPK).map(function(c){return c[0]}),c=ks.indexOf(k),go=null;
- if(/^[1-5]$/.test(e.key)){e.preventDefault();repOver(i,k,+e.key);return}
- if(e.key==="Backspace"||e.key==="Delete"){e.preventDefault();repOver(i,k,0);return}
- if(e.key==="ArrowDown")go=[i+1,c];else if(e.key==="ArrowUp")go=[i-1,c];else if(e.key==="ArrowRight")go=[i,c+1];else if(e.key==="ArrowLeft")go=[i,c-1];
- if(go&&go[0]>=0&&go[0]<S.length&&go[1]>=0&&go[1]<ks.length){e.preventDefault();var n=$("repW").querySelector('.repb[data-ri="'+go[0]+'"][data-rg="'+ks[go[1]]+'"]');if(n)n.focus()}});
+ var b=e.target.closest(".repb");if(!b)return;var c2=b.dataset.rc,i2=+b.dataset.ri,k2=b.dataset.rg,ks=repCols(REPK).map(function(x){return x[0]}),col=ks.indexOf(k2),go=null,n=ST[c2]?ST[c2].S.length:0;
+ if(/^[1-5]$/.test(e.key)){e.preventDefault();repOver(c2,i2,k2,+e.key);return}
+ if(e.key==="Backspace"||e.key==="Delete"){e.preventDefault();repOver(c2,i2,k2,0);return}
+ if(e.key==="ArrowDown")go=[i2+1,col];else if(e.key==="ArrowUp")go=[i2-1,col];else if(e.key==="ArrowRight")go=[i2,col+1];else if(e.key==="ArrowLeft")go=[i2,col-1];
+ if(go&&go[0]>=0&&go[0]<n&&go[1]>=0&&go[1]<ks.length){e.preventDefault();var x=repZone().querySelector('.repb[data-rc="'+c2+'"][data-ri="'+go[0]+'"][data-rg="'+ks[go[1]]+'"]');if(x)x.focus()}}
+["vG","vP"].forEach(function(id){$(id).addEventListener("click",repClick);$(id).addEventListener("keydown",repKey)});
+$("vP").addEventListener("input",function(e){if(e.target.id==="repQ"){REPF=e.target.value;repSchool()}});
 document.addEventListener("click",function(e){if(REPP&&!e.target.closest("#repPop")&&!e.target.closest(".repb"))repPickClose()});
 $("drwB").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;
- if(b.dataset.rprint){repPrint([+b.dataset.rprint]);return}
+ if(b.dataset.rprint){repPrint([[b.dataset.rc,+b.dataset.ri]]);return}
+ if(b.dataset.rmail){repMail("one",b.dataset.rc,+b.dataset.ri);return}
+ if(b.dataset.rset){repSettingsOpen();return}
+ if(b.dataset.rto){REPM_.to=b.dataset.rto;repMailDraw();repMailPreview();return}
+ if(b.dataset.rsent){repMailLog();return}
+ if(b.id==="repGo"){repMailSend();return}
  if(b.id==="repAddT"){var y=new Date().getFullYear(),box=$("repTermsF");box.insertAdjacentHTML("beforeend",repTermRow({id:"",name:"Term "+(box.children.length+1),from:y+"-09-01",to:y+"-12-20"}));box.lastChild.querySelector(".repTn").focus();return}
  if(b.classList.contains("repTx")){var row=b.closest(".repterm");if(row)row.remove();return}
+ if(b.id==="repBx"){REPLOGO="x";$("repLogoP").innerHTML='<span>No logo</span>';b.remove();return}
  if(b.id==="repSave")repSaveSettings()});
-
+$("drwB").addEventListener("change",function(e){var t=e.target;
+ if(t.id==="repOff"){REPM_.off=t.checked;REPM_.pv=0;repMailDraw();repMailPreview();return}
+ if(t.id==="repPv"){REPM_.pv=+t.value;repMailPreview();return}
+ if(t.id==="repBc"){var p=$("repLogoP");if(p)p.style.setProperty("--bc",t.value);return}
+ if(t.id==="repBl"&&t.files&&t.files[0]){var f=t.files[0];if(f.size>3e6){toast("That picture is too big. Choose one under 3 MB.",1);t.value="";return}
+  var rd=new FileReader();rd.onload=function(){REPLOGO=rd.result;$("repLogoP").innerHTML='<img src="'+esc(rd.result)+'" alt="">'};rd.readAsDataURL(f)}});
 /* ---------- Tabs ---------- */
 /* Recording happens on the Quran tab: scores in the sheet, and warnings, merits, house points and the student's
    record (passes, target, fails, rename, remove) from the menu on a student's name. */
@@ -4460,7 +4607,7 @@ if(PHN.addEventListener)PHN.addEventListener("change",noSheet);else PHN.addListe
 /* ---------- Navigation ---------- */
 /* The rail has no list of classes: Classes opens the class cards, and stays marked while a class is open. */
 function navL(){
- $("nM").setAttribute("aria-current",PAGE==="M"?"page":"false");if(PAGE==="M")hello();$("nR").setAttribute("aria-current",PAGE==="R"?"page":"false");$("nL").setAttribute("aria-current",PAGE==="L"||PAGE==="C"?"page":"false");$("nU").setAttribute("aria-current",PAGE==="U"?"page":"false");$("nH").setAttribute("aria-current",PAGE==="H"?"page":"false");$("nK").setAttribute("aria-current",PAGE==="K"?"page":"false");$("nA").setAttribute("aria-current",PAGE==="A"?"page":"false");dockSet()}
+ $("nM").setAttribute("aria-current",PAGE==="M"?"page":"false");if(PAGE==="M")hello();$("nR").setAttribute("aria-current",PAGE==="R"?"page":"false");$("nL").setAttribute("aria-current",PAGE==="L"||PAGE==="C"?"page":"false");$("nU").setAttribute("aria-current",PAGE==="U"?"page":"false");$("nH").setAttribute("aria-current",PAGE==="H"?"page":"false");$("nK").setAttribute("aria-current",PAGE==="K"?"page":"false");$("nP").setAttribute("aria-current",PAGE==="P"?"page":"false");$("nA").setAttribute("aria-current",PAGE==="A"?"page":"false");dockSet()}
 /* The phone dock (tokens.css): a teacher always has Home and their class pages; an admin has Home, Classes and
    Record, and the class pages while a class is open, with Classes first to get back. Class pages tapped from
    elsewhere open the class used last. Everything else is under More, the full menu. */
@@ -4491,23 +4638,24 @@ function cname(n){n=String(n||"");if(CNM.hasOwnProperty(n))return CNM[n];var g=/
  if(g){l=/^\s*-?\s*([A-Z])\b/.exec(n.slice(g.index+g[0].length));y="Yr"+g[1].replace(/\s+/g,"")+(l?l[1]:"")}else if(/\breception\b/i.test(n))y="Reception";
  return CNM[n]=[y,cteach(n)].filter(Boolean).join(" ")||n}
 function head(){var n=CID?ST[CID]:null;$("sName").textContent=n?n.name:"";
- $("ttl").textContent=n?cname(n.name):PAGE==="R"?"Record":PAGE==="L"?(TEACHER?"Your classes":"Classes"):PAGE==="U"?(TEACHER?"Your students":"Students"):PAGE==="H"?"House points":PAGE==="K"?"Rankings":PAGE==="A"?"Ask Ilmi":TEACHER?"Class overview":"School overview";$("swc").hidden=!n||CIDS.length<2;$("crumb").hidden=!n;$("crumbL").textContent=TEACHER?"Your classes":"Classes";$("crumbC").textContent=n?cname(n.name):"";hello();
+ $("ttl").textContent=n?cname(n.name):PAGE==="R"?"Record":PAGE==="L"?(TEACHER?"Your classes":"Classes"):PAGE==="U"?(TEACHER?"Your students":"Students"):PAGE==="H"?"House points":PAGE==="K"?"Rankings":PAGE==="P"?"Reports":PAGE==="A"?"Ask Ilmi":TEACHER?"Class overview":"School overview";$("swc").hidden=!n||CIDS.length<2;$("crumb").hidden=!n;$("crumbL").textContent=TEACHER?"Your classes":"Classes";$("crumbC").textContent=n?cname(n.name):"";hello();
  // The Presenter (the TV's scenes for one class) is served by the Railway server, in this tab.
  $("nB").hidden=!window.RAILWAY||!STAFF;
  $("nA").hidden=!(window.RAILWAY&&window.ME&&ME.assistant);
- document.title=(n?cname(n.name)+" · ":PAGE==="R"?"Record · ":"")+(PAGE==="L"?"Classes · ":"")+(PAGE==="U"?"Students · ":"")+(PAGE==="H"?"House points · ":"")+(PAGE==="K"?"Rankings · ":"")+(PAGE==="A"?"Ask Ilmi · ":"")+"Ilmi"}
+ document.title=(n?cname(n.name)+" · ":PAGE==="R"?"Record · ":"")+(PAGE==="L"?"Classes · ":"")+(PAGE==="U"?"Students · ":"")+(PAGE==="H"?"House points · ":"")+(PAGE==="K"?"Rankings · ":"")+(PAGE==="P"?"Reports · ":"")+(PAGE==="A"?"Ask Ilmi · ":"")+"Ilmi"}
 function setClass(c){if(c!==LASTC){LASTC=c;try{localStorage.setItem("mysafar.lastClass",c)}catch(e){}}if(c!==CID){QF="";QX={};QMN=-1;MS=-1;MM="";MD=""}CID=c;S=ST[c].S;FCD=ST[c].fcd;$("fcd").value=FCD;EXP={};head();render()}
-function go(c,keepTab){if((c==="R"||c==="U"||c==="H"||c==="K")&&TEACHER)c="M";if(c==="U"&&HEAD)c="M";if(c==="A"&&!(window.RAILWAY&&window.ME&&ME.assistant))c="M";if(c!=="M"&&c!=="R"&&c!=="L"&&c!=="U"&&c!=="H"&&c!=="K"&&c!=="A"&&!ST[c])c="M";var R=c==="R",M=c==="M",L=c==="L",U=c==="U",H=c==="H",K=c==="K",A=c==="A";PAGE=R?"R":M?"M":L?"L":U?"U":H?"H":K?"K":A?"A":"C";closeDrawer();$("figP").hidden=!M;if(!M)$("figP").open=false;
- $("vM").classList.toggle("hide",!M);$("vR").classList.toggle("hide",!R);$("vL").classList.toggle("hide",!L);$("vU").classList.toggle("hide",!U);$("vH").classList.toggle("hide",!H);$("vK").classList.toggle("hide",!K);$("vA").classList.toggle("hide",!A);$("sub").classList.toggle("hide",M||R||L||U||H||K||A);document.documentElement.classList.toggle("ai-page",A);
+function go(c,keepTab){if((c==="R"||c==="U"||c==="H"||c==="K"||c==="P")&&TEACHER)c="M";if(c==="U"&&HEAD)c="M";if(c==="A"&&!(window.RAILWAY&&window.ME&&ME.assistant))c="M";if(c!=="M"&&c!=="R"&&c!=="L"&&c!=="U"&&c!=="H"&&c!=="K"&&c!=="A"&&c!=="P"&&!ST[c])c="M";var R=c==="R",M=c==="M",L=c==="L",U=c==="U",H=c==="H",K=c==="K",A=c==="A",P=c==="P";PAGE=R?"R":M?"M":L?"L":U?"U":H?"H":K?"K":A?"A":P?"P":"C";closeDrawer();$("figP").hidden=!M;if(!M)$("figP").open=false;
+ $("vM").classList.toggle("hide",!M);$("vR").classList.toggle("hide",!R);$("vL").classList.toggle("hide",!L);$("vU").classList.toggle("hide",!U);$("vH").classList.toggle("hide",!H);$("vK").classList.toggle("hide",!K);$("vP").classList.toggle("hide",!P);$("vA").classList.toggle("hide",!A);$("sub").classList.toggle("hide",M||R||L||U||H||K||A||P);document.documentElement.classList.toggle("ai-page",A);
  if(A){CID=null;TABS.forEach(function(k){$("v"+k).classList.add("hide")});head();if(window.AskIlmi)AskIlmi.show()}
  else if(K){CID=null;TABS.forEach(function(k){$("v"+k).classList.add("hide")});head();rkPage()}
+ else if(P){CID=null;TABS.forEach(function(k){$("v"+k).classList.add("hide")});head();repSchool()}
  else if(H){CID=null;TABS.forEach(function(k){$("v"+k).classList.add("hide")});head();hpPage()}
  else if(U){CID=null;TABS.forEach(function(k){$("v"+k).classList.add("hide")});head();stuPage()}
  else if(L){CID=null;TABS.forEach(function(k){$("v"+k).classList.add("hide")});head();dirTab()}
  else if(R){CID=null;TABS.forEach(function(k){$("v"+k).classList.add("hide")});head();recPage()}
  else if(M){CID=null;TABS.forEach(function(k){$("v"+k).classList.add("hide")});head();master()}
  else{setClass(c);tab(keepTab||"Q")}
- try{history.replaceState(null,"",M||R?location.pathname+location.search:L?"#classes":U?"#students":H?"#house-points":K?"#rankings":A?"#ask":"#"+c)}catch(e){}
+ try{history.replaceState(null,"",M||R?location.pathname+location.search:L?"#classes":U?"#students":H?"#house-points":K?"#rankings":P?"#reports":A?"#ask":"#"+c)}catch(e){}
  $("navt").checked=false;navL();window.scrollTo(0,0);arrive()}
 /* Presenter (in the menu): the open class's month on the big screen, served by the Railway server in a new tab (as
    the TV preview is), so the dashboard stays open here. With no class open, a teacher with one class goes straight to
@@ -4572,7 +4720,7 @@ function houseBoard(all){var T=window.HOUSE_TOTALS||houseTotals(all),V=HOUSES.ma
  return '<div class="mod gold hb"><div class="mod-h">'+ovT("H","House points")+'</div><div class="houses">'+O.map(function(h){var v=T[h]||0;return '<div class="house '+h+'"><span class="hn"><span class="hdot '+h+'"></span>'+h+(h===lead?' <span class="pill lead">Leading</span>':'')+'</span><span class="pts">'+v+'</span><div class="tr"><i style="width:'+(v/top*100)+'%"></i></div></div>'}).join("")+'</div></div>'}
 function classRows(per){return CIDS.map(function(c){var L=ST[c].S,n=L.length,p=sumOf(L,function(s){return rpPass(s,per)}),m=sumOf(L,function(s){return rpMerit(s,per)});
  return {name:cname(ST[c].name),open:c,v:n?Math.round((p+m)/n*10)/10:0,sub:plural(p,"pass","passes")+", "+plural(m,"merit")+", "+plural(n,"student")}})}
-function master(){if(PAGE==="L"){dirTab();return}if(PAGE==="U"){stuPage();return}if(PAGE==="H"){hpPage();return}if(PAGE==="K"){rkPage();return}var K=school(),A=K.A,all=K.all,adm=!STAFF;
+function master(){if(PAGE==="P"){repSchool();return}if(PAGE==="L"){dirTab();return}if(PAGE==="U"){stuPage();return}if(PAGE==="H"){hpPage();return}if(PAGE==="K"){rkPage();return}var K=school(),A=K.A,all=K.all,adm=!STAFF;
  $("figs").innerHTML=CIDS.length?fig(A.length,A.length===1?"Student":"Students")+fig(CIDS.length,CIDS.length===1?"Class":"Classes")+fig(sumOf(all,mpc),"Passes this month")+fig(sumOf(all,mmc),"Merits this month")+fig(K.wr.length+K.mb.length,"With a warning",K.wr.length+K.mb.length?"alert":"")+fig(K.stale.length,"Overdue a pass",K.stale.length?"alert":""):"";
  if(!CIDS.length){$("mst").innerHTML=LOADED?'<div class="empty"><b>'+(adm?'No classrooms yet':'No classrooms have been given to you yet')+'</b>'+(adm?'Upload a CSV of your students to create them.<button type="button" class="btn sm p" data-open="L">Upload students</button>':'Ask an admin to add you to your classrooms on Manage users.')+'</div>':skel();
   return}
@@ -4810,14 +4958,14 @@ function stuRows(){var q=nkey(SQ),all=stuAll(),A=all.filter(function(o){return s
   +'</tbody></table></div>'+pagerHtml("stu",A.length,SPG,"students");
  var nw=$("stuL").querySelector("tr.snew");SNEW=null;
  if(nw){nw.classList.remove("snew");if(nw.scrollIntoView)nw.scrollIntoView({block:"center"});if(!QM.matches&&nw.animate)nw.animate([{backgroundColor:"#edf3ee",boxShadow:"inset 2px 0 0 #4e7d5b"},{backgroundColor:"rgba(237,243,238,0)",boxShadow:"inset 2px 0 0 rgba(78,125,91,0)"}],{duration:1200,easing:"ease-out"})}}
-var SPF=[["name","Name"],["sid","Student ID"],["fid","Family ID"],["dob","Date of birth"],["gender","Gender"],["sy","Year group"],["house","House"],["ist","Arabic and Islamic Studies Class"]];
+var SPF=[["name","Name"],["sid","Student ID"],["fid","Family ID"],["pe","Parent email"],["dob","Date of birth"],["gender","Gender"],["sy","Year group"],["house","House"],["ist","Arabic and Islamic Studies Class"]];
 function yrs(a,b){var L=[];for(var n=a;n<=b;n++)L.push("Year "+n);return L}
 function opts(L,v,none){var A=L.slice();if(v&&A.indexOf(v)<0)A.unshift(v);return '<option value="">'+none+'</option>'+A.map(function(x){return '<option'+(x===v?' selected':'')+'>'+esc(x)+'</option>'}).join("")}
 function isoDay(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
 function ageOn(dob){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(dob||"");if(!m)return null;var n=new Date(),a=n.getFullYear()-m[1];if(n.getMonth()+1<+m[2]||n.getMonth()+1===+m[2]&&n.getDate()<+m[3])a--;return a}
 function dobText(dob,bare){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(dob||"");if(!m)return "";var a=ageOn(dob);return (+m[3])+" "+"Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ")[m[2]-1]+" "+m[1]+(a>=0&&!bare?" (age "+a+")":"")}
 function family(s){var k=nkey(s.fid),L=[];if(!k)return L;CIDS.forEach(function(c){ST[c].S.forEach(function(o){if(o!==s&&nkey(o.fid)===k)L.push({s:o,c:c})})});return L}
-var SPS=null;
+var SPS=null,EMAILRX=/^[^@\s"<>,;]{1,64}@[^@\s"<>,;]{1,190}\.[A-Za-z]{2,24}$/;
 /* Arabic and Islamic Studies classes aren't classrooms here: each student carries theirs from the CSV, so the
    choices are every one found on the dashboard. */
 function aiClasses(){var D={};CIDS.forEach(function(c){ST[c].S.forEach(function(o){if(o.ist)D[o.ist]=1})});
@@ -4830,6 +4978,7 @@ function stuForm(s,c){var AIL=aiClasses(),ist=s.ist||"";if(ist&&AIL.indexOf(ist)
   +'<label>Arabic and Islamic Studies Class'+(AIL.length?'<select id="spist"><option value="">Not set</option>'+AIL.map(function(x){return '<option value="'+esc(x)+'"'+(x===ist?' selected':'')+'>'+esc(cname(x))+'</option>'}).join("")+'</select>':'<input id="spist" maxlength="80" autocomplete="off" value="'+esc(ist)+'">')+'</label>'
   +'<label>Student ID<input id="spsid" maxlength="40" autocomplete="off" placeholder="SE…" value="'+esc(s.sid||"")+'"></label>'
   +'<label>Family ID<input id="spfid" maxlength="40" autocomplete="off" placeholder="SP…" value="'+esc(s.fid||"")+'"></label>'
+  +'<label>Parent email<input id="sppe" type="email" maxlength="254" autocomplete="off" placeholder="Where their term report is sent" value="'+esc(s.pe||"")+'"></label>'
   +'<div class="spdob"><label>Date of birth<input id="spdob" type="date" max="'+isoDay(new Date())+'" value="'+esc(s.dob||"")+'"></label><button type="button" class="lk" id="spdobX"'+(s.dob?'':' hidden')+'>Clear date of birth</button></div>'
   +'<label>Gender<select id="spgender">'+opts(["Female","Male"],s.gender||"","Not recorded")+'</select></label>'
   +'<label>Year group<select id="spsy">'+opts(["Reception"].concat(yrs(1,13)),s.sy||"","Not recorded")+'</select></label>'
@@ -4845,6 +4994,7 @@ function stuVals(me,err,L){var v={},dup=null,to=$("spcls").value;SPF.forEach(fun
  if(v.sid)eachStu(function(o,k){if(!dup&&o!==me&&o.sid&&nkey(o.sid)===nkey(v.sid))dup=[o,k]});
  if(dup)return no("Student ID "+v.sid+" already belongs to "+(dup[1]&&ST[dup[1]].X.indexOf(dup[0])>=0?"ex student ":"")+dup[0].name+" in "+cname(ST[dup[1]].name)+".","spsid");
  if(v.dob&&(!/^\d{4}-\d{2}-\d{2}$/.test(v.dob)||v.dob>isoDay(new Date())))return no("Enter a date of birth that isn't in the future.","spdob");
+ if(v.pe&&!EMAILRX.test(v.pe))return no("Enter the parent's email address in full, like name@example.com.","sppe");
  v.to=to;v.L=L;return v}
 function stuAdd(){var c0=SC||(LASTC&&ST[LASTC]?LASTC:CIDS[0]);if(!c0)return;SPS=null;
  drawer("Add a student",'<form class="addf spf" id="suF" novalidate><p class="cap">Only the name is needed; every other detail can be filled in later. They are saved with their class straight away, and appear on its Quran, Memo and Progress pages.</p>'
@@ -5105,7 +5255,7 @@ f.onchange=function(){if(!f.value||!CID)return;FCD=f.value;ST[CID].fcd=FCD;save(
 $("bulkA").onclick=function(){if(!CID)return;var c=CID,n=$("bulk").value.split("\n").map(function(x){return x.trim()}).filter(Boolean);if(!n.length){toast("Type some names first",1);$("bulk").focus();return}
  nextSid(function(k){if(CID!==c)return;n.forEach(function(x,i){var s=blank(x);s.sid=sidFmt(k+i);S.push(s)});$("bulk").value="";save();render();toast(plural(n.length,"student")+" added, "+(n.length>1?sidFmt(k)+" to "+sidFmt(k+n.length-1):sidFmt(k)))})};
 function nav(c){return function(){if(c===PAGE){go(c);return}turn(function(){go(c)})}}
-$("nM").onclick=nav("M");$("nL").onclick=nav("L");$("nU").onclick=nav("U");$("nR").onclick=nav("R");$("nH").onclick=nav("H");$("nK").onclick=nav("K");if(TEACHER){$("nR").hidden=true;$("nU").hidden=true;$("nH").hidden=true;$("nK").hidden=true}if(HEAD)$("nU").hidden=true;$("home").onclick=function(e){e.preventDefault();nav("M")()};
+$("nM").onclick=nav("M");$("nL").onclick=nav("L");$("nU").onclick=nav("U");$("nR").onclick=nav("R");$("nH").onclick=nav("H");$("nK").onclick=nav("K");$("nP").onclick=nav("P");if(TEACHER){$("nR").hidden=true;$("nU").hidden=true;$("nH").hidden=true;$("nK").hidden=true;$("nP").hidden=true}if(HEAD)$("nU").hidden=true;$("home").onclick=function(e){e.preventDefault();nav("M")()};
 $("swc").onclick=switcher;$("nB").onclick=presenter;$("nA").onclick=nav("A");
 $("dH").onclick=nav("M");$("dL").onclick=nav("L");$("dR").onclick=nav("R");
 Object.keys(DKC).forEach(function(id){$(id).onclick=function(){var k=DKC[id];if(PAGE==="C"){if(k===CUR)return;turn(function(){tab(k);window.scrollTo(0,0)});return}turn(function(){var c=lastC();if(c)go(c,k);else go("L")})}});
@@ -5214,6 +5364,7 @@ var COLS=[["sid","Student ID",function(h){return /^(student|pupil) ?id$|^id$|stu
  ["last","Surname",function(h){return /surname|last ?name|family ?name/.test(h)}],
  ["name","Student Name",function(h){return /^(student |pupil )?(full )?name$|student.*name|pupil.*name/.test(h)}],
  ["fid","Family ID",function(h){return /famil(y|ies) ?(id|no|number|ref)|^family$/.test(h)}],
+ ["pe","Parent Email",function(h){return /e-?mail/.test(h)}],
  ["dob","Date of birth",function(h){return /\bdob\b|d\.o\.b|date of birth|birth ?date|birthday/.test(h)}],
  ["gender","Gender",function(h){return /gender|^sex$/.test(h)}],
  ["year","Madrasah Year Group",function(h){return /madrasa|safar/.test(h)&&/year/.test(h)}],
@@ -5264,15 +5415,16 @@ function colsHTML(){var M=CSV.M,need=needCols(M),n=COLS.filter(function(c){retur
  if(need.length)h+='<p class="warnline">Choose the column for '+need.map(function(t){return '“'+esc(t)+'”'}).join(' and ')+' above to see what this file will change.</p>';
  return h}
 /* Compares the file with the dashboard: who is new, who moves classroom, whose details change. */
-function planCSV(){var M=CSV.M,F=["name","year"].concat(["sid","fid","dob","gender","sy","ist","house"].filter(function(k){return M[k]!==undefined}));
+function planCSV(){var M=CSV.M,F=["name","year"].concat(["sid","fid","pe","dob","gender","sy","ist","house"].filter(function(k){return M[k]!==undefined}));
  function cell(r,k){return M[k]===undefined?"":clean(r[M[k]])}
- var rows=[],empty=0,dup=0,seen={},byFileId={},notes=[],badHouse={},badDob=0,kept=[];
- CSV.rows.forEach(function(r){var o={sid:cell(r,"sid"),name:cell(r,"name")||clean(cell(r,"first")+" "+cell(r,"last")),gender:cell(r,"gender"),sy:cell(r,"sy"),teacher:cell(r,"teacher"),ist:cell(r,"ist"),fid:cell(r,"fid")};
+ var rows=[],empty=0,dup=0,seen={},byFileId={},notes=[],badHouse={},badDob=0,badPe=0,kept=[];
+ CSV.rows.forEach(function(r){var o={sid:cell(r,"sid"),name:cell(r,"name")||clean(cell(r,"first")+" "+cell(r,"last")),gender:cell(r,"gender"),sy:cell(r,"sy"),teacher:cell(r,"teacher"),ist:cell(r,"ist"),fid:cell(r,"fid"),pe:cell(r,"pe")};if(o.pe&&!EMAILRX.test(o.pe)){badPe++;o.pe=""}
   var dr=cell(r,"dob");o.dob=dr?csvDob(dr):"";if(dr&&!o.dob)badDob++;o.year=cell(r,"year")||madrasahYear(o.teacher,o.ist);
   var hr=cell(r,"house");o.house=normHouse(hr);if(hr&&!o.house)badHouse[hr]=(badHouse[hr]||0)+1;
   if(!o.name||!o.teacher){empty++;return}
   var key=nkey(o.sid)+"|"+nkey(o.name)+"|"+nkey(o.teacher);if(seen[key]){dup++;return}seen[key]=1;rows.push(o);
   if(o.sid)(byFileId[nkey(o.sid)]=byFileId[nkey(o.sid)]||[]).push(o)});
+ if(badPe)notes.push(plural(badPe,"parent email")+" couldn't be read as an email address, so "+(badPe>1?"they are":"it is")+" left as "+(badPe>1?"they are":"it is")+".");
  if(badDob)notes.push(plural(badDob,"date of birth","dates of birth")+" couldn't be read, so "+(badDob>1?"they are":"it is")+" left as "+(badDob>1?"they are":"it is")+". Write dates day first, like 12/03/2015.");
  Object.keys(badHouse).forEach(function(v){notes.push('House "'+v+'" ('+badHouse[v]+(badHouse[v]>1?' students':' student')+') isn\'t Makkah, Al-Aqsa or Madinah, so their house is left as it is.')});
  Object.keys(byFileId).forEach(function(k){var L=byFileId[k];if(L.length<2)return;var names={};L.forEach(function(o){names[nkey(o.name)]=1});

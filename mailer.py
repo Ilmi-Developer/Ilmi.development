@@ -43,7 +43,7 @@ class Mailer:
         """The bare address in MAIL_FROM, for showing on the admin pages."""
         return self.sender.rsplit("<", 1)[-1].rstrip(">").strip() if self.sender else ""
 
-    def send(self, to, subject, text, html=None, tag=None, background=False):
+    def send(self, to, subject, text, html=None, tag=None, background=False, from_name=None):
         """Returns True when the email was accepted for delivery.
 
         With background=True it returns straight away (True if a send was started) and sends from
@@ -52,6 +52,12 @@ class Mailer:
         if not self.enabled:
             return False
         payload = {"from": self.sender, "to": [to], "subject": subject, "text": text}
+        if from_name and self.sender_address:
+            # A school's own name on its term reports, from Ilmi's address ("Safar Academy via Ilmi").
+            clean = "".join(ch for ch in from_name if ch.isprintable() and ch not in '"<>\\')[:80].strip()
+            if clean:
+                payload["from"] = f'"{clean} via Ilmi" <{self.sender_address}>'
+
         if html:
             payload["html"] = html
         if self.redirect_to:

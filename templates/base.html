@@ -96,6 +96,7 @@
     {{ nl("/#classes", "grid", "Classes") }}
     {% if all_classes %}{{ nl("/#house-points", "pie", "House points") }}
     {{ nl("/#rankings", "trophy", "Rankings") }}
+    {{ nl("/#reports", "sheet", "Reports") }}
     {% endif %}
     {# Teachers and HeadTeachers open one class's Presenter; admins have the Presenter page (TV screens) below. #}
     {% if user.role != "admin" %}{{ nl("/#presenter", "presenter", "Presenter") }}{% endif %}
