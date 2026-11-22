@@ -73,7 +73,7 @@ four components) from what the class already records, using the rules of the sch
 | Memorisation | Progress | New targets passed out of 8 expected, as a percentage |
 | Both | Effort | The rounded mean of the other four final grades |
 
-Only pupils with a lesson recorded in the term get grades, and class averages count only them. A teacher can pick their
+Only pupils with a lesson recorded in the term get grades, and class averages count only them. A worked-out grade is never below 2 (a Report setting); a teacher can still give a 1. A teacher can pick their
 own grade for any of the five; **Auto** brings back the worked-out one. The Quran tab's score picker also records each day's
 homework (0 to 5, 0 when not done); it is kept with the pupil but doesn't change a grade. Attendance comes from Journey 2 Jannah
 (stored on each pupil by class day; teachers can't change it). The term dates and every number above are the admin's
