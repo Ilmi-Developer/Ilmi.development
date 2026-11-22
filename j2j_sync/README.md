@@ -10,7 +10,8 @@ prints one `J2J-MAP` line per page to the service's logs: addresses, headings, t
 forms and filters, and the data requests each page makes. Pupil names and other free text are never printed (a value
 shows only when it is a date, a number or a short status word such as "present").
 
-Railway service settings: Dockerfile path `j2j_sync/Dockerfile`, restart policy Never. Variables, set by the school in
+Railway service settings: root directory `/j2j_sync`, so this folder's own `railway.json` applies (Dockerfile, restart
+policy Never), not the web service's. Variables, set by the school in
 the Railway dashboard and never in this repository:
 
 | Variable | What |
