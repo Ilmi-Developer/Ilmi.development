@@ -112,9 +112,10 @@
     main.push(searchSlot);
   }
   // The dashboard's class shortcuts from its old phone dock (Quran and Memo for a teacher, or while a class is
-  // open), placed after Classes.
+  // open), placed after Classes: buttons on the dashboard, links on the other signed-in pages (templates/base.html),
+  // so a teacher's dock is the same everywhere.
   var oldDock = rail.querySelector(".dock");
-  var classKeys = oldDock ? Array.prototype.filter.call(oldDock.querySelectorAll(".dk-quran,.dk-memo"), function (d) { return d.tagName === "BUTTON"; }) : [];
+  var classKeys = oldDock ? Array.prototype.filter.call(oldDock.querySelectorAll(".dk-quran,.dk-memo"), function (d) { return d.tagName === "BUTTON" || d.tagName === "A"; }) : [];
 
   var admin = null, links = null;
   function adminFolder(nodes) {
@@ -148,7 +149,7 @@
     }
     if (k.classList.contains("nav")) {
       main.push(slot(k, textOf(k)));
-      if (k.id === "nL" || (k.id === "nM" && !document.getElementById("nL"))) {
+      if (k.id === "nL" || k.getAttribute("href") === "/#classes" || (k.id === "nM" && !document.getElementById("nL"))) {
         classKeys.forEach(function (d) {
           d.classList.add("nav");
           main.push(slot(d, d.classList.contains("dkx") ? "Class settings" : textOf(d.querySelector("span:last-child") || d)));
