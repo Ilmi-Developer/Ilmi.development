@@ -108,7 +108,8 @@ ST002,Yusuf Ali,Male,Year 4,Yr4-B-QM-Sr Zainab,Yr4-B-AI-Br Idris</div>
  </div></div>
  <div class="pane" data-pane="hi" hidden><div class="g12 eq">
   <div class="grp s4"><h2>Passes per week</h2><p class="cap">Last 8 weeks, Monday to Sunday</p><div id="wk"></div></div>
-  <div class="grp s8" id="histMod"><div class="mod-h"><h2>Pass history</h2><div class="seg" id="hP" role="group" aria-label="Period shown"><button type="button" data-p="m" aria-pressed="true">This month</button><button type="button" data-p="a" aria-pressed="false">All</button></div></div>
+  <div class="grp s8" id="histMod"><div class="mod-h"><h2>Pass history</h2><div class="seg" id="hP" role="group" aria-label="Period shown"><button type="button" data-p="w" aria-pressed="false">This week</button><button type="button" data-p="m" aria-pressed="true">This month</button><button type="button" data-p="lm" aria-pressed="false">Last month</button><button type="button" data-p="a" aria-pressed="false">All</button></div></div>
+   <div class="phbar"><label class="phs">Student<select id="hS"></select></label><div class="seg" id="hK" role="group" aria-label="Shown"><button type="button" data-k="p" aria-pressed="true">Passes</button><button type="button" data-k="f" aria-pressed="false">With fails</button></div><p class="cap" id="hC" aria-live="polite"></p></div>
    <details class="pastf" id="pastD"><summary class="btn sm">Add a past pass</summary>
     <div class="pf"><label>Student<select id="pS"></select></label><label>Date<input type="date" id="pD"></label><label>Target passed<select id="pT"></select></label><button class="btn p" id="pA" type="button">Add past pass</button></div></details>
    <div class="hist" id="hist"></div></div>
@@ -752,14 +753,45 @@ function student(i){var s=S[i];if(!s)return;var q=qavg(s),E=events().filter(func
   +'<p>'+(s.warn?wl(s.warn)+' ':'')+(late(s)?'<span class="pill red">'+(s.passes?'No pass in 3+ weeks':'No passes yet')+'</span>':'<span class="pill">Last pass: '+since(s).toLowerCase()+'</span>')+'</p>'
   +'<h3>Details</h3><dl class="ddl">'+details(s)+'</dl>'
   +'<h3>Passes and fails</h3>'+(E.length?'<ul class="feed">'+E.map(function(e){return '<li><span class="d">'+ds(e.t)+'</span><span class="x'+(e.f?' fail':'')+'">'+esc(e.x)+'</span></li>'}).join("")+'</ul>':'<p class="none">Nothing recorded yet.</p>'))}
-var HP="m";
+/* Pass history: every Memo pass in the class as a list a teacher can scan, newest first. It filters by period
+   (HP), by student (HS, the student's name, so it survives a re-sort of the class) and can take in fails (HK).
+   The Date, Student and Target headings sort (HO, with HD the direction). The score comes from the Memo test the
+   pass was recorded with; a past pass added by hand has none. */
+var HP="m",HK="p",HS="",HO="t",HD=-1,
+ HSRT='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
+ HDEL='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>';
+function hFrom(){var n=new Date();if(HP==="w")return [wk0(Date.now()),Infinity];if(HP==="m")return [ms0(),Infinity];
+ if(HP==="lm")return [new Date(n.getFullYear(),n.getMonth()-1,1).getTime(),ms0()];return [-Infinity,Infinity]}
+function hDay(t){var d=new Date(t),o={weekday:"short",day:"numeric",month:"short"};if(d.getFullYear()!==new Date().getFullYear())o.year="numeric";return d.toLocaleDateString("en-GB",o)}
+function hScore(s,k){var d=dk(s.log[k]),x=s.lx[k],T=s.tests||[];
+ for(var j=T.length-1;j>=0;j--){var t=T[j];if(t.k==="m"&&t.ok&&t.d===d&&(x?t.x===x:!t.x&&t.n===s.lt[k]))return t.sc}return null}
+function hLevel(n){return n>BL?mGrp(n).name:"L"+(lv(n)+1)}
 function past(){var sS=$("pS"),v=sS.value;
  sS.innerHTML=S.map(function(s,i){return '<option value="'+i+'">'+esc(s.name)+'</option>'}).join("");sS.value=v&&S[+v]?v:"0";
  var pT=$("pT");if(!pT.options.length)pT.innerHTML=TOP;
  var pD=$("pD");pD.min=FCD;pD.max=dk(Date.now());if(!pD.value)pD.value=dk(Date.now());
- var all=events(),m=ms0(),E=HP==="m"?all.filter(function(e){return e.t>=m}):all;
- $("hist").innerHTML=E.length?E.map(function(e){return '<div class="hr"><span>'+ds(e.t)+'</span><b>'+esc(S[e.i].name)+'</b><span'+(e.f?' class="fail"':'')+'>'+esc(e.x)+'</span><button class="btn sm" type="button" data-hi="'+e.i+'" data-hk="'+e.k+'"'+(e.f?' data-hf="1"':'')+' aria-label="Remove '+(e.f?'fail':'pass '+esc(e.x))+' for '+esc(S[e.i].name)+' on '+ds(e.t)+'">Remove</button></div>'}).join("")
-  :'<div class="empty"><b>'+(all.length?'Nothing recorded this month':'No passes or fails recorded yet')+'</b>'+(all.length?'<button type="button" class="btn sm quiet" data-hp="a">Show all '+all.length+'</button>':'They appear here as soon as you add one.')+'</div>'}
+ if(HS&&!S.some(function(s){return s.name===HS}))HS="";
+ var N=S.map(function(s){return s.name}).sort(function(a,b){return a.localeCompare(b,undefined,{sensitivity:"base"})});
+ $("hS").innerHTML='<option value="">All students</option>'+N.map(function(n){return '<option'+(n===HS?' selected':'')+'>'+esc(n)+'</option>'}).join("");
+ var all=events(),r=hFrom(),E=all.filter(function(e){return e.t>=r[0]&&e.t<r[1]&&(HK==="f"||!e.f)&&(!HS||S[e.i].name===HS)});
+ function az(a,b){return S[a.i].name.localeCompare(S[b.i].name,undefined,{sensitivity:"base"})}
+ E.sort(function(a,b){return (HO==="n"?az(a,b):HO==="l"?(a.f?0:a.l)-(b.f?0:b.l):0)*HD||(b.t-a.t)*(HO==="t"?-HD:1)||az(a,b)});
+ var np=E.filter(function(e){return !e.f}).length,nf=E.length-np,who={};E.forEach(function(e){if(!e.f)who[e.i]=1});
+ $("hC").textContent=E.length?plural(np,"pass","passes")+(HS?"":" by "+plural(Object.keys(who).length,"student"))+(nf?", "+plural(nf,"fail"):""):"";
+ var per={w:"this week",m:"this month",lm:"last month",a:""}[HP];
+ if(!E.length){$("hist").innerHTML='<div class="empty"><b>'+(all.length?'Nothing recorded '+(per||'for '+esc(HS)):'No passes or fails recorded yet')+'</b>'
+  +(all.length&&HP!=="a"?'<button type="button" class="btn sm quiet" data-hp="a">Show all</button>':all.length?'':'They appear here as soon as you add one.')+'</div>';return}
+ function th(k,lab,c){var on=HO===k;return '<th scope="col"'+(c?' class="'+c+'"':'')+(on?' aria-sort="'+(HD>0?'ascending':'descending')+'"':'')+'><button type="button" class="srt'+(on?' on'+(HD>0?'':' dn'):'')+'" data-ho="'+k+'">'+lab+HSRT+'</button></th>'}
+ $("hist").innerHTML='<table class="tbl stackable dir phl"><thead><tr>'+th("n","Student")+th("t","Date")+th("l","Target passed")+'<th scope="col">Level</th><th scope="col" class="num">Score</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>'
+  +E.map(function(e){var s=S[e.i],sc=e.f?null:hScore(s,e.k);
+   return '<tr'+(e.f?' class="phf"':'')+'><td class="lead"><button type="button" class="lk" data-hs="'+esc(s.name)+'" title="Show only '+esc(s.name)+'">'+esc(s.name)+'</button></td>'
+    +'<td data-label="Date" class="c-l">'+hDay(e.t)+'</td>'
+    +'<td data-label="Target passed">'+(e.f?'<span class="fail">Not passed</span>':chip(lc(e.l),esc(e.x)))+'</td>'
+    +'<td data-label="Level">'+(e.f?'<span class="zero">–</span>':esc(hLevel(e.l)))+'</td>'
+    +'<td data-label="Score" class="num'+(sc==null?' zero':'')+'">'+(sc==null?'–':sc+'/5')+'</td>'
+    +'<td class="act"><button class="ibtn phx" type="button" data-hi="'+e.i+'" data-hk="'+e.k+'"'+(e.f?' data-hf="1"':'')+' aria-label="Remove '+(e.f?'fail':'pass '+esc(e.x))+' for '+esc(s.name)+' on '+ds(e.t)+'" title="Remove">'+HDEL+'</button></td></tr>'}).join("")
+  +'</tbody></table>'}
+$("hS").addEventListener("change",function(){HS=this.value;if(CID)render()});
 $("pA").onclick=function(){var s=S[+$("pS").value],v=$("pD").value,t=+$("pT").value;
  if(!s){toast("Add a student first",1);return}if(!v){toast("Pick a date first",1);return}
  if(v<FCD){toast("The first class day was "+ds(sd().getTime()),1);return}
@@ -769,6 +801,8 @@ $("pA").onclick=function(){var s=S[+$("pS").value],v=$("pD").value,t=+$("pT").va
  s.log=a.map(function(x){return x[0]});s.lt=a.map(function(x){return x[1]});s.lx=a.map(function(x){return x[2]});s.passes++;if(s.target<=t)s.target=Math.min(t+1,NB);
  s.hit=s.log[s.log.length-1];save();render();toast(fn(s)+" passed "+bl(t)+" on "+ds(ts))};
 $("hist").addEventListener("click",function(e){var p=e.target.closest("[data-hp]");if(p){setSeg("hP",p.dataset.hp);return}
+ var o=e.target.closest("[data-ho]");if(o){var k=o.dataset.ho;if(HO===k)HD=-HD;else{HO=k;HD=k==="t"?-1:1}past();var f=$("hist").querySelector('[data-ho="'+k+'"]');if(f)f.focus();return}
+ var w=e.target.closest("[data-hs]");if(w){HS=HS===w.dataset.hs?"":w.dataset.hs;past();$("hS").focus();return}
  var b=e.target.closest("[data-hi]");if(!b)return;var i=+b.dataset.hi,s=S[i],k=+b.dataset.hk,c=CID,f=b.dataset.hf,t=f?s&&s.fl[k]:s&&s.log[k];if(!s)return;
  ask("Remove "+(f?"the fail":"the pass for "+pl(s,k))+" from "+s.name+" on "+ds(t)+"?",f?"Remove fail":"Remove pass",function(){if(!same(c,i,s)||(f?s.fl[k]:s.log[k])!==t)return;
   if(f){s.fl.splice(k,1);save();render();toast("Fail removed for "+fn(s));return}
@@ -1782,9 +1816,9 @@ function trSwap(w){w.classList.remove("swap");void w.offsetWidth;w.classList.add
 function swapIn(box){if(!box||!box.animate||QM.matches)return;Array.prototype.forEach.call(box.children,function(c,i){if(i>24)return;
  c.animate([{opacity:0,transform:"translateY(6px)"},{opacity:1,transform:"none"}],{duration:260,delay:Math.min(i,10)*28,easing:"cubic-bezier(.2,.8,.2,1)",fill:"backwards"})})}
 function setSeg(id,v){var g=$(id);Array.prototype.forEach.call(g.querySelectorAll("button"),function(b){var k=b.dataset.p||b.dataset.k||b.dataset.t;b.setAttribute("aria-pressed",k===v)});
- if(id==="hP")HP=v;if(id==="tP")TP=v;if(id==="qP")QP=v;if(id==="rP"){RP=v;master();swapIn($("mst").querySelector(".rk4"));return}
+ if(id==="hP")HP=v;if(id==="hK")HK=v;if(id==="tP")TP=v;if(id==="qP")QP=v;if(id==="rP"){RP=v;master();swapIn($("mst").querySelector(".rk4"));return}
  if(CID)render()}
-["hP","tP","qP"].forEach(function(id){$(id).addEventListener("click",function(e){var b=e.target.closest("button");if(b)setSeg(id,b.dataset.p||b.dataset.k||b.dataset.t)})});
+["hP","hK","tP","qP"].forEach(function(id){$(id).addEventListener("click",function(e){var b=e.target.closest("button");if(b)setSeg(id,b.dataset.p||b.dataset.k||b.dataset.t)})});
 /* Views inside a class tab (Quran, Memo, Progress): one pane at a time, kept while moving between classes. */
 var VW={Q:"rec",D:"lv",T:"day"};
 function view(k,v){VW[k]=v;var sec=$("v"+k);sec.setAttribute("data-v",v);Array.prototype.forEach.call(sec.querySelectorAll(".pane"),function(p){p.hidden=p.dataset.pane!==v});
